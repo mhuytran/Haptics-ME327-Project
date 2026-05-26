@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
@@ -6,6 +7,9 @@ public class EmergencyAbortController : MonoBehaviour
 {
     [Header("scene")]
     public string homeSceneName = "HomeScene";
+
+    [Header("timing")]
+    public float serialShutdownDelaySeconds = 0.15f;
 
     [Header("debug")]
     public bool logAbort = true;
@@ -32,28 +36,51 @@ public class EmergencyAbortController : MonoBehaviour
             Keyboard.current.leftShiftKey.isPressed ||
             Keyboard.current.rightShiftKey.isPressed;
 
-        bool xPressedThisFrame =
-            Keyboard.current.xKey.wasPressedThisFrame;
+        bool xPressedThisFrame = Keyboard.current.xKey.wasPressedThisFrame;
 
         if (ctrlPressed && shiftPressed && xPressedThisFrame)
         {
-            EmergencyAbort();
+            StartCoroutine(EmergencyAbortRoutine());
         }
     }
 
-    public void EmergencyAbort()
+    IEnumerator EmergencyAbortRoutine()
     {
         abortTriggered = true;
 
-        // mark the current run as invalid so no score can be saved
+        // Prevent this run from being saved to leaderboard or CSV.
         GameAbortState.MarkRunAborted();
 
-        // unpause if game was paused at game over
+        // Clear local input state so valves do not remain visually pressed.
+        ValveInputState.ClearAll();
+
+        // Always unpause before leaving the scene so animations/UI do not stay frozen later.
         Time.timeScale = 1f;
 
         if (logAbort)
         {
-            Debug.LogWarning("Emergency abort triggered. Current run invalidated. Returning to home screen.");
+            Debug.LogWarning("Emergency abort triggered. Sending hardware shutdown and returning home.");
+        }
+
+        // Send hardware all-off command before scene changes.
+        HapticFeedbackManager haptics = HapticFeedbackManager.Instance;
+
+        if (haptics != null)
+        {
+            haptics.EmergencyAllOff();
+        }
+        else if (TeensySerialInput.Instance != null)
+        {
+            TeensySerialInput.Instance.SendLine("X");
+        }
+
+        // Give the serial command a short real-time window to transmit before scene load.
+        yield return new WaitForSecondsRealtime(serialShutdownDelaySeconds);
+
+        // Disconnect cleanly if the serial manager exists.
+        if (TeensySerialInput.Instance != null)
+        {
+            TeensySerialInput.Instance.Disconnect();
         }
 
         SceneManager.LoadScene(homeSceneName);

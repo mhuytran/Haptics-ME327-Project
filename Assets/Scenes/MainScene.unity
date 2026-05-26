@@ -2646,6 +2646,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1414622044}
+  - component: {fileID: 1414622045}
+  - component: {fileID: 1414622046}
+  - component: {fileID: 1414622047}
   m_Layer: 0
   m_Name: TeensyManager
   m_TagString: Untagged
@@ -2670,6 +2673,62 @@ Transform:
   - {fileID: 1646046085}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1414622045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1414622043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23ddd76d8ac0dc74593704a46c84b764, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TeensySerialInput
+  portName: COM4
+  baudRate: 115200
+  connectOnStart: 1
+  valve1RestDistanceMM: 80
+  valve1PressedDistanceMM: 25
+  valve2RestDistanceMM: 80
+  valve2PressedDistanceMM: 25
+  valve3RestDistanceMM: 80
+  valve3PressedDistanceMM: 25
+  printIncomingLines: 1
+  printOutgoingCommands: 1
+--- !u!114 &1414622046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1414622043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5fc851b971930743a24543af1a5f6f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HapticFeedbackManager
+  teensySerialInput: {fileID: 1414622045}
+  enableHaptics: 1
+  printCommands: 1
+--- !u!114 &1414622047
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1414622043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 481c0f76a0b9c9646b1596d684e5533d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitySolenoidTester
+  hapticFeedbackManager: {fileID: 1414622046}
+  testDuty: 0.7
+  testDurationMs: 300
+  normalPhase: 0
+  shiftedPhase: 1
+  enableKeyboardTesting: 1
 --- !u!1 &1476594531
 GameObject:
   m_ObjectHideFlags: 0
@@ -2816,6 +2875,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1502017323}
+  - component: {fileID: 1502017324}
   m_Layer: 0
   m_Name: InputManager
   m_TagString: Untagged
@@ -2838,6 +2898,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1502017324
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1502017322}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fa52cbd37b5fcb47a29e802be8fbc82, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeyboardValveInput
 --- !u!1 &1566750325
 GameObject:
   m_ObjectHideFlags: 0
@@ -3275,6 +3347,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1646046085}
+  - component: {fileID: 1646046086}
   m_Layer: 0
   m_Name: HapticFeedbackManager
   m_TagString: Untagged
@@ -3297,6 +3370,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1414622044}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1646046086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1646046084}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5fc851b971930743a24543af1a5f6f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HapticFeedbackManager
+  teensySerialInput: {fileID: 1414622045}
+  enableHaptics: 1
+  printCommands: 1
 --- !u!1 &1646561942
 GameObject:
   m_ObjectHideFlags: 0
@@ -3685,6 +3773,7 @@ MonoBehaviour:
   pointMultiplier: 1
   maxPointMultiplier: 20
   uiFeedback: {fileID: 1740641790}
+  hapticFeedbackManager: {fileID: 1414622046}
 --- !u!114 &1740641789
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4799,6 +4888,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EmergencyAbortController
   homeSceneName: HomeScene
+  serialShutdownDelaySeconds: 0.15
   logAbort: 1
 --- !u!1001 &810020403682491978
 PrefabInstance:
@@ -4889,9 +4979,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrumpetValveAnimator
   laneIndex: 1
-  maxPressedLocalOffset: {x: 0, y: -0.25, z: 0}
-  pressSpeed: 2
-  releaseSpeed: 1.5
+  pressedLocalOffset: {x: 0, y: -0.18, z: 0}
+  motionSpeed: 8
+  useAnalogValveAmount: 1
 --- !u!114 &810020403682491982
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4905,9 +4995,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrumpetValveAnimator
   laneIndex: 0
-  maxPressedLocalOffset: {x: 0, y: -0.25, z: 0}
-  pressSpeed: 2
-  releaseSpeed: 1.5
+  pressedLocalOffset: {x: 0, y: -0.18, z: 0}
+  motionSpeed: 8
+  useAnalogValveAmount: 1
 --- !u!1 &810020403682491983 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6400996076825264593, guid: 2f438cd8023804842ae3f779e31d5fdb, type: 3}
@@ -4926,9 +5016,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrumpetValveAnimator
   laneIndex: 2
-  maxPressedLocalOffset: {x: 0, y: -0.25, z: 0}
-  pressSpeed: 2
-  releaseSpeed: 1.5
+  pressedLocalOffset: {x: 0, y: -0.18, z: 0}
+  motionSpeed: 8
+  useAnalogValveAmount: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

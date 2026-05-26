@@ -11,6 +11,8 @@ public class HapticFeedbackManager : MonoBehaviour
     public bool enableHaptics = true;
     public bool printCommands = true;
 
+    private bool emergencyStopped = false;
+
     void Awake()
     {
         Instance = this;
@@ -26,33 +28,38 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void SendPreCue(int laneIndex)
     {
-        string command = "PRECUE," + (laneIndex + 1);
-        Send(command);
+        Send("PRECUE," + (laneIndex + 1));
     }
 
     public void SendTapComplete(int laneIndex, bool perfect)
     {
         string rating = perfect ? "PERFECT" : "GOOD";
-        string command = "TAPCOMPLETE," + (laneIndex + 1) + "," + rating;
-        Send(command);
+        Send("TAPCOMPLETE," + (laneIndex + 1) + "," + rating);
     }
 
     public void SendHoldStart(int laneIndex)
     {
-        string command = "HOLDSTART," + (laneIndex + 1);
-        Send(command);
+        Send("HOLDSTART," + (laneIndex + 1));
     }
 
     public void SendHoldComplete(int laneIndex)
     {
-        string command = "HOLDCOMPLETE," + (laneIndex + 1);
-        Send(command);
+        Send("HOLDCOMPLETE," + (laneIndex + 1));
     }
 
     public void SendMiss(int laneIndex)
     {
-        string command = "MISS," + (laneIndex + 1);
-        Send(command);
+        Send("MISS," + (laneIndex + 1));
+    }
+
+    public void TestSolenoid(int channelIndex, float duty, int phase, int durationMs)
+    {
+        int channelNumber = channelIndex + 1;
+        duty = Mathf.Clamp01(duty);
+        phase = phase == 0 ? 0 : 1;
+        durationMs = Mathf.Max(1, durationMs);
+
+        Send("SOL," + channelNumber + "," + duty.ToString("0.00") + "," + phase + "," + durationMs);
     }
 
     public void AllOff()
@@ -60,8 +67,38 @@ public class HapticFeedbackManager : MonoBehaviour
         Send("X");
     }
 
-    void Send(string command)
+    public void EmergencyAllOff()
     {
+        emergencyStopped = true;
+
+        if (teensySerialInput == null)
+        {
+            teensySerialInput = TeensySerialInput.Instance;
+        }
+
+        if (printCommands)
+        {
+            Debug.LogWarning("Emergency haptic shutdown: X");
+        }
+
+        if (teensySerialInput != null)
+        {
+            teensySerialInput.SendLine("X");
+        }
+    }
+
+    public void ResetEmergencyStop()
+    {
+        emergencyStopped = false;
+    }
+
+    private void Send(string command)
+    {
+        if (emergencyStopped)
+        {
+            return;
+        }
+
         if (!enableHaptics)
         {
             return;
