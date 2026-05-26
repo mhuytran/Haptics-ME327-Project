@@ -28,6 +28,9 @@ public class RhythmGameManager : MonoBehaviour
     [Header("ui")]
     public GameplayUIFeedback uiFeedback;
 
+    [Header("haptics")]
+    public HapticFeedbackManager hapticFeedbackManager;
+
     private List<FlyingNote> activeNotes = new List<FlyingNote>();
     private bool[] previousValveStates = new bool[3];
 
@@ -37,6 +40,11 @@ public class RhythmGameManager : MonoBehaviour
     void Start()
     {
         Time.timeScale = 1f;
+
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
 
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
         UpdateMultiplier();
@@ -86,6 +94,24 @@ public class RhythmGameManager : MonoBehaviour
         activeNotes.Remove(note);
     }
 
+    public void OnNotePreCue(FlyingNote note)
+    {
+        if (note == null || gameOver)
+        {
+            return;
+        }
+
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager != null)
+        {
+            hapticFeedbackManager.SendPreCue(note.laneIndex);
+        }
+    }
+
     public void TryHit(int lane)
     {
         if (gameOver)
@@ -129,11 +155,13 @@ public class RhythmGameManager : MonoBehaviour
 
             if (bestNote.isHoldNote)
             {
+                SendHoldStart(bestNote.laneIndex);
                 bestNote.StartHold(rating);
                 ShowFeedback(rating, perfect ? Color.green : Color.yellow);
             }
             else
             {
+                SendTapComplete(bestNote.laneIndex, perfect);
                 bestNote.ResolveTapHit(rating);
                 RegisterSuccessfulNote(rating, perfect, true);
             }
@@ -147,6 +175,11 @@ public class RhythmGameManager : MonoBehaviour
             return;
         }
 
+        if (note != null)
+        {
+            SendHoldComplete(note.laneIndex);
+        }
+
         UnregisterNote(note);
         RegisterSuccessfulNote("", true, false);
     }
@@ -156,6 +189,11 @@ public class RhythmGameManager : MonoBehaviour
         if (gameOver)
         {
             return;
+        }
+
+        if (note != null)
+        {
+            SendMiss(note.laneIndex);
         }
 
         UnregisterNote(note);
@@ -246,6 +284,11 @@ public class RhythmGameManager : MonoBehaviour
 
         ClearActiveNotes();
 
+        if (hapticFeedbackManager != null)
+        {
+            hapticFeedbackManager.AllOff();
+        }
+
         if (uiFeedback != null)
         {
             uiFeedback.ShowGameOver(score);
@@ -265,6 +308,58 @@ public class RhythmGameManager : MonoBehaviour
         }
 
         activeNotes.Clear();
+    }
+
+    void SendTapComplete(int lane, bool perfect)
+    {
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager != null)
+        {
+            hapticFeedbackManager.SendTapComplete(lane, perfect);
+        }
+    }
+
+    void SendHoldStart(int lane)
+    {
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager != null)
+        {
+            hapticFeedbackManager.SendHoldStart(lane);
+        }
+    }
+
+    void SendHoldComplete(int lane)
+    {
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager != null)
+        {
+            hapticFeedbackManager.SendHoldComplete(lane);
+        }
+    }
+
+    void SendMiss(int lane)
+    {
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager != null)
+        {
+            hapticFeedbackManager.SendMiss(lane);
+        }
     }
 
     void UpdateMultiplier()

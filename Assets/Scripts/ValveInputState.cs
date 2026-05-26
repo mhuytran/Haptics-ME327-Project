@@ -7,9 +7,14 @@ public static class ValveInputState
     private static bool[] keyboardValves = new bool[3];
     private static bool[] teensyValves = new bool[3];
 
+    // Analog valve depth from ToF distance.
+    // 0 = valve fully up / not pressed
+    // 1 = valve fully pressed
+    private static float[] teensyValveAmounts = new float[3];
+
     public static bool GetValve(int laneIndex)
     {
-        if (laneIndex < 0 || laneIndex > 2)
+        if (!IsValidLane(laneIndex))
         {
             return false;
         }
@@ -20,9 +25,28 @@ public static class ValveInputState
         }
     }
 
+    public static float GetValveAmount(int laneIndex)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return 0f;
+        }
+
+        lock (stateLock)
+        {
+            // Keyboard still gives full press for testing.
+            if (keyboardValves[laneIndex])
+            {
+                return 1f;
+            }
+
+            return Mathf.Clamp01(teensyValveAmounts[laneIndex]);
+        }
+    }
+
     public static void SetKeyboardValve(int laneIndex, bool pressed)
     {
-        if (laneIndex < 0 || laneIndex > 2)
+        if (!IsValidLane(laneIndex))
         {
             return;
         }
@@ -35,7 +59,7 @@ public static class ValveInputState
 
     public static void SetTeensyValve(int laneIndex, bool pressed)
     {
-        if (laneIndex < 0 || laneIndex > 2)
+        if (!IsValidLane(laneIndex))
         {
             return;
         }
@@ -46,14 +70,34 @@ public static class ValveInputState
         }
     }
 
-    public static void ClearTeensyState()
+    public static void SetTeensyValveAmount(int laneIndex, float amount)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return;
+        }
+
+        lock (stateLock)
+        {
+            teensyValveAmounts[laneIndex] = Mathf.Clamp01(amount);
+        }
+    }
+
+    public static void ClearAll()
     {
         lock (stateLock)
         {
             for (int i = 0; i < 3; i++)
             {
+                keyboardValves[i] = false;
                 teensyValves[i] = false;
+                teensyValveAmounts[i] = 0f;
             }
         }
+    }
+
+    private static bool IsValidLane(int laneIndex)
+    {
+        return laneIndex >= 0 && laneIndex < 3;
     }
 }

@@ -6,6 +6,10 @@ public class FlyingNote : MonoBehaviour
     public float targetHitTime;
     public bool resolved = false;
 
+    [Header("pre-cue")]
+    public float preCueLeadTime = 0.35f;
+    private bool preCueSent = false;
+
     [Header("hold note")]
     public bool isHoldNote = false;
     public float holdDuration = 0f;
@@ -89,6 +93,8 @@ public class FlyingNote : MonoBehaviour
             return;
         }
 
+        TrySendPreCue();
+
         float travelFraction = Mathf.InverseLerp(spawnTime, targetHitTime, Time.time);
         travelFraction = Mathf.Clamp01(travelFraction);
 
@@ -128,6 +134,26 @@ public class FlyingNote : MonoBehaviour
             {
                 Miss();
                 return;
+            }
+        }
+    }
+
+    void TrySendPreCue()
+    {
+        if (preCueSent)
+        {
+            return;
+        }
+
+        float timeUntilHit = targetHitTime - Time.time;
+
+        if (timeUntilHit <= preCueLeadTime && timeUntilHit > 0f)
+        {
+            preCueSent = true;
+
+            if (gameManager != null)
+            {
+                gameManager.OnNotePreCue(this);
             }
         }
     }
