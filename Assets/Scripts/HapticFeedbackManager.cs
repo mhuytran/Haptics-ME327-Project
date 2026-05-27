@@ -1,3 +1,4 @@
+using System.Globalization;
 using UnityEngine;
 
 public class HapticFeedbackManager : MonoBehaviour
@@ -10,6 +11,9 @@ public class HapticFeedbackManager : MonoBehaviour
     [Header("debug")]
     public bool enableHaptics = true;
     public bool printCommands = true;
+
+    [Header("solenoid setup")]
+    public int solenoidPhase = 1;
 
     private bool emergencyStopped = false;
 
@@ -52,14 +56,68 @@ public class HapticFeedbackManager : MonoBehaviour
         Send("MISS," + (laneIndex + 1));
     }
 
-    public void TestSolenoid(int channelIndex, float duty, int phase, int durationMs)
+    // Current correct version: solenoid always uses phase 1.
+    public void SendSolenoidTest(int laneIndex, float duty, int durationMs)
     {
-        int channelNumber = channelIndex + 1;
+        SendSolenoidCommand(laneIndex, duty, solenoidPhase, durationMs);
+    }
+
+    // Compatibility overload for older scripts that still pass phase.
+    // The passed phase is intentionally ignored because your hardware only uses phase 1.
+    public void SendSolenoidTest(int laneIndex, float duty, int ignoredPhase, int durationMs)
+    {
+        SendSolenoidCommand(laneIndex, duty, solenoidPhase, durationMs);
+    }
+
+    public void TestSolenoid(int laneIndex, float duty, int durationMs)
+    {
+        SendSolenoidCommand(laneIndex, duty, solenoidPhase, durationMs);
+    }
+
+    public void TestSolenoid(int laneIndex, float duty, int ignoredPhase, int durationMs)
+    {
+        SendSolenoidCommand(laneIndex, duty, solenoidPhase, durationMs);
+    }
+
+    void SendSolenoidCommand(int laneIndex, float duty, int phase, int durationMs)
+    {
         duty = Mathf.Clamp01(duty);
-        phase = phase == 0 ? 0 : 1;
+        phase = 1;
         durationMs = Mathf.Max(1, durationMs);
 
-        Send("SOL," + channelNumber + "," + duty.ToString("0.00") + "," + phase + "," + durationMs);
+        string command =
+            "SOL," +
+            (laneIndex + 1) + "," +
+            duty.ToString("0.00", CultureInfo.InvariantCulture) + "," +
+            phase + "," +
+            durationMs;
+
+        Send(command);
+    }
+
+    public void SendERMTest(int laneIndex, float duty, int durationMs)
+    {
+        duty = Mathf.Clamp01(duty);
+        durationMs = Mathf.Max(1, durationMs);
+
+        string command =
+            "ERM," +
+            (laneIndex + 1) + "," +
+            duty.ToString("0.00", CultureInfo.InvariantCulture) + "," +
+            durationMs;
+
+        Send(command);
+    }
+
+    public void TestERM(int laneIndex, float duty, int durationMs)
+    {
+        SendERMTest(laneIndex, duty, durationMs);
+    }
+
+    public void SendThreshold(int thresholdMM)
+    {
+        thresholdMM = Mathf.Clamp(thresholdMM, 1, 254);
+        Send("THRESH," + thresholdMM);
     }
 
     public void AllOff()

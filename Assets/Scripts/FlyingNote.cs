@@ -7,6 +7,10 @@ public class FlyingNote : MonoBehaviour
     public bool resolved = false;
 
     [Header("pre-cue")]
+
+    // 0.25s, later, more precise
+    // 0.35s, good starting value 
+    // 0.50s, earlier warning
     public float preCueLeadTime = 0.35f;
     private bool preCueSent = false;
 

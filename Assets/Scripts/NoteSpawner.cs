@@ -19,6 +19,10 @@ public class NoteSpawner : MonoBehaviour
     public Transform hitPlane2;
     public Transform hitPlane3;
 
+    [Header("spawning control")]
+    public bool spawningEnabled = true;
+    public bool spawnImmediatelyWhenEnabled = false;
+
     [Header("note timing")]
     public float spawnInterval = 0.8f;
     public float noteTravelTime = 1.5f;
@@ -52,8 +56,21 @@ public class NoteSpawner : MonoBehaviour
         1.4f, 0.0f, 0.7f, 0.0f
     };
 
+    void Start()
+    {
+        if (gameManager == null)
+        {
+            gameManager = FindAnyObjectByType<RhythmGameManager>();
+        }
+    }
+
     void Update()
     {
+        if (!spawningEnabled)
+        {
+            return;
+        }
+
         spawnTimer += Time.deltaTime;
 
         if (spawnTimer >= spawnInterval)
@@ -63,8 +80,32 @@ public class NoteSpawner : MonoBehaviour
         }
     }
 
+    public void SetSpawningEnabled(bool enabled)
+    {
+        SetSpawningEnabled(enabled, spawnImmediatelyWhenEnabled);
+    }
+
+    public void SetSpawningEnabled(bool enabled, bool spawnImmediately)
+    {
+        spawningEnabled = enabled;
+
+        if (spawningEnabled)
+        {
+            spawnTimer = spawnImmediately ? spawnInterval : 0f;
+        }
+        else
+        {
+            spawnTimer = 0f;
+        }
+    }
+
     void SpawnNextNote()
     {
+        if (notePrefab == null || gameManager == null)
+        {
+            return;
+        }
+
         int lane = lanePattern[patternIndex];
         float requestedHoldDuration = holdDurationPattern[patternIndex];
 
@@ -73,6 +114,11 @@ public class NoteSpawner : MonoBehaviour
         Transform spawnPoint = GetSpawnPoint(lane);
         Transform valveTarget = GetValveTarget(lane);
         Transform hitPlane = GetHitPlane(lane);
+
+        if (spawnPoint == null || valveTarget == null)
+        {
+            return;
+        }
 
         float targetHitTime = Time.time + noteTravelTime;
 
@@ -96,6 +142,7 @@ public class NoteSpawner : MonoBehaviour
         Color noteColor = GetLaneColor(lane);
 
         NoteGlowPulse glowPulse = noteObject.GetComponent<NoteGlowPulse>();
+
         if (glowPulse != null)
         {
             glowPulse.SetColor(noteColor);

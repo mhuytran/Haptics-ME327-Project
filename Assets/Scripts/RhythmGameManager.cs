@@ -3,10 +3,16 @@ using UnityEngine;
 
 public class RhythmGameManager : MonoBehaviour
 {
+    [Header("gameplay state")]
+    public bool gameplayActive = true;
+
     [Header("timing windows")]
     public float perfectWindow = 0.08f;
     public float goodWindow = 0.16f;
     public float missWindow = 0.22f;
+
+    [Header("physical input timing compensation")]
+    public float teensyInputLatencyCompensation = 0.08f;
 
     [Header("score")]
     public int score = 0;
@@ -47,8 +53,10 @@ public class RhythmGameManager : MonoBehaviour
         }
 
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+
         UpdateMultiplier();
         UpdateUI();
+        ResetValveEdgeMemory();
     }
 
     void Update()
@@ -58,22 +66,49 @@ public class RhythmGameManager : MonoBehaviour
             return;
         }
 
+        if (!gameplayActive)
+        {
+            ResetValveEdgeMemory();
+            return;
+        }
+
         for (int lane = 0; lane < 3; lane++)
         {
             bool pressed = ValveInputState.GetValve(lane);
 
             if (pressed && !previousValveStates[lane])
             {
-                TryHit(lane);
+                bool teensyPress =
+                    ValveInputState.GetLastPressSource(lane) == ValveInputState.InputSource.Teensy;
+
+                float effectivePressTime = teensyPress
+                    ? Time.time - teensyInputLatencyCompensation
+                    : Time.time;
+
+                TryHit(lane, effectivePressTime);
             }
 
             previousValveStates[lane] = pressed;
         }
     }
 
+    public void SetGameplayActive(bool active)
+    {
+        gameplayActive = active;
+        ResetValveEdgeMemory();
+    }
+
+    public void ResetValveEdgeMemory()
+    {
+        for (int lane = 0; lane < 3; lane++)
+        {
+            previousValveStates[lane] = ValveInputState.GetValve(lane);
+        }
+    }
+
     public void RegisterNote(FlyingNote note)
     {
-        if (gameOver)
+        if (gameOver || !gameplayActive)
         {
             if (note != null)
             {
@@ -83,7 +118,7 @@ public class RhythmGameManager : MonoBehaviour
             return;
         }
 
-        if (!activeNotes.Contains(note))
+        if (note != null && !activeNotes.Contains(note))
         {
             activeNotes.Add(note);
         }
@@ -91,12 +126,17 @@ public class RhythmGameManager : MonoBehaviour
 
     public void UnregisterNote(FlyingNote note)
     {
+        if (note == null)
+        {
+            return;
+        }
+
         activeNotes.Remove(note);
     }
 
     public void OnNotePreCue(FlyingNote note)
     {
-        if (note == null || gameOver)
+        if (note == null || gameOver || !gameplayActive)
         {
             return;
         }
@@ -112,9 +152,9 @@ public class RhythmGameManager : MonoBehaviour
         }
     }
 
-    public void TryHit(int lane)
+    public void TryHit(int lane, float pressTime)
     {
-        if (gameOver)
+        if (gameOver || !gameplayActive)
         {
             return;
         }
@@ -134,7 +174,7 @@ public class RhythmGameManager : MonoBehaviour
                 continue;
             }
 
-            float timingError = Mathf.Abs(Time.time - note.targetHitTime);
+            float timingError = Mathf.Abs(pressTime - note.targetHitTime);
 
             if (timingError < bestTimingError)
             {
@@ -170,7 +210,7 @@ public class RhythmGameManager : MonoBehaviour
 
     public void OnHoldCompleted(FlyingNote note)
     {
-        if (gameOver)
+        if (gameOver || !gameplayActive)
         {
             return;
         }
@@ -186,8 +226,13 @@ public class RhythmGameManager : MonoBehaviour
 
     public void OnNoteMissed(FlyingNote note)
     {
-        if (gameOver)
+        if (gameOver || !gameplayActive)
         {
+            if (note != null)
+            {
+                UnregisterNote(note);
+            }
+
             return;
         }
 
@@ -223,7 +268,7 @@ public class RhythmGameManager : MonoBehaviour
 
     void RegisterSuccessfulNote(string feedbackMessage, bool strongHit, bool showFeedbackText)
     {
-        if (gameOver)
+        if (gameOver || !gameplayActive)
         {
             return;
         }
@@ -280,8 +325,8 @@ public class RhythmGameManager : MonoBehaviour
     {
         gameOver = true;
         currentHealth = 0f;
-        UpdateUI();
 
+        UpdateUI();
         ClearActiveNotes();
 
         if (hapticFeedbackManager != null)

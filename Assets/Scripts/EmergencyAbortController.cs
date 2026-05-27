@@ -2,6 +2,11 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class EmergencyAbortController : MonoBehaviour
 {
@@ -48,13 +53,23 @@ public class EmergencyAbortController : MonoBehaviour
     {
         abortTriggered = true;
 
-        // Prevent this run from being saved to leaderboard or CSV.
+        // Mark this run invalid so leaderboard / CSV saving is blocked.
         GameAbortState.MarkRunAborted();
 
-        // Clear local input state so valves do not remain visually pressed.
+        // Clear input state so no valve stays visually pressed.
         ValveInputState.ClearAll();
 
-        // Always unpause before leaving the scene so animations/UI do not stay frozen later.
+        // Clear selected UI object so Unity does not keep previewing destroyed UI.
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+        }
+
+#if UNITY_EDITOR
+        Selection.activeObject = null;
+#endif
+
+        // Always unpause before changing scenes.
         Time.timeScale = 1f;
 
         if (logAbort)
@@ -62,7 +77,7 @@ public class EmergencyAbortController : MonoBehaviour
             Debug.LogWarning("Emergency abort triggered. Sending hardware shutdown and returning home.");
         }
 
-        // Send hardware all-off command before scene changes.
+        // Turn off all Teensy outputs before changing scenes.
         HapticFeedbackManager haptics = HapticFeedbackManager.Instance;
 
         if (haptics != null)
@@ -74,10 +89,10 @@ public class EmergencyAbortController : MonoBehaviour
             TeensySerialInput.Instance.SendLine("X");
         }
 
-        // Give the serial command a short real-time window to transmit before scene load.
+        // Give the serial command time to transmit.
         yield return new WaitForSecondsRealtime(serialShutdownDelaySeconds);
 
-        // Disconnect cleanly if the serial manager exists.
+        // Cleanly close serial before leaving MainScene.
         if (TeensySerialInput.Instance != null)
         {
             TeensySerialInput.Instance.Disconnect();

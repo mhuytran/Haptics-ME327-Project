@@ -2,15 +2,20 @@ using UnityEngine;
 
 public static class ValveInputState
 {
+    public enum InputSource
+    {
+        None,
+        Keyboard,
+        Teensy
+    }
+
     private static readonly object stateLock = new object();
 
     private static bool[] keyboardValves = new bool[3];
     private static bool[] teensyValves = new bool[3];
-
-    // Analog valve depth from ToF distance.
-    // 0 = valve fully up / not pressed
-    // 1 = valve fully pressed
     private static float[] teensyValveAmounts = new float[3];
+
+    private static InputSource[] lastPressSource = new InputSource[3];
 
     public static bool GetValve(int laneIndex)
     {
@@ -34,13 +39,25 @@ public static class ValveInputState
 
         lock (stateLock)
         {
-            // Keyboard still gives full press for testing.
             if (keyboardValves[laneIndex])
             {
                 return 1f;
             }
 
             return Mathf.Clamp01(teensyValveAmounts[laneIndex]);
+        }
+    }
+
+    public static InputSource GetLastPressSource(int laneIndex)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return InputSource.None;
+        }
+
+        lock (stateLock)
+        {
+            return lastPressSource[laneIndex];
         }
     }
 
@@ -53,7 +70,13 @@ public static class ValveInputState
 
         lock (stateLock)
         {
+            bool wasPressed = keyboardValves[laneIndex];
             keyboardValves[laneIndex] = pressed;
+
+            if (pressed && !wasPressed)
+            {
+                lastPressSource[laneIndex] = InputSource.Keyboard;
+            }
         }
     }
 
@@ -66,7 +89,13 @@ public static class ValveInputState
 
         lock (stateLock)
         {
+            bool wasPressed = teensyValves[laneIndex];
             teensyValves[laneIndex] = pressed;
+
+            if (pressed && !wasPressed)
+            {
+                lastPressSource[laneIndex] = InputSource.Teensy;
+            }
         }
     }
 
@@ -92,6 +121,7 @@ public static class ValveInputState
                 keyboardValves[i] = false;
                 teensyValves[i] = false;
                 teensyValveAmounts[i] = 0f;
+                lastPressSource[i] = InputSource.None;
             }
         }
     }

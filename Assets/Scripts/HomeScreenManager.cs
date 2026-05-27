@@ -39,6 +39,7 @@ public class HomeScreenManager : MonoBehaviour
 
     public void StartGame()
     {
+        Time.timeScale = 1f;
         GameAbortState.ResetForNewRun();
         SceneManager.LoadScene(gameSceneName);
     }
