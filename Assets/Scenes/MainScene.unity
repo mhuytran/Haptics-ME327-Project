@@ -2782,33 +2782,32 @@ MonoBehaviour:
     ermIn1Pin: 22
     ermIn2Pin: 23
   commandGuide: 'Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE,
-    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, THRESH.
-    Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale
-    loops.'
+    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, THRESH. Not used by
+    Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.'
   commandProfile: 1
   filterOutgoingCommands: 1
   enableHaptics: 1
   printCommands: 1
-  maxSolenoidDuty: 1
-  maxSolenoidDurationMs: 350
+  maxSolenoidDuty: 0.8
+  maxSolenoidDurationMs: 250
   useRampedPreCue: 1
-  preCueErmDuty: 1
-  preCueErmRampMs: 1000
-  preCueErmHoldMs: 100
+  preCueErmDuty: 0.25
+  preCueErmRampMs: 800
+  preCueErmHoldMs: 120
   preCueErmRampCurve: 1
-  maxErmDuty: 1
+  maxErmDuty: 0.45
   maxErmRampMs: 1200
   tuneLane: 1
-  tuneSolenoidDuty: 1
+  tuneSolenoidDuty: 0.8
   tuneSolenoidDurationMs: 125
-  tuneSolenoidRampMs: 800
+  tuneSolenoidRampMs: 500
   tuneSolenoidRampCurve: 1
-  tuneSolenoidRampHoldMs: 350
-  tuneErmDuty: 1
+  tuneSolenoidRampHoldMs: 200
+  tuneErmDuty: 0.25
   tuneErmDurationMs: 120
-  tuneErmRampMs: 1000
+  tuneErmRampMs: 800
   tuneErmRampCurve: 1
-  tuneErmHoldMs: 100
+  tuneErmHoldMs: 120
   tuneTeamSequenceDelayMs: 1000
   tuneRawTofThresholdMM: 65
   lastCommandStatus: No haptic command sent yet.
@@ -3549,33 +3548,32 @@ MonoBehaviour:
     ermIn1Pin: 22
     ermIn2Pin: 23
   commandGuide: 'Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE,
-    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, THRESH.
-    Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale
-    loops.'
+    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, THRESH. Not used by
+    Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.'
   commandProfile: 1
   filterOutgoingCommands: 1
   enableHaptics: 1
   printCommands: 1
-  maxSolenoidDuty: 1
-  maxSolenoidDurationMs: 350
+  maxSolenoidDuty: 0.8
+  maxSolenoidDurationMs: 250
   useRampedPreCue: 1
-  preCueErmDuty: 1
-  preCueErmRampMs: 1000
-  preCueErmHoldMs: 100
+  preCueErmDuty: 0.25
+  preCueErmRampMs: 800
+  preCueErmHoldMs: 120
   preCueErmRampCurve: 1
-  maxErmDuty: 1
+  maxErmDuty: 0.45
   maxErmRampMs: 1200
   tuneLane: 1
-  tuneSolenoidDuty: 1
+  tuneSolenoidDuty: 0.8
   tuneSolenoidDurationMs: 125
-  tuneSolenoidRampMs: 800
+  tuneSolenoidRampMs: 500
   tuneSolenoidRampCurve: 1
-  tuneSolenoidRampHoldMs: 350
-  tuneErmDuty: 1
+  tuneSolenoidRampHoldMs: 200
+  tuneErmDuty: 0.25
   tuneErmDurationMs: 120
-  tuneErmRampMs: 1000
+  tuneErmRampMs: 800
   tuneErmRampCurve: 1
-  tuneErmHoldMs: 100
+  tuneErmHoldMs: 120
   tuneTeamSequenceDelayMs: 1000
   tuneRawTofThresholdMM: 65
   lastCommandStatus: No haptic command sent yet.
@@ -4012,10 +4010,15 @@ MonoBehaviour:
   spawnInterval: 2
   noteTravelTime: 1.5
   waitForPreviousFingeringToResolve: 1
+  allowModeSwitchShortcuts: 1
+  toggleSpawnModeKey: 102
+  randomDebugModeKey: 103
+  songChartModeKey: 104
+  clearNotesWhenSwitchingModes: 1
+  startSongWhenSwitchingToSongMode: 1
   songModeGuide: RandomDebug keeps spawning generated fingerings. SongChart loads
-    From-The-Start 90 BPM from Resources/TrumpetCharts, plays the audio, and spawns
-    the PDF/OMR note chart in sync. F9 toggles modes, F10 forces RandomDebug, F11
-    forces SongChart. Space starts/pauses, R restarts, [/] nudge note timing.
+    From-The-Start from Resources/TrumpetCharts, plays the audio, and spawns the
+    PDF/OMR note chart in sync. Keyboard testing still uses A/S/D for valves 1/2/3.
   songChartJson: {fileID: 0}
   songChartResourcePath: TrumpetCharts/From-The-Start-90bpm
   songAudioSource: {fileID: 0}
@@ -4026,8 +4029,17 @@ MonoBehaviour:
   startPauseSongKey: 1
   restartSongKey: 32
   useChartLeadInSeconds: 1
-  manualLeadInSeconds: 5.1667
-  additionalChartOffsetSeconds: 0
+  manualLeadInSeconds: 2
+  additionalChartOffsetSeconds: 2.6
+  useDspClockForSongSync: 1
+  useSampleAccurateSongTime: 1
+  scheduledAudioStartDelaySeconds: 0.1
+  allowTimingOffsetShortcuts: 1
+  nudgeChartEarlierKey: 11
+  nudgeChartLaterKey: 12
+  resetChartOffsetKey: 10
+  timingOffsetNudgeSeconds: 0.025
+  currentAudioClockTime: 0
   useSongDurationsAsHolds: 1
   minimumSongHoldDuration: 0.5
   skipVeryLateSongNotes: 1

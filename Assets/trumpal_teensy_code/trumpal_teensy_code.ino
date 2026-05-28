@@ -991,7 +991,6 @@ void handleLineCommand(char *line)
         char *rampToken = strtok(NULL, ",");
         char *holdToken = strtok(NULL, ",");
         char *curveToken = strtok(NULL, ",");
-        char *curveToken = strtok(NULL, ",");
 
         if (chToken == NULL || dutyToken == NULL)
         {
@@ -1019,6 +1018,7 @@ void handleLineCommand(char *line)
         char *dutyToken = strtok(NULL, ",");
         char *rampToken = strtok(NULL, ",");
         char *holdToken = strtok(NULL, ",");
+        char *curveToken = strtok(NULL, ",");
 
         if (laneToken == NULL)
         {
