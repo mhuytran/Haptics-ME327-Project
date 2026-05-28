@@ -56,13 +56,24 @@ bool tofAvailable[3] = {false, false, false};
 // therefore raw Teensy V = 1 when D <= threshold.
 // ------------------------------------------------------------
 const uint8_t INVALID_DISTANCE = 255;
-uint8_t pressThresholdMM = 13;
+uint8_t pressThresholdMM = 65;
 
 // ------------------------------------------------------------
 // Unity serial output timing
 // ------------------------------------------------------------
 unsigned long lastUnitySendTime = 0;
 const unsigned long UNITY_SEND_INTERVAL_MS = 20; // 50 Hz
+
+// ------------------------------------------------------------
+// Serial command surface
+// MVP commands are always accepted:
+// X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE, MISS
+// Bench tuning commands can be disabled after the hardware feels right:
+// THRESH, SOL, ERM, ERMRAMP
+// Not used in this Unity MVP: READ, STREAM, RATE, A/B/C quick commands,
+// blocking scale playback loops.
+// ------------------------------------------------------------
+const bool ENABLE_TUNING_COMMANDS = true;
 
 // ------------------------------------------------------------
 // Gameplay solenoid push-off tuning.
@@ -562,19 +573,21 @@ void handleMissCommand(int lane)
 // ------------------------------------------------------------
 // Parse Unity command line
 //
-// Supported:
+// MVP:
 // X
-// THRESH,13
-// SOL,1,0.30,1,300
-// ERM,1,0.25,120
 // PRECUE,1
 // PRECUE,1,0.25,800,120
-// ERMRAMP,1,0.25,800,120
 // TAPCOMPLETE,1,PERFECT
 // TAPCOMPLETE,1,GOOD
 // HOLDSTART,1
 // HOLDCOMPLETE,1
 // MISS,1
+//
+// Bench tuning when ENABLE_TUNING_COMMANDS is true:
+// THRESH,65
+// SOL,1,0.80,1,125
+// ERM,1,0.25,120
+// ERMRAMP,1,0.25,800,120
 // ------------------------------------------------------------
 void handleLineCommand(char *line)
 {
@@ -591,7 +604,7 @@ void handleLineCommand(char *line)
         return;
     }
 
-    if (strcmp(command, "THRESH") == 0)
+    if (ENABLE_TUNING_COMMANDS && strcmp(command, "THRESH") == 0)
     {
         char *thresholdToken = strtok(NULL, ",");
 
@@ -604,7 +617,7 @@ void handleLineCommand(char *line)
         return;
     }
 
-    if (strcmp(command, "SOL") == 0)
+    if (ENABLE_TUNING_COMMANDS && strcmp(command, "SOL") == 0)
     {
         char *chToken = strtok(NULL, ",");
         char *dutyToken = strtok(NULL, ",");
@@ -636,7 +649,7 @@ void handleLineCommand(char *line)
         return;
     }
 
-    if (strcmp(command, "ERM") == 0)
+    if (ENABLE_TUNING_COMMANDS && strcmp(command, "ERM") == 0)
     {
         char *chToken = strtok(NULL, ",");
         char *dutyToken = strtok(NULL, ",");
@@ -655,7 +668,7 @@ void handleLineCommand(char *line)
         return;
     }
 
-    if (strcmp(command, "ERMRAMP") == 0)
+    if (ENABLE_TUNING_COMMANDS && strcmp(command, "ERMRAMP") == 0)
     {
         char *chToken = strtok(NULL, ",");
         char *dutyToken = strtok(NULL, ",");

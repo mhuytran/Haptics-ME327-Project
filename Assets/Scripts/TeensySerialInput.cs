@@ -9,11 +9,16 @@ public class TeensySerialInput : MonoBehaviour
 {
     public static TeensySerialInput Instance { get; private set; }
 
-    [Header("serial")]
+    [Header("Serial connection")]
+    [Tooltip("Fallback COM port. If Auto Detect Port is on, this is tried first and then Unity tries every detected serial port.")]
     public string portName = "COM3";
+    [Tooltip("Must match Serial.begin(...) in trumpal_teensy_code.ino.")]
     public int baudRate = 115200;
+    [Tooltip("Connect to the Teensy automatically when the scene starts.")]
     public bool connectOnStart = true;
+    [Tooltip("Try the configured port first, then scan other COM ports. Leave on for plug-and-play.")]
     public bool autoDetectPort = true;
+    [Tooltip("Keep retrying if the Teensy is plugged in after Play starts or briefly disconnects.")]
     public bool reconnectWhenDisconnected = true;
     public float reconnectIntervalSeconds = 2f;
 
@@ -21,24 +26,42 @@ public class TeensySerialInput : MonoBehaviour
     public TeensyHardwareChannel[] hardwarePinout = TeensyHardwarePinout.CreateDefaultChannels();
 
     [Header("ToF calibration, mm")]
+    [TextArea(4, 8)]
+    public string tofCalibrationGuide =
+        "Plug in with all valves released. Auto calibration samples the live ToF rest distance, usually near 80 mm. Pressed threshold = rest - Press Enter Delta, so 80 and 15 gives a 65 mm press threshold. If presses do not register, lower Press Enter Delta. If idle valves falsely press, raise it.";
+
+    [Tooltip("Auto-filled at startup from D1. Expected bench value is around 80 mm with valve 1 released.")]
     public float valve1RestDistanceMM = 80f;
-    public float valve1PressedDistanceMM = 25f;
+    [Tooltip("Auto-filled at startup as rest minus Press Enter Delta. Expected bench value is around 65 mm.")]
+    public float valve1PressedDistanceMM = 65f;
 
+    [Tooltip("Auto-filled at startup from D2. Expected bench value is around 80 mm with valve 2 released.")]
     public float valve2RestDistanceMM = 80f;
-    public float valve2PressedDistanceMM = 25f;
+    [Tooltip("Auto-filled at startup as rest minus Press Enter Delta. Expected bench value is around 65 mm.")]
+    public float valve2PressedDistanceMM = 65f;
 
+    [Tooltip("Auto-filled at startup from D3. Expected bench value is around 80 mm with valve 3 released.")]
     public float valve3RestDistanceMM = 80f;
-    public float valve3PressedDistanceMM = 25f;
+    [Tooltip("Auto-filled at startup as rest minus Press Enter Delta. Expected bench value is around 65 mm.")]
+    public float valve3PressedDistanceMM = 65f;
 
     [Header("ToF auto calibration")]
+    [Tooltip("Leave on for MVP. At Play start the game pauses, samples released valves, then writes the rest/pressed mm fields above.")]
     public bool autoCalibrateOnStart = true;
+    [Tooltip("Pause gameplay during calibration so the first notes do not move while ToF is finding rest distances.")]
     public bool pauseGameDuringCalibration = true;
     public float startupCalibrationPauseSeconds = 1.5f;
-    public float pressEnterDeltaMM = 12f;
-    public float releaseDeltaMM = 6f;
+    [Tooltip("Main ToF tuning value. Pressed threshold = calibrated rest - this value. 15 mm turns an 80 mm rest into a 65 mm press threshold.")]
+    public float pressEnterDeltaMM = 15f;
+    [Tooltip("Release hysteresis. Released again when distance rises above rest - this value. 8 mm gives release around 72 mm when rest is 80 mm.")]
+    public float releaseDeltaMM = 8f;
+    [Tooltip("MVP mode: Unity only cares about pressed or released, using the calibrated ToF threshold.")]
     public bool useDiscreteToFStates = true;
+    [Tooltip("Debug only. Uses Teensy's raw V1/V2/V3 bits instead of Unity's calibrated ToF states.")]
     public bool useTeensyDebugPressBits = false;
+    [Tooltip("Read-only runtime status.")]
     public bool isCalibrated = false;
+    [Tooltip("Read-only runtime status.")]
     public bool isCalibrating = false;
 
     [Header("legacy press threshold")]
@@ -49,6 +72,22 @@ public class TeensySerialInput : MonoBehaviour
     [Header("debug")]
     public bool printIncomingLines = false;
     public bool printOutgoingCommands = true;
+
+    [Header("Live ToF readout")]
+    [TextArea(4, 8)]
+    public string liveToFReadout = "Waiting for Teensy data.";
+    public int liveValve1DistanceMM = 255;
+    public int liveValve2DistanceMM = 255;
+    public int liveValve3DistanceMM = 255;
+    public bool liveValve1Pressed = false;
+    public bool liveValve2Pressed = false;
+    public bool liveValve3Pressed = false;
+    [Range(0f, 1f)]
+    public float liveValve1Amount = 0f;
+    [Range(0f, 1f)]
+    public float liveValve2Amount = 0f;
+    [Range(0f, 1f)]
+    public float liveValve3Amount = 0f;
 
     private SerialPort serialPort;
     private Thread readThread;
@@ -179,6 +218,7 @@ public class TeensySerialInput : MonoBehaviour
         ApplyValveStateFromTeensyChannel(1, v1, a1, d1, s1, e1);
         ApplyValveStateFromTeensyChannel(2, v2, a2, d2, s2, e2);
         ApplyValveStateFromTeensyChannel(3, v3, a3, d3, s3, e3);
+        UpdateLiveToFReadout(d1, d2, d3, v1, v2, v3, a1, a2, a3);
     }
 
     IEnumerator AutoCalibrateStartup()
@@ -264,9 +304,7 @@ public class TeensySerialInput : MonoBehaviour
         valve2RestDistanceMM = GetCalibratedRestDistance(1, sums, sampleCounts, valve2RestDistanceMM);
         valve3RestDistanceMM = GetCalibratedRestDistance(2, sums, sampleCounts, valve3RestDistanceMM);
 
-        valve1PressedDistanceMM = Mathf.Max(1f, valve1RestDistanceMM - pressEnterDeltaMM);
-        valve2PressedDistanceMM = Mathf.Max(1f, valve2RestDistanceMM - pressEnterDeltaMM);
-        valve3PressedDistanceMM = Mathf.Max(1f, valve3RestDistanceMM - pressEnterDeltaMM);
+        ApplyPressedThresholdsFromCalibratedRest();
     }
 
     float GetCalibratedRestDistance(
@@ -291,9 +329,8 @@ public class TeensySerialInput : MonoBehaviour
             return calibratedPressedStates[laneIndex];
         }
 
-        float restDistanceMM = GetRestDistance(laneIndex);
-        float enterPressedDistanceMM = restDistanceMM - Mathf.Max(1f, pressEnterDeltaMM);
-        float exitPressedDistanceMM = restDistanceMM - Mathf.Max(0.5f, releaseDeltaMM);
+        float enterPressedDistanceMM = GetPressEnterDistance(laneIndex);
+        float exitPressedDistanceMM = GetReleaseDistance(laneIndex);
         bool wasPressed = calibratedPressedStates[laneIndex];
         bool pressed = wasPressed
             ? distanceMM <= exitPressedDistanceMM
@@ -308,6 +345,75 @@ public class TeensySerialInput : MonoBehaviour
         if (laneIndex == 0) return valve1RestDistanceMM;
         if (laneIndex == 1) return valve2RestDistanceMM;
         return valve3RestDistanceMM;
+    }
+
+    float GetPressedDistance(int laneIndex)
+    {
+        if (laneIndex == 0) return valve1PressedDistanceMM;
+        if (laneIndex == 1) return valve2PressedDistanceMM;
+        return valve3PressedDistanceMM;
+    }
+
+    float GetPressEnterDistance(int laneIndex)
+    {
+        return GetPressedDistance(laneIndex);
+    }
+
+    float GetReleaseDistance(int laneIndex)
+    {
+        return GetRestDistance(laneIndex) - Mathf.Max(0.5f, releaseDeltaMM);
+    }
+
+    void ApplyPressedThresholdsFromCalibratedRest()
+    {
+        float clampedDelta = Mathf.Max(1f, pressEnterDeltaMM);
+        valve1PressedDistanceMM = Mathf.Max(1f, valve1RestDistanceMM - clampedDelta);
+        valve2PressedDistanceMM = Mathf.Max(1f, valve2RestDistanceMM - clampedDelta);
+        valve3PressedDistanceMM = Mathf.Max(1f, valve3RestDistanceMM - clampedDelta);
+    }
+
+    void UpdateLiveToFReadout(
+        int d1,
+        int d2,
+        int d3,
+        bool v1,
+        bool v2,
+        bool v3,
+        float a1,
+        float a2,
+        float a3
+    )
+    {
+        liveValve1DistanceMM = d1;
+        liveValve2DistanceMM = d2;
+        liveValve3DistanceMM = d3;
+        liveValve1Pressed = v1;
+        liveValve2Pressed = v2;
+        liveValve3Pressed = v3;
+        liveValve1Amount = a1;
+        liveValve2Amount = a2;
+        liveValve3Amount = a3;
+
+        string status = isCalibrating ? "CALIBRATING" : (isCalibrated ? "CALIBRATED" : "WAITING");
+
+        liveToFReadout =
+            "Status: " + status + "\n" +
+            BuildValveReadout(1, d1, v1, a1) + "\n" +
+            BuildValveReadout(2, d2, v2, a2) + "\n" +
+            BuildValveReadout(3, d3, v3, a3);
+    }
+
+    string BuildValveReadout(int valveNumber, int distanceMM, bool pressed, float amount)
+    {
+        int laneIndex = valveNumber - 1;
+
+        return "V" + valveNumber +
+            " D=" + distanceMM + " mm" +
+            " rest=" + GetRestDistance(laneIndex).ToString("0.0") +
+            " press<=" + GetPressEnterDistance(laneIndex).ToString("0.0") +
+            " release>" + GetReleaseDistance(laneIndex).ToString("0.0") +
+            " amount=" + amount.ToString("0.00") +
+            " state=" + (pressed ? "PRESSED" : "released");
     }
 
     bool IsValidDistance(int distanceMM)
@@ -667,5 +773,13 @@ public class TeensySerialInput : MonoBehaviour
     void OnValidate()
     {
         TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
+        startupCalibrationPauseSeconds = Mathf.Max(0.1f, startupCalibrationPauseSeconds);
+        pressEnterDeltaMM = Mathf.Max(1f, pressEnterDeltaMM);
+        releaseDeltaMM = Mathf.Clamp(releaseDeltaMM, 0.5f, pressEnterDeltaMM - 0.5f);
+
+        if (!Application.isPlaying)
+        {
+            ApplyPressedThresholdsFromCalibratedRest();
+        }
     }
 }

@@ -1,8 +1,16 @@
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 public class NoteSpawner : MonoBehaviour
 {
+    public enum NoteSpawnMode
+    {
+        RandomDebug,
+        SongChart
+    }
+
     [Serializable]
     public class TrumpetFingering
     {
@@ -45,6 +53,32 @@ public class NoteSpawner : MonoBehaviour
         }
     }
 
+    [Serializable]
+    public class SongChart
+    {
+        public string songTitle = "";
+        public string audioFile = "";
+        public float bpm = 120f;
+        public string timeSignature = "4/4";
+        public float leadInSeconds = 0f;
+        public string conversionMode = "";
+        public SongChartNote[] notes;
+    }
+
+    [Serializable]
+    public class SongChartNote
+    {
+        public float time = 0f;
+        public float duration = 0f;
+        public int[] laneMask;
+        public int pitchMidi = 0;
+        public string pitchName = "";
+        public string type = "tap";
+        public bool generatedOpenFill = false;
+        public bool generatedGapFill = false;
+        public string sourceFile = "";
+    }
+
     [Header("references")]
     public GameObject notePrefab;
     public RhythmGameManager gameManager;
@@ -63,9 +97,37 @@ public class NoteSpawner : MonoBehaviour
     public Transform hitPlane3;
 
     [Header("note timing")]
+    public NoteSpawnMode spawnMode = NoteSpawnMode.RandomDebug;
     public float spawnInterval = 2.0f;
     public float noteTravelTime = 1.5f;
     public bool waitForPreviousFingeringToResolve = true;
+
+    [Header("song chart mode")]
+    [TextArea(4, 7)]
+    public string songModeGuide =
+        "RandomDebug keeps spawning generated fingerings. SongChart loads From-The-Start from Resources/TrumpetCharts, plays the audio, and spawns the PDF/OMR note chart in sync. Keyboard testing still uses A/S/D for valves 1/2/3.";
+    public TextAsset songChartJson;
+    public string songChartResourcePath = "TrumpetCharts/From-The-Start";
+    public AudioSource songAudioSource;
+    public AudioClip songAudioClip;
+    public string songAudioResourcePath = "TrumpetCharts/From-The-Start";
+    public bool autoStartSong = true;
+    public bool allowSongKeyboardControls = true;
+    public Key startPauseSongKey = Key.Space;
+    public Key restartSongKey = Key.R;
+    public bool useChartLeadInSeconds = true;
+    public float manualLeadInSeconds = 3.0f;
+    public float additionalChartOffsetSeconds = 0f;
+    public bool useSongDurationsAsHolds = true;
+    public float minimumSongHoldDuration = 0.45f;
+    public bool skipVeryLateSongNotes = true;
+    public float lateSongNoteSkipSeconds = 0.35f;
+    public bool loopSongChart = false;
+    public string loadedSongTitle = "";
+    public int loadedSongNoteCount = 0;
+    public int nextSongNoteIndex = 0;
+    public float currentSongTime = 0f;
+    public string currentSongStatus = "Song chart not loaded.";
 
     [Header("haptic cue tuning")]
     public bool useDistanceBasedPreCue = true;
@@ -106,6 +168,10 @@ public class NoteSpawner : MonoBehaviour
     private int lastRandomFingeringIndex = -1;
 
     private float[] laneHoldBusyUntil = new float[3];
+    private SongChart loadedSongChart;
+    private bool songStarted = false;
+    private bool songPaused = false;
+    private float fallbackSongStartTime = 0f;
 
     private int[] lanePattern = new int[]
     {
@@ -131,10 +197,17 @@ public class NoteSpawner : MonoBehaviour
         }
 
         ApplyLanePaletteToMaterials();
+        LoadSongChartIfNeeded();
     }
 
     void Update()
     {
+        if (spawnMode == NoteSpawnMode.SongChart)
+        {
+            UpdateSongChartMode();
+            return;
+        }
+
         spawnTimer += Time.deltaTime;
 
         if (waitForPreviousFingeringToResolve &&
@@ -371,6 +444,392 @@ public class NoteSpawner : MonoBehaviour
         // The current lane UI only renders pressed valves, so open notes are documented
         // in the list but skipped until there is an open-note visual target.
         return !fingering.IsOpen();
+    }
+
+    void UpdateSongChartMode()
+    {
+        LoadSongChartIfNeeded();
+        HandleSongKeyboardControls();
+
+        if (!songStarted && autoStartSong && CanStartSongNow())
+        {
+            StartSong();
+        }
+
+        if (!songStarted || songPaused || loadedSongChart == null)
+        {
+            return;
+        }
+
+        currentSongTime = GetSongTime();
+
+        if (songAudioSource != null &&
+            songAudioSource.clip != null &&
+            !songAudioSource.isPlaying &&
+            currentSongTime >= songAudioSource.clip.length - 0.05f)
+        {
+            if (loopSongChart)
+            {
+                RestartSong();
+            }
+            else
+            {
+                currentSongStatus = "Song finished.";
+                songStarted = false;
+            }
+
+            return;
+        }
+
+        SongChartNote[] notes = loadedSongChart.notes;
+
+        if (notes == null)
+        {
+            return;
+        }
+
+        while (nextSongNoteIndex < notes.Length)
+        {
+            SongChartNote chartNote = notes[nextSongNoteIndex];
+            float hitSongTime = GetChartNoteHitSongTime(chartNote);
+            float timeUntilHit = hitSongTime - currentSongTime;
+
+            if (skipVeryLateSongNotes && timeUntilHit < -lateSongNoteSkipSeconds)
+            {
+                nextSongNoteIndex++;
+                continue;
+            }
+
+            if (timeUntilHit > noteTravelTime)
+            {
+                break;
+            }
+
+            SpawnSongChartNote(chartNote, hitSongTime, timeUntilHit);
+            nextSongNoteIndex++;
+        }
+    }
+
+    void HandleSongKeyboardControls()
+    {
+        if (!allowSongKeyboardControls || Keyboard.current == null)
+        {
+            return;
+        }
+
+        if (WasKeyPressed(startPauseSongKey))
+        {
+            if (!songStarted)
+            {
+                StartSong();
+            }
+            else if (songPaused)
+            {
+                ResumeSong();
+            }
+            else
+            {
+                PauseSong();
+            }
+        }
+
+        if (WasKeyPressed(restartSongKey))
+        {
+            RestartSong();
+        }
+    }
+
+    bool WasKeyPressed(Key key)
+    {
+        if (Keyboard.current == null)
+        {
+            return false;
+        }
+
+        KeyControl keyControl = Keyboard.current[key];
+        return keyControl != null && keyControl.wasPressedThisFrame;
+    }
+
+    bool CanStartSongNow()
+    {
+        return TeensySerialInput.Instance == null || !TeensySerialInput.Instance.isCalibrating;
+    }
+
+    [ContextMenu("Song/Start Song Chart")]
+    public void StartSong()
+    {
+        LoadSongChartIfNeeded();
+
+        if (loadedSongChart == null)
+        {
+            currentSongStatus = "Cannot start: no song chart loaded.";
+            return;
+        }
+
+        EnsureSongAudioSource();
+
+        nextSongNoteIndex = 0;
+        songStarted = true;
+        songPaused = false;
+        fallbackSongStartTime = Time.time;
+
+        if (songAudioSource != null && songAudioSource.clip != null)
+        {
+            songAudioSource.Stop();
+            songAudioSource.time = 0f;
+            songAudioSource.Play();
+        }
+
+        currentSongStatus = "Playing " + loadedSongTitle;
+    }
+
+    [ContextMenu("Song/Pause Song Chart")]
+    public void PauseSong()
+    {
+        if (!songStarted)
+        {
+            return;
+        }
+
+        songPaused = true;
+
+        if (songAudioSource != null)
+        {
+            songAudioSource.Pause();
+        }
+
+        currentSongStatus = "Paused " + loadedSongTitle;
+    }
+
+    [ContextMenu("Song/Resume Song Chart")]
+    public void ResumeSong()
+    {
+        if (!songStarted)
+        {
+            return;
+        }
+
+        songPaused = false;
+
+        if (songAudioSource != null && songAudioSource.clip != null)
+        {
+            songAudioSource.UnPause();
+        }
+        else
+        {
+            fallbackSongStartTime = Time.time - currentSongTime;
+        }
+
+        currentSongStatus = "Playing " + loadedSongTitle;
+    }
+
+    [ContextMenu("Song/Restart Song Chart")]
+    public void RestartSong()
+    {
+        if (gameManager != null)
+        {
+            gameManager.ClearActiveNotes();
+        }
+
+        StartSong();
+    }
+
+    void LoadSongChartIfNeeded()
+    {
+        if (loadedSongChart != null)
+        {
+            return;
+        }
+
+        if (songChartJson == null && !string.IsNullOrWhiteSpace(songChartResourcePath))
+        {
+            songChartJson = Resources.Load<TextAsset>(songChartResourcePath);
+        }
+
+        if (songChartJson == null)
+        {
+            currentSongStatus = "No song chart JSON assigned or found at Resources/" + songChartResourcePath;
+            return;
+        }
+
+        loadedSongChart = JsonUtility.FromJson<SongChart>(songChartJson.text);
+
+        if (loadedSongChart == null || loadedSongChart.notes == null)
+        {
+            currentSongStatus = "Song chart JSON could not be parsed.";
+            loadedSongChart = null;
+            return;
+        }
+
+        Array.Sort(
+            loadedSongChart.notes,
+            (a, b) => GetChartNoteHitSongTime(a).CompareTo(GetChartNoteHitSongTime(b))
+        );
+
+        loadedSongTitle = string.IsNullOrEmpty(loadedSongChart.songTitle)
+            ? songChartJson.name
+            : loadedSongChart.songTitle;
+        loadedSongNoteCount = loadedSongChart.notes.Length;
+        currentSongStatus = "Loaded " + loadedSongTitle + " (" + loadedSongNoteCount + " notes).";
+
+        EnsureSongAudioSource();
+    }
+
+    void EnsureSongAudioSource()
+    {
+        if (songAudioClip == null && !string.IsNullOrWhiteSpace(songAudioResourcePath))
+        {
+            songAudioClip = Resources.Load<AudioClip>(songAudioResourcePath);
+        }
+
+        if (songAudioSource == null)
+        {
+            songAudioSource = GetComponent<AudioSource>();
+        }
+
+        if (songAudioSource == null)
+        {
+            songAudioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        if (songAudioSource.clip == null && songAudioClip != null)
+        {
+            songAudioSource.clip = songAudioClip;
+        }
+
+        songAudioSource.playOnAwake = false;
+    }
+
+    float GetSongTime()
+    {
+        if (songAudioSource != null && songAudioSource.clip != null)
+        {
+            return songAudioSource.time;
+        }
+
+        return Mathf.Max(0f, Time.time - fallbackSongStartTime);
+    }
+
+    float GetChartNoteHitSongTime(SongChartNote chartNote)
+    {
+        float leadIn = useChartLeadInSeconds && loadedSongChart != null
+            ? loadedSongChart.leadInSeconds
+            : manualLeadInSeconds;
+
+        return Mathf.Max(0f, leadIn + additionalChartOffsetSeconds + chartNote.time);
+    }
+
+    void SpawnSongChartNote(SongChartNote chartNote, float hitSongTime, float timeUntilHit)
+    {
+        int requiredValveMask = LaneArrayToValveMask(chartNote.laneMask);
+
+        if (requiredValveMask == 0)
+        {
+            return;
+        }
+
+        int groupId = nextFingeringGroupId++;
+        float targetHitTime = Time.time + Mathf.Max(0.02f, timeUntilHit);
+        float holdDuration = GetSongHoldDuration(chartNote);
+        string fingeringName = BuildSongFingeringName(chartNote, requiredValveMask);
+
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((requiredValveMask & (1 << lane)) == 0)
+            {
+                continue;
+            }
+
+            SpawnLaneNote(
+                lane,
+                targetHitTime,
+                holdDuration,
+                groupId,
+                requiredValveMask,
+                fingeringName
+            );
+        }
+
+        lastSpawnedFingering = fingeringName;
+        currentSongStatus =
+            "Playing " + loadedSongTitle +
+            " t=" + currentSongTime.ToString("0.00") +
+            " next=" + nextSongNoteIndex + "/" + loadedSongNoteCount;
+    }
+
+    int LaneArrayToValveMask(int[] laneMask)
+    {
+        int mask = 0;
+
+        if (laneMask == null)
+        {
+            return mask;
+        }
+
+        for (int i = 0; i < laneMask.Length; i++)
+        {
+            int laneIndex = laneMask[i] - 1;
+
+            if (laneIndex >= 0 && laneIndex < 3)
+            {
+                mask |= 1 << laneIndex;
+            }
+        }
+
+        return mask;
+    }
+
+    float GetSongHoldDuration(SongChartNote chartNote)
+    {
+        if (!useSongDurationsAsHolds)
+        {
+            return 0f;
+        }
+
+        float duration = Mathf.Max(0f, chartNote.duration);
+
+        if (duration < minimumSongHoldDuration)
+        {
+            return 0f;
+        }
+
+        return duration;
+    }
+
+    string BuildSongFingeringName(SongChartNote chartNote, int requiredValveMask)
+    {
+        string noteName = string.IsNullOrEmpty(chartNote.pitchName)
+            ? "Song note"
+            : chartNote.pitchName;
+
+        return noteName + " - " + ValveMaskToLabel(requiredValveMask);
+    }
+
+    string ValveMaskToLabel(int valveMask)
+    {
+        if (valveMask == 0)
+        {
+            return "open";
+        }
+
+        string label = "";
+
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) == 0)
+            {
+                continue;
+            }
+
+            if (!string.IsNullOrEmpty(label))
+            {
+                label += "+";
+            }
+
+            label += (lane + 1).ToString();
+        }
+
+        return label;
     }
 
     bool FingeringOverlapsExistingHold(TrumpetFingering fingering, float targetHitTime)

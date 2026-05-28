@@ -1,6 +1,12 @@
 using System.Globalization;
 using UnityEngine;
 
+public enum HapticCommandProfile
+{
+    MvpOnly,
+    MvpAndTuning
+}
+
 public class HapticFeedbackManager : MonoBehaviour
 {
     public static HapticFeedbackManager Instance { get; private set; }
@@ -11,24 +17,53 @@ public class HapticFeedbackManager : MonoBehaviour
     [Header("Teensy pinout from trumpal_teensy_code")]
     public TeensyHardwareChannel[] hardwarePinout = TeensyHardwarePinout.CreateDefaultChannels();
 
-    [Header("debug")]
+    [Header("MVP command filter")]
+    [TextArea(5, 9)]
+    public string commandGuide =
+        "Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE, MISS. Needed for bench tuning: SOL, ERM, ERMRAMP, THRESH. Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.";
+    [Tooltip("MvpAndTuning lets inspector tune buttons send SOL/ERM/ERMRAMP/THRESH. MvpOnly blocks those and keeps gameplay commands only.")]
+    public HapticCommandProfile commandProfile = HapticCommandProfile.MvpAndTuning;
+    [Tooltip("Leave on so accidental raw/debug commands cannot be sent through this manager.")]
+    public bool filterOutgoingCommands = true;
+
+    [Header("Debug")]
     public bool enableHaptics = true;
     public bool printCommands = true;
 
-    [Header("hardware safety caps")]
+    [Header("Solenoid safety caps")]
     [Range(0f, 1f)]
+    [Tooltip("Maximum solenoid duty Unity is allowed to send. Firmware also caps this.")]
     public float maxSolenoidDuty = SolenoidPulseSettings.MaxRecommendedDuty;
+    [Tooltip("Maximum solenoid pulse duration Unity is allowed to send. Firmware also caps this.")]
     public int maxSolenoidDurationMs = SolenoidPulseSettings.MaxRecommendedDurationMs;
 
     [Header("ERM pre-cue ramp")]
     public bool useRampedPreCue = true;
     [Range(0f, 1f)]
+    [Tooltip("Main ERM pre-cue strength. Partner ramp value is 0.25.")]
     public float preCueErmDuty = 0.25f;
+    [Tooltip("ERM pre-cue ramp time. Partner ramp value is 800 ms.")]
     public int preCueErmRampMs = 800;
+    [Tooltip("ERM hold time after the ramp completes.")]
     public int preCueErmHoldMs = 120;
     [Range(0f, 1f)]
     public float maxErmDuty = 0.45f;
     public int maxErmRampMs = 1200;
+
+    [Header("Quick bench tuning")]
+    [Range(1, 3)]
+    public int tuneLane = 1;
+    [Range(0f, 1f)]
+    public float tuneSolenoidDuty = 0.80f;
+    public int tuneSolenoidDurationMs = 125;
+    [Range(0f, 1f)]
+    public float tuneErmDuty = 0.25f;
+    public int tuneErmDurationMs = 120;
+    public int tuneErmRampMs = 800;
+    public int tuneErmHoldMs = 120;
+    public int tuneRawTofThresholdMM = 65;
+    [TextArea(2, 4)]
+    public string lastCommandStatus = "No haptic command sent yet.";
 
     private bool emergencyStopped = false;
 
@@ -144,6 +179,66 @@ public class HapticFeedbackManager : MonoBehaviour
         );
     }
 
+    public void TestErm(int channelIndex, float duty, int durationMs)
+    {
+        int channelNumber = GetTeensyChannelNumber(channelIndex);
+        float safeDuty = Mathf.Clamp(duty, 0f, Mathf.Clamp01(maxErmDuty));
+        durationMs = Mathf.Clamp(durationMs, 1, 500);
+
+        Send(
+            "ERM," +
+            channelNumber + "," +
+            safeDuty.ToString("0.00", CultureInfo.InvariantCulture) + "," +
+            durationMs
+        );
+    }
+
+    public void TestErmRamp(int channelIndex, float duty, int rampMs, int holdMs)
+    {
+        int channelNumber = GetTeensyChannelNumber(channelIndex);
+        float safeDuty = Mathf.Clamp(duty, 0f, Mathf.Clamp01(maxErmDuty));
+        rampMs = Mathf.Clamp(rampMs, 1, Mathf.Max(1, maxErmRampMs));
+        holdMs = Mathf.Clamp(holdMs, 0, 500);
+
+        Send(
+            "ERMRAMP," +
+            channelNumber + "," +
+            safeDuty.ToString("0.00", CultureInfo.InvariantCulture) + "," +
+            rampMs + "," +
+            holdMs
+        );
+    }
+
+    public void SendRawTofThreshold(int thresholdMM)
+    {
+        thresholdMM = Mathf.Clamp(thresholdMM, 1, 254);
+        Send("THRESH," + thresholdMM);
+    }
+
+    [ContextMenu("Tune/Pulse Selected Solenoid")]
+    public void TunePulseSelectedSolenoid()
+    {
+        TestSolenoid(tuneLane - 1, tuneSolenoidDuty, TeensyHardwarePinout.ActiveSolenoidPhase, tuneSolenoidDurationMs);
+    }
+
+    [ContextMenu("Tune/Pulse Selected ERM")]
+    public void TunePulseSelectedErm()
+    {
+        TestErm(tuneLane - 1, tuneErmDuty, tuneErmDurationMs);
+    }
+
+    [ContextMenu("Tune/Ramp Selected ERM")]
+    public void TuneRampSelectedErm()
+    {
+        TestErmRamp(tuneLane - 1, tuneErmDuty, tuneErmRampMs, tuneErmHoldMs);
+    }
+
+    [ContextMenu("Tune/Send Raw ToF Debug Threshold")]
+    public void TuneSendRawTofThreshold()
+    {
+        SendRawTofThreshold(tuneRawTofThresholdMM);
+    }
+
     public void AllOff()
     {
         Send("X");
@@ -186,6 +281,18 @@ public class HapticFeedbackManager : MonoBehaviour
             return;
         }
 
+        if (filterOutgoingCommands && !IsCommandAllowed(command))
+        {
+            lastCommandStatus = "BLOCKED by command filter: " + command;
+
+            if (printCommands)
+            {
+                Debug.LogWarning(lastCommandStatus);
+            }
+
+            return;
+        }
+
         if (teensySerialInput == null)
         {
             teensySerialInput = TeensySerialInput.Instance;
@@ -193,7 +300,8 @@ public class HapticFeedbackManager : MonoBehaviour
 
         if (teensySerialInput == null)
         {
-            Debug.LogWarning("No TeensySerialInput found. Haptic command not sent: " + command);
+            lastCommandStatus = "No TeensySerialInput found. Not sent: " + command;
+            Debug.LogWarning(lastCommandStatus);
             return;
         }
 
@@ -202,7 +310,46 @@ public class HapticFeedbackManager : MonoBehaviour
             Debug.Log("Haptic command: " + command);
         }
 
+        lastCommandStatus = "Sent: " + command;
         teensySerialInput.SendLine(command);
+    }
+
+    bool IsCommandAllowed(string command)
+    {
+        string commandName = GetCommandName(command);
+
+        if (commandName == "X" ||
+            commandName == "PRECUE" ||
+            commandName == "TAPCOMPLETE" ||
+            commandName == "HOLDSTART" ||
+            commandName == "HOLDCOMPLETE" ||
+            commandName == "MISS")
+        {
+            return true;
+        }
+
+        if (commandProfile == HapticCommandProfile.MvpAndTuning &&
+            (commandName == "SOL" ||
+             commandName == "ERM" ||
+             commandName == "ERMRAMP" ||
+             commandName == "THRESH"))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    string GetCommandName(string command)
+    {
+        if (string.IsNullOrWhiteSpace(command))
+        {
+            return "";
+        }
+
+        int commaIndex = command.IndexOf(',');
+        string commandName = commaIndex >= 0 ? command.Substring(0, commaIndex) : command;
+        return commandName.Trim().ToUpperInvariant();
     }
 
     int GetTeensyChannelNumber(int laneIndex)
@@ -231,5 +378,13 @@ public class HapticFeedbackManager : MonoBehaviour
         maxErmRampMs = Mathf.Clamp(maxErmRampMs, 1, 1200);
         preCueErmRampMs = Mathf.Clamp(preCueErmRampMs, 1, maxErmRampMs);
         preCueErmHoldMs = Mathf.Clamp(preCueErmHoldMs, 0, 500);
+        tuneLane = Mathf.Clamp(tuneLane, 1, TeensyHardwarePinout.ChannelCount);
+        tuneSolenoidDuty = Mathf.Clamp(tuneSolenoidDuty, 0f, maxSolenoidDuty);
+        tuneSolenoidDurationMs = Mathf.Clamp(tuneSolenoidDurationMs, 1, maxSolenoidDurationMs);
+        tuneErmDuty = Mathf.Clamp(tuneErmDuty, 0f, maxErmDuty);
+        tuneErmDurationMs = Mathf.Clamp(tuneErmDurationMs, 1, 500);
+        tuneErmRampMs = Mathf.Clamp(tuneErmRampMs, 1, maxErmRampMs);
+        tuneErmHoldMs = Mathf.Clamp(tuneErmHoldMs, 0, 500);
+        tuneRawTofThresholdMM = Mathf.Clamp(tuneRawTofThresholdMM, 1, 254);
     }
 }

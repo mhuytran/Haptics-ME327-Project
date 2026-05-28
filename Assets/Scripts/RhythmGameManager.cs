@@ -579,7 +579,7 @@ public class RhythmGameManager : MonoBehaviour
         Time.timeScale = 0f;
     }
 
-    void ClearActiveNotes()
+    public void ClearActiveNotes()
     {
         for (int i = activeNotes.Count - 1; i >= 0; i--)
         {

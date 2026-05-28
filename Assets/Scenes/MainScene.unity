@@ -2692,16 +2692,16 @@ MonoBehaviour:
   reconnectWhenDisconnected: 1
   reconnectIntervalSeconds: 2
   valve1RestDistanceMM: 80
-  valve1PressedDistanceMM: 25
+  valve1PressedDistanceMM: 65
   valve2RestDistanceMM: 80
-  valve2PressedDistanceMM: 25
+  valve2PressedDistanceMM: 65
   valve3RestDistanceMM: 80
-  valve3PressedDistanceMM: 25
+  valve3PressedDistanceMM: 65
   autoCalibrateOnStart: 1
   pauseGameDuringCalibration: 1
   startupCalibrationPauseSeconds: 1.5
-  pressEnterDeltaMM: 12
-  releaseDeltaMM: 6
+  pressEnterDeltaMM: 15
+  releaseDeltaMM: 8
   useDiscreteToFStates: 1
   useTeensyDebugPressBits: 0
   isCalibrated: 0
@@ -2725,6 +2725,8 @@ MonoBehaviour:
   teensySerialInput: {fileID: 1414622045}
   enableHaptics: 1
   printCommands: 1
+  commandProfile: 1
+  filterOutgoingCommands: 1
   maxSolenoidDuty: 0.8
   maxSolenoidDurationMs: 250
   useRampedPreCue: 1
@@ -2733,6 +2735,15 @@ MonoBehaviour:
   preCueErmHoldMs: 120
   maxErmDuty: 0.45
   maxErmRampMs: 1200
+  tuneLane: 1
+  tuneSolenoidDuty: 0.8
+  tuneSolenoidDurationMs: 125
+  tuneErmDuty: 0.25
+  tuneErmDurationMs: 120
+  tuneErmRampMs: 800
+  tuneErmHoldMs: 120
+  tuneRawTofThresholdMM: 65
+  lastCommandStatus: No haptic command sent yet.
 --- !u!114 &1414622047
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3407,6 +3418,25 @@ MonoBehaviour:
   teensySerialInput: {fileID: 1414622045}
   enableHaptics: 1
   printCommands: 1
+  commandProfile: 1
+  filterOutgoingCommands: 1
+  maxSolenoidDuty: 0.8
+  maxSolenoidDurationMs: 250
+  useRampedPreCue: 1
+  preCueErmDuty: 0.25
+  preCueErmRampMs: 800
+  preCueErmHoldMs: 120
+  maxErmDuty: 0.45
+  maxErmRampMs: 1200
+  tuneLane: 1
+  tuneSolenoidDuty: 0.8
+  tuneSolenoidDurationMs: 125
+  tuneErmDuty: 0.25
+  tuneErmDurationMs: 120
+  tuneErmRampMs: 800
+  tuneErmHoldMs: 120
+  tuneRawTofThresholdMM: 65
+  lastCommandStatus: No haptic command sent yet.
 --- !u!1 &1646561942
 GameObject:
   m_ObjectHideFlags: 0
