@@ -62,6 +62,20 @@ public class TeensySerialInputEditor : Editor
             }
 
             EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Scan ToF Mux"))
+            {
+                input.SendTofScan();
+            }
+
+            if (GUILayout.Button("Send ToF Map"))
+            {
+                input.SendInspectorTofMap();
+            }
+
+            EditorGUILayout.EndHorizontal();
         }
     }
 }

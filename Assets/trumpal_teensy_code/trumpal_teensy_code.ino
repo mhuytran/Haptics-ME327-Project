@@ -41,12 +41,14 @@ const int ERM_IN2[3] = {13, 15, 23};
 // D3/V3 -> SC7/SD7 -> lane 3
 // ------------------------------------------------------------
 const uint8_t TCA_ADDR = 0x70;
-const uint8_t TOF_CHANNELS[3] = {0, 6, 7};
+uint8_t tofChannels[3] = {0, 6, 7};
 
 Adafruit_VL6180X tof = Adafruit_VL6180X();
 bool tofAvailable[3] = {false, false, false};
 unsigned long lastTofRetryTime = 0;
 const unsigned long TOF_RETRY_INTERVAL_MS = 1000;
+const bool AUTO_REMAP_BAD_TOF_CHANNELS = true;
+const uint8_t MAX_REASONABLE_TOF_REST_MM = 90;
 
 // ------------------------------------------------------------
 // Raw ToF press detection
@@ -556,7 +558,7 @@ void initializeTOF()
 {
     for (int i = 0; i < 3; i++)
     {
-        uint8_t channel = TOF_CHANNELS[i];
+        uint8_t channel = tofChannels[i];
 
         if (!selectTCAChannel(channel))
         {
@@ -566,6 +568,136 @@ void initializeTOF()
 
         tofAvailable[i] = tof.begin();
     }
+}
+
+uint8_t probeTOFChannel(uint8_t channel, bool *ok)
+{
+    if (ok != NULL)
+    {
+        *ok = false;
+    }
+
+    if (channel > 7 || !selectTCAChannel(channel))
+    {
+        return INVALID_DISTANCE;
+    }
+
+    if (!tof.begin())
+    {
+        return INVALID_DISTANCE;
+    }
+
+    uint8_t range = tof.readRange();
+    uint8_t status = tof.readRangeStatus();
+
+    if (status != VL6180X_ERROR_NONE)
+    {
+        return INVALID_DISTANCE;
+    }
+
+    if (ok != NULL)
+    {
+        *ok = true;
+    }
+
+    return range;
+}
+
+bool tofChannelAlreadyAssigned(uint8_t channel, int ignoredLane)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        if (i == ignoredLane)
+        {
+            continue;
+        }
+
+        if (tofChannels[i] == channel)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void setTOFChannelForLane(int laneIndex, uint8_t muxChannel)
+{
+    if (laneIndex < 0 || laneIndex > 2 || muxChannel > 7)
+    {
+        return;
+    }
+
+    tofChannels[laneIndex] = muxChannel;
+
+    if (!selectTCAChannel(muxChannel))
+    {
+        tofAvailable[laneIndex] = false;
+        return;
+    }
+
+    tofAvailable[laneIndex] = tof.begin();
+}
+
+void autoRemapBadTOFChannels()
+{
+    if (!AUTO_REMAP_BAD_TOF_CHANNELS)
+    {
+        return;
+    }
+
+    uint8_t channelDistances[8];
+    bool channelOk[8];
+
+    for (int channel = 0; channel < 8; channel++)
+    {
+        channelDistances[channel] = probeTOFChannel(channel, &channelOk[channel]);
+    }
+
+    for (int lane = 0; lane < 3; lane++)
+    {
+        uint8_t configuredChannel = tofChannels[lane];
+        bool configuredOk = configuredChannel <= 7 && channelOk[configuredChannel];
+        bool configuredBad = !configuredOk ||
+                             channelDistances[configuredChannel] > MAX_REASONABLE_TOF_REST_MM;
+
+        if (!configuredBad)
+        {
+            continue;
+        }
+
+        for (int candidate = 0; candidate < 8; candidate++)
+        {
+            if (!channelOk[candidate] ||
+                channelDistances[candidate] > MAX_REASONABLE_TOF_REST_MM ||
+                tofChannelAlreadyAssigned(candidate, lane))
+            {
+                continue;
+            }
+
+            tofChannels[lane] = candidate;
+            break;
+        }
+    }
+}
+
+void printTOFScan()
+{
+    Serial.print("TOFSCAN");
+
+    for (int channel = 0; channel < 8; channel++)
+    {
+        bool ok = false;
+        uint8_t distance = probeTOFChannel(channel, &ok);
+
+        Serial.print(",A");
+        Serial.print(channel);
+        Serial.print(":");
+        Serial.print(ok ? distance : INVALID_DISTANCE);
+    }
+
+    Serial.println();
+    initializeTOF();
 }
 
 void retryUnavailableTOF()
@@ -586,7 +718,7 @@ void retryUnavailableTOF()
             continue;
         }
 
-        if (!selectTCAChannel(TOF_CHANNELS[i]))
+        if (!selectTCAChannel(tofChannels[i]))
         {
             continue;
         }
@@ -611,7 +743,7 @@ uint8_t readRawTOFmm(int sensorIndex)
         return INVALID_DISTANCE;
     }
 
-    if (!selectTCAChannel(TOF_CHANNELS[sensorIndex]))
+    if (!selectTCAChannel(tofChannels[sensorIndex]))
     {
         return INVALID_DISTANCE;
     }
@@ -672,6 +804,13 @@ void sendUnityState()
     Serial.print(d2);
     Serial.print(",D3:");
     Serial.print(d3);
+
+    Serial.print(",TC1:");
+    Serial.print(tofChannels[0]);
+    Serial.print(",TC2:");
+    Serial.print(tofChannels[1]);
+    Serial.print(",TC3:");
+    Serial.print(tofChannels[2]);
 
     Serial.print(",S1:");
     Serial.print(solenoidDuty[0], 2);
@@ -823,6 +962,9 @@ void handleMissCommand(int lane)
 //
 // Bench tuning when ENABLE_TUNING_COMMANDS is true:
 // THRESH,65
+// TOFSCAN
+// TOFMAP,2,6
+// TOFMAPALL,0,6,7
 // SOL,1,0.80,1,125
 // SOLRAMP,1,500,1,200,0.80
 // ERM,1,0.25,120
@@ -842,6 +984,43 @@ void handleLineCommand(char *line)
     if (strcmp(command, "X") == 0)
     {
         allOutputsOff();
+        return;
+    }
+
+    if (ENABLE_TUNING_COMMANDS && strcmp(command, "TOFSCAN") == 0)
+    {
+        printTOFScan();
+        return;
+    }
+
+    if (ENABLE_TUNING_COMMANDS && strcmp(command, "TOFMAP") == 0)
+    {
+        char *laneToken = strtok(NULL, ",");
+        char *channelToken = strtok(NULL, ",");
+
+        if (laneToken == NULL || channelToken == NULL)
+        {
+            return;
+        }
+
+        setTOFChannelForLane(atoi(laneToken) - 1, constrain(atoi(channelToken), 0, 7));
+        return;
+    }
+
+    if (ENABLE_TUNING_COMMANDS && strcmp(command, "TOFMAPALL") == 0)
+    {
+        char *channel1Token = strtok(NULL, ",");
+        char *channel2Token = strtok(NULL, ",");
+        char *channel3Token = strtok(NULL, ",");
+
+        if (channel1Token == NULL || channel2Token == NULL || channel3Token == NULL)
+        {
+            return;
+        }
+
+        setTOFChannelForLane(0, constrain(atoi(channel1Token), 0, 7));
+        setTOFChannelForLane(1, constrain(atoi(channel2Token), 0, 7));
+        setTOFChannelForLane(2, constrain(atoi(channel3Token), 0, 7));
         return;
     }
 
@@ -1188,6 +1367,8 @@ void setup()
 
     delay(300);
 
+    initializeTOF();
+    autoRemapBadTOFChannels();
     initializeTOF();
 }
 

@@ -45,9 +45,9 @@ public class HapticFeedbackManager : MonoBehaviour
     [Tooltip("Maximum solenoid pulse duration Unity is allowed to send. Firmware also caps this.")]
     public int maxSolenoidDurationMs = 800;
 
-    [Header("playable dwell before push-off")]
-    [Tooltip("Delay TAPCOMPLETE/HOLDCOMPLETE/MISS commands so the player gets time to press or hold before the solenoid pushes back. Set to 0 for instant push-off.")]
-    public int completionPushDelayMs = 0;
+[Header("playable dwell before push-off")]
+[Tooltip("Delay TAPCOMPLETE/HOLDCOMPLETE/MISS commands so the player gets time to press or hold before the solenoid pushes back. Set to 0 for instant push-off.")]
+public int completionPushDelayMs = 200;
 
     [Header("ERM pre-cue ramp")]
     public bool useRampedPreCue = true;
@@ -381,7 +381,7 @@ public class HapticFeedbackManager : MonoBehaviour
     {
         maxSolenoidDuty = 1.00f;
         maxSolenoidDurationMs = 800;
-        completionPushDelayMs = 0;
+        completionPushDelayMs = 200;
 
         useRampedPreCue = true;
         preCueErmDuty = 1.00f;

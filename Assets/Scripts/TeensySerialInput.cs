@@ -71,7 +71,7 @@ public class TeensySerialInput : MonoBehaviour
     [Tooltip("For close-mounted sensors, cap press delta to this fraction of calibrated rest. 0.25 turns a 33 mm rest into roughly a 25 mm press threshold.")]
     public float closeSensorPressDeltaFraction = 0.25f;
     [Tooltip("Smallest allowed press threshold delta after auto calibration. Keep small for close-mounted sensors.")]
-    public float minimumPressEnterDeltaMM = 4f;
+    public float minimumPressEnterDeltaMM = 1.5f;
 
     [Header("ToF anti-jitter")]
     [Tooltip("After auto calibration finishes, keep all ToF valves released for this long. This prevents startup sensor settling from twitching valves.")]
@@ -85,6 +85,27 @@ public class TeensySerialInput : MonoBehaviour
     public float calibrationRestPercentile = 0.75f;
     [Tooltip("Minimum live samples before percentile calibration is trusted for a lane.")]
     public int minimumCalibrationSamplesPerLane = 5;
+    [Tooltip("Reject startup rest calibration above this distance. A close-mounted valve reading near 96 mm usually means the wrong mux channel or bad aiming.")]
+    public float maxReasonableRestDistanceMM = 90f;
+    [Tooltip("When a lane calibrates above Max Reasonable Rest Distance, keep the previous rest value and wait for a valid live value instead.")]
+    public bool rejectOutOfRangeCalibration = true;
+
+    [Header("ToF channel diagnostics")]
+    [Tooltip("Latest active mux channel reported by firmware for valve 1.")]
+    public int activeValve1TofMuxChannel = 0;
+    [Tooltip("Latest active mux channel reported by firmware for valve 2.")]
+    public int activeValve2TofMuxChannel = 6;
+    [Tooltip("Latest active mux channel reported by firmware for valve 3.")]
+    public int activeValve3TofMuxChannel = 7;
+    [TextArea(2, 4)]
+    public string tofHealthReadout = "ToF channels not checked yet.";
+
+    [Header("ToF animation amount")]
+    [Tooltip("Gameplay stays discrete, but valve animation can still show partial ToF travel before the pressed threshold is crossed.")]
+    public bool useAnalogAmountsWhileDiscrete = true;
+    [Range(0f, 0.5f)]
+    [Tooltip("Small analog amount ignored for animation so idle ToF noise does not wiggle valves.")]
+    public float analogAmountDeadZone = 0.08f;
 
     [Header("legacy press threshold")]
     public bool derivePressedStateFromDistance = false;
@@ -126,6 +147,10 @@ public class TeensySerialInput : MonoBehaviour
     private int latestD1 = 255;
     private int latestD2 = 255;
     private int latestD3 = 255;
+
+    private int latestTC1 = 0;
+    private int latestTC2 = 6;
+    private int latestTC3 = 7;
 
     private float latestS1 = 0f;
     private float latestS2 = 0f;
@@ -178,6 +203,10 @@ public class TeensySerialInput : MonoBehaviour
         int d2;
         int d3;
 
+        int tc1;
+        int tc2;
+        int tc3;
+
         float s1;
         float s2;
         float s3;
@@ -195,6 +224,10 @@ public class TeensySerialInput : MonoBehaviour
             d1 = latestD1;
             d2 = latestD2;
             d3 = latestD3;
+
+            tc1 = latestTC1;
+            tc2 = latestTC2;
+            tc3 = latestTC3;
 
             s1 = latestS1;
             s2 = latestS2;
@@ -232,9 +265,9 @@ public class TeensySerialInput : MonoBehaviour
             v2 = GetDiscretePressedState(1, d2);
             v3 = GetDiscretePressedState(2, d3);
 
-            a1 = v1 ? 1f : 0f;
-            a2 = v2 ? 1f : 0f;
-            a3 = v3 ? 1f : 0f;
+            a1 = GetDiscreteModeValveAmount(0, d1, v1, a1);
+            a2 = GetDiscreteModeValveAmount(1, d2, v2, a2);
+            a3 = GetDiscreteModeValveAmount(2, d3, v3, a3);
         }
         else if (derivePressedStateFromDistance)
         {
@@ -259,6 +292,7 @@ public class TeensySerialInput : MonoBehaviour
         ApplyValveStateFromTeensyChannel(1, v1, a1, d1, s1, e1);
         ApplyValveStateFromTeensyChannel(2, v2, a2, d2, s2, e2);
         ApplyValveStateFromTeensyChannel(3, v3, a3, d3, s3, e3);
+        UpdateActiveTofChannels(tc1, tc2, tc3);
         UpdateLiveToFReadout(d1, d2, d3, v1, v2, v3, a1, a2, a3);
     }
 
@@ -380,15 +414,59 @@ public class TeensySerialInput : MonoBehaviour
 
     void ApplyCalibrationSamples(float[] sums, int[] sampleCounts, List<int>[] calibrationSamples)
     {
-        valve1RestDistanceMM = GetCalibratedRestDistance(0, sums, sampleCounts, calibrationSamples, valve1RestDistanceMM);
-        valve2RestDistanceMM = GetCalibratedRestDistance(1, sums, sampleCounts, calibrationSamples, valve2RestDistanceMM);
-        valve3RestDistanceMM = GetCalibratedRestDistance(2, sums, sampleCounts, calibrationSamples, valve3RestDistanceMM);
+        bool accepted1;
+        bool accepted2;
+        bool accepted3;
 
-        laneHasLiveCalibration[0] = sampleCounts[0] > 0;
-        laneHasLiveCalibration[1] = sampleCounts[1] > 0;
-        laneHasLiveCalibration[2] = sampleCounts[2] > 0;
+        valve1RestDistanceMM = GetValidatedCalibratedRestDistance(0, sums, sampleCounts, calibrationSamples, valve1RestDistanceMM, out accepted1);
+        valve2RestDistanceMM = GetValidatedCalibratedRestDistance(1, sums, sampleCounts, calibrationSamples, valve2RestDistanceMM, out accepted2);
+        valve3RestDistanceMM = GetValidatedCalibratedRestDistance(2, sums, sampleCounts, calibrationSamples, valve3RestDistanceMM, out accepted3);
+
+        laneHasLiveCalibration[0] = accepted1;
+        laneHasLiveCalibration[1] = accepted2;
+        laneHasLiveCalibration[2] = accepted3;
 
         ApplyPressedThresholdsFromCalibratedRest();
+    }
+
+    float GetValidatedCalibratedRestDistance(
+        int laneIndex,
+        float[] sums,
+        int[] sampleCounts,
+        List<int>[] calibrationSamples,
+        float fallbackRestDistanceMM,
+        out bool accepted
+    )
+    {
+        accepted = false;
+
+        float calibratedRestDistance = GetCalibratedRestDistance(
+            laneIndex,
+            sums,
+            sampleCounts,
+            calibrationSamples,
+            fallbackRestDistanceMM
+        );
+
+        if (sampleCounts[laneIndex] <= 0)
+        {
+            return fallbackRestDistanceMM;
+        }
+
+        if (!IsReasonableRestDistance(calibratedRestDistance))
+        {
+            Debug.LogWarning(
+                "Rejected ToF calibration for valve " + (laneIndex + 1) +
+                ": rest=" + calibratedRestDistance.ToString("0.0") +
+                " mm. Keeping previous rest=" + fallbackRestDistanceMM.ToString("0.0") +
+                " mm. Check mux channel/aiming."
+            );
+
+            return fallbackRestDistanceMM;
+        }
+
+        accepted = true;
+        return calibratedRestDistance;
     }
 
     float GetCalibratedRestDistance(
@@ -446,6 +524,28 @@ public class TeensySerialInput : MonoBehaviour
             : distanceMM <= enterPressedDistanceMM;
 
         return ApplyDiscreteStateDebounce(laneIndex, rawPressed);
+    }
+
+    float GetDiscreteModeValveAmount(int laneIndex, int distanceMM, bool pressed, float rawAmount)
+    {
+        if (pressed)
+        {
+            return 1f;
+        }
+
+        if (!useAnalogAmountsWhileDiscrete || !IsValidDistance(distanceMM))
+        {
+            return 0f;
+        }
+
+        float deadZone = Mathf.Clamp01(analogAmountDeadZone);
+
+        if (rawAmount <= deadZone)
+        {
+            return 0f;
+        }
+
+        return Mathf.InverseLerp(deadZone, 1f, Mathf.Clamp01(rawAmount));
     }
 
     bool ApplyDiscreteStateDebounce(int laneIndex, bool rawPressed)
@@ -506,6 +606,11 @@ public class TeensySerialInput : MonoBehaviour
         }
 
         if (laneHasLiveCalibration[laneIndex] || !IsValidDistance(distanceMM))
+        {
+            return;
+        }
+
+        if (!IsReasonableRestDistance(distanceMM))
         {
             return;
         }
@@ -577,6 +682,16 @@ public class TeensySerialInput : MonoBehaviour
         }
     }
 
+    bool IsReasonableRestDistance(float distanceMM)
+    {
+        if (!rejectOutOfRangeCalibration)
+        {
+            return true;
+        }
+
+        return distanceMM > 0f && distanceMM <= Mathf.Max(1f, maxReasonableRestDistanceMM);
+    }
+
     float GetEffectivePressEnterDelta(int laneIndex)
     {
         float restDistance = Mathf.Max(1f, GetRestDistance(laneIndex));
@@ -627,6 +742,11 @@ public class TeensySerialInput : MonoBehaviour
             BuildValveReadout(1, d1, v1, a1) + "\n" +
             BuildValveReadout(2, d2, v2, a2) + "\n" +
             BuildValveReadout(3, d3, v3, a3);
+
+        tofHealthReadout =
+            BuildTofHealthLine(1, d1, activeValve1TofMuxChannel) + "\n" +
+            BuildTofHealthLine(2, d2, activeValve2TofMuxChannel) + "\n" +
+            BuildTofHealthLine(3, d3, activeValve3TofMuxChannel);
     }
 
     string BuildValveReadout(int valveNumber, int distanceMM, bool pressed, float amount)
@@ -640,6 +760,24 @@ public class TeensySerialInput : MonoBehaviour
             " release>" + GetReleaseDistance(laneIndex).ToString("0.0") +
             " amount=" + amount.ToString("0.00") +
             " state=" + (pressed ? "PRESSED" : "released");
+    }
+
+    string BuildTofHealthLine(int valveNumber, int distanceMM, int muxChannel)
+    {
+        bool valid = IsValidDistance(distanceMM);
+        bool reasonable = valid && IsReasonableRestDistance(distanceMM);
+
+        return "V" + valveNumber +
+            " mux=SC" + muxChannel +
+            " live=" + distanceMM + "mm " +
+            (reasonable ? "OK" : "CHECK SENSOR/MUX");
+    }
+
+    void UpdateActiveTofChannels(int tc1, int tc2, int tc3)
+    {
+        activeValve1TofMuxChannel = Mathf.Clamp(tc1, 0, 7);
+        activeValve2TofMuxChannel = Mathf.Clamp(tc2, 0, 7);
+        activeValve3TofMuxChannel = Mathf.Clamp(tc3, 0, 7);
     }
 
     bool IsValidDistance(int distanceMM)
@@ -926,6 +1064,18 @@ public class TeensySerialInput : MonoBehaviour
                 {
                     int.TryParse(value, out latestD3);
                 }
+                else if (key == "TC1")
+                {
+                    int.TryParse(value, out latestTC1);
+                }
+                else if (key == "TC2")
+                {
+                    int.TryParse(value, out latestTC2);
+                }
+                else if (key == "TC3")
+                {
+                    int.TryParse(value, out latestTC3);
+                }
                 else if (key == "S1")
                 {
                     latestS1 = ParseSerialFloat(value, latestS1);
@@ -1012,6 +1162,25 @@ public class TeensySerialInput : MonoBehaviour
         }
     }
 
+    [ContextMenu("ToF/Scan Firmware Mux Channels")]
+    public void SendTofScan()
+    {
+        SendLine("TOFSCAN");
+    }
+
+    [ContextMenu("ToF/Send Inspector Mux Map")]
+    public void SendInspectorTofMap()
+    {
+        TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
+
+        SendLine(
+            "TOFMAPALL," +
+            Mathf.Clamp(hardwarePinout[0].tofMuxChannel, 0, 7) + "," +
+            Mathf.Clamp(hardwarePinout[1].tofMuxChannel, 0, 7) + "," +
+            Mathf.Clamp(hardwarePinout[2].tofMuxChannel, 0, 7)
+        );
+    }
+
     void OnApplicationQuit()
     {
         SendLine("X");
@@ -1037,6 +1206,8 @@ public class TeensySerialInput : MonoBehaviour
         releaseDebounceSeconds = Mathf.Clamp(releaseDebounceSeconds, 0f, 0.25f);
         calibrationRestPercentile = Mathf.Clamp(calibrationRestPercentile, 0.5f, 0.95f);
         minimumCalibrationSamplesPerLane = Mathf.Clamp(minimumCalibrationSamplesPerLane, 1, 200);
+        maxReasonableRestDistanceMM = Mathf.Clamp(maxReasonableRestDistanceMM, 1f, 254f);
+        analogAmountDeadZone = Mathf.Clamp01(analogAmountDeadZone);
 
         if (!Application.isPlaying)
         {
