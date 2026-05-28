@@ -1,11 +1,3 @@
-// Tune These if the Push-Off Is Too Weak 
-// const float TAP_RESET_SOL_DUTY_GOOD = 0.50f;
-// const float TAP_RESET_SOL_DUTY_PERFECT = 0.55f;
-// const float HOLD_RESET_SOL_DUTY = 0.60f;
-
-// const unsigned long TAP_RESET_SOL_MS = 100;
-// const unsigned long HOLD_RESET_SOL_MS = 120;
-
 #include <Wire.h>
 #include <Adafruit_VL6180X.h>
 #include <string.h>
@@ -73,37 +65,39 @@ unsigned long lastUnitySendTime = 0;
 const unsigned long UNITY_SEND_INTERVAL_MS = 20; // 50 Hz
 
 // ------------------------------------------------------------
-// Gameplay solenoid push-off tuning
-// Start conservative. Increase only if needed.
+// Gameplay solenoid push-off tuning.
+// These defaults are intentionally conservative for an MVP bench test.
+// Raise only after confirming the mechanism does not heat, bind, or slap.
 // ------------------------------------------------------------
-const float TAP_RESET_SOL_DUTY_GOOD = 0.60f;
-const float TAP_RESET_SOL_DUTY_PERFECT = 0.65f;
-const float HOLD_RESET_SOL_DUTY = 0.70f;
+const float MAX_SOLENOID_DUTY = 0.80f;
+const unsigned long DEFAULT_SOLENOID_PULSE_MS = 125;
+const unsigned long MAX_SOLENOID_PULSE_MS = 250;
 
-const unsigned long TAP_RESET_SOL_MS = 100;
-const unsigned long HOLD_RESET_SOL_MS = 120;
+const float TAP_RESET_SOL_DUTY_GOOD = 0.65f;
+const float TAP_RESET_SOL_DUTY_PERFECT = 0.80f;
+const float HOLD_RESET_SOL_DUTY = 0.75f;
 
-// Tune These if the Push-Off Is Too Weak 
-// const float TAP_RESET_SOL_DUTY_GOOD = 0.50f;
-// const float TAP_RESET_SOL_DUTY_PERFECT = 0.55f;
-// const float HOLD_RESET_SOL_DUTY = 0.60f;
-
-// const unsigned long TAP_RESET_SOL_MS = 100;
-// const unsigned long HOLD_RESET_SOL_MS = 120;
+const unsigned long TAP_RESET_SOL_MS = 125;
+const unsigned long HOLD_RESET_SOL_MS = 125;
 
 // ------------------------------------------------------------
 // ERM gameplay tuning
 // ------------------------------------------------------------
-const float PRECUE_ERM_DUTY = 0.30f;
-const unsigned long PRECUE_ERM_MS = 110;
+const float MAX_ERM_DUTY = 0.45f;
+const unsigned long MAX_ERM_PULSE_MS = 500;
+const unsigned long MAX_ERM_RAMP_MS = 1200;
 
-const float GOOD_ERM_DUTY = 0.35f;
-const float PERFECT_ERM_DUTY = 0.50f;
-const float MISS_ERM_DUTY = 0.55f;
+const float PRECUE_ERM_DUTY = 0.25f;
+const unsigned long PRECUE_ERM_RAMP_MS = 800;
+const unsigned long PRECUE_ERM_HOLD_MS = 120;
 
-const unsigned long GOOD_ERM_MS = 70;
-const unsigned long PERFECT_ERM_MS = 90;
-const unsigned long MISS_ERM_MS = 130;
+const float GOOD_ERM_DUTY = 0.25f;
+const float PERFECT_ERM_DUTY = 0.35f;
+const float MISS_ERM_DUTY = 0.45f;
+
+const unsigned long GOOD_ERM_MS = 120;
+const unsigned long PERFECT_ERM_MS = 150;
+const unsigned long MISS_ERM_MS = 200;
 
 // ------------------------------------------------------------
 // Actuator state reported back to Unity
@@ -117,6 +111,12 @@ unsigned long solenoidOffTime[3] = {0, 0, 0};
 
 float ermDuty[3] = {0.0f, 0.0f, 0.0f};
 unsigned long ermOffTime[3] = {0, 0, 0};
+bool ermRampActive[3] = {false, false, false};
+float ermRampStartDuty[3] = {0.0f, 0.0f, 0.0f};
+float ermRampTargetDuty[3] = {0.0f, 0.0f, 0.0f};
+unsigned long ermRampStartTime[3] = {0, 0, 0};
+unsigned long ermRampDurationMs[3] = {0, 0, 0};
+unsigned long ermRampHoldMs[3] = {0, 0, 0};
 
 // ------------------------------------------------------------
 // Serial command buffer from Unity
@@ -131,6 +131,25 @@ int dutyToPWM(float dutyFraction)
 {
     dutyFraction = constrain(dutyFraction, 0.0f, 1.0f);
     return (int)(255.0f * dutyFraction);
+}
+
+void writeERMDuty(int channel, float dutyFraction)
+{
+    if (!ERM_HARDWARE_CONNECTED)
+    {
+        return;
+    }
+
+    if (channel < 0 || channel > 2)
+    {
+        return;
+    }
+
+    dutyFraction = constrain(dutyFraction, 0.0f, MAX_ERM_DUTY);
+    ermDuty[channel] = dutyFraction;
+
+    analogWrite(ERM_IN1[channel], dutyToPWM(dutyFraction));
+    analogWrite(ERM_IN2[channel], 0);
 }
 
 // ------------------------------------------------------------
@@ -171,7 +190,17 @@ void setSolenoid(int channel, float dutyFraction, bool ignoredPhase, unsigned lo
         return;
     }
 
-    dutyFraction = constrain(dutyFraction, 0.0f, 1.0f);
+    dutyFraction = constrain(dutyFraction, 0.0f, MAX_SOLENOID_DUTY);
+
+    if (dutyFraction > 0.0f)
+    {
+        if (durationMs == 0)
+        {
+            durationMs = DEFAULT_SOLENOID_PULSE_MS;
+        }
+
+        durationMs = constrain(durationMs, 1UL, MAX_SOLENOID_PULSE_MS);
+    }
 
     solenoidDuty[channel] = dutyFraction;
     solenoidPhase[channel] = SOLENOID_ACTIVE_PHASE;
@@ -200,16 +229,53 @@ void setERM(int channel, float dutyFraction, unsigned long durationMs = 0)
         return;
     }
 
-    dutyFraction = constrain(dutyFraction, 0.0f, 1.0f);
+    dutyFraction = constrain(dutyFraction, 0.0f, MAX_ERM_DUTY);
 
-    ermDuty[channel] = dutyFraction;
+    if (durationMs > 0)
+    {
+        durationMs = constrain(durationMs, 1UL, MAX_ERM_PULSE_MS);
+    }
 
-    analogWrite(ERM_IN1[channel], dutyToPWM(dutyFraction));
-    analogWrite(ERM_IN2[channel], 0);
+    ermRampActive[channel] = false;
+
+    writeERMDuty(channel, dutyFraction);
 
     ermOffTime[channel] = (durationMs > 0 && dutyFraction > 0.0f)
                           ? millis() + durationMs
                           : 0;
+}
+
+// ------------------------------------------------------------
+// Non-blocking ERM ramp.
+// Used by note pre-cues so serial input and ToF streaming keep running.
+// ------------------------------------------------------------
+void rampERM(int channel, float targetDuty, unsigned long rampMs, unsigned long holdMs = 0)
+{
+    if (!ERM_HARDWARE_CONNECTED)
+    {
+        return;
+    }
+
+    if (channel < 0 || channel > 2)
+    {
+        return;
+    }
+
+    targetDuty = constrain(targetDuty, 0.0f, MAX_ERM_DUTY);
+    rampMs = constrain(rampMs, 1UL, MAX_ERM_RAMP_MS);
+
+    if (holdMs > 0)
+    {
+        holdMs = constrain(holdMs, 1UL, MAX_ERM_PULSE_MS);
+    }
+
+    ermRampStartDuty[channel] = ermDuty[channel];
+    ermRampTargetDuty[channel] = targetDuty;
+    ermRampStartTime[channel] = millis();
+    ermRampDurationMs[channel] = rampMs;
+    ermRampHoldMs[channel] = holdMs;
+    ermRampActive[channel] = true;
+    ermOffTime[channel] = 0;
 }
 
 // ------------------------------------------------------------
@@ -229,14 +295,39 @@ void allOutputsOff()
 // ------------------------------------------------------------
 void updateTimedOutputs()
 {
+    unsigned long now = millis();
+
     for (int i = 0; i < 3; i++)
     {
+        if (ermRampActive[i])
+        {
+            unsigned long elapsed = now - ermRampStartTime[i];
+
+            if (elapsed >= ermRampDurationMs[i])
+            {
+                writeERMDuty(i, ermRampTargetDuty[i]);
+                ermRampActive[i] = false;
+
+                ermOffTime[i] = (ermRampHoldMs[i] > 0 && ermRampTargetDuty[i] > 0.0f)
+                                ? now + ermRampHoldMs[i]
+                                : 0;
+            }
+            else
+            {
+                float rampT = (float)elapsed / (float)ermRampDurationMs[i];
+                float duty = ermRampStartDuty[i] +
+                             (ermRampTargetDuty[i] - ermRampStartDuty[i]) * rampT;
+
+                writeERMDuty(i, duty);
+            }
+        }
+
         if (solenoidOffTime[i] != 0 && timeReached(solenoidOffTime[i]))
         {
             setSolenoid(i, 0.0f, SOLENOID_ACTIVE_PHASE, 0);
         }
 
-        if (ermOffTime[i] != 0 && timeReached(ermOffTime[i]))
+        if (!ermRampActive[i] && ermOffTime[i] != 0 && timeReached(ermOffTime[i]))
         {
             setERM(i, 0.0f, 0);
         }
@@ -369,9 +460,14 @@ void sendUnityState()
 
 // ------------------------------------------------------------
 // Gameplay command: note pre-cue
-// ERM buzzes before note reaches valve target.
+// ERM ramps up before note reaches valve target.
 // ------------------------------------------------------------
-void handlePreCueCommand(int lane)
+void handlePreCueCommand(
+    int lane,
+    float duty = PRECUE_ERM_DUTY,
+    unsigned long rampMs = PRECUE_ERM_RAMP_MS,
+    unsigned long holdMs = PRECUE_ERM_HOLD_MS
+)
 {
     int channel = lane - 1;
 
@@ -380,7 +476,7 @@ void handlePreCueCommand(int lane)
         return;
     }
 
-    setERM(channel, PRECUE_ERM_DUTY, PRECUE_ERM_MS);
+    rampERM(channel, duty, rampMs, holdMs);
 }
 
 // ------------------------------------------------------------
@@ -472,6 +568,8 @@ void handleMissCommand(int lane)
 // SOL,1,0.30,1,300
 // ERM,1,0.25,120
 // PRECUE,1
+// PRECUE,1,0.25,800,120
+// ERMRAMP,1,0.25,800,120
 // TAPCOMPLETE,1,PERFECT
 // TAPCOMPLETE,1,GOOD
 // HOLDSTART,1
@@ -557,16 +655,52 @@ void handleLineCommand(char *line)
         return;
     }
 
+    if (strcmp(command, "ERMRAMP") == 0)
+    {
+        char *chToken = strtok(NULL, ",");
+        char *dutyToken = strtok(NULL, ",");
+        char *rampToken = strtok(NULL, ",");
+        char *holdToken = strtok(NULL, ",");
+
+        if (chToken == NULL || dutyToken == NULL)
+        {
+            return;
+        }
+
+        int ch = atoi(chToken) - 1;
+        float duty = atof(dutyToken);
+        unsigned long rampMs = rampToken == NULL
+                               ? PRECUE_ERM_RAMP_MS
+                               : strtoul(rampToken, NULL, 10);
+        unsigned long holdMs = holdToken == NULL
+                               ? PRECUE_ERM_HOLD_MS
+                               : strtoul(holdToken, NULL, 10);
+
+        rampERM(ch, duty, rampMs, holdMs);
+        return;
+    }
+
     if (strcmp(command, "PRECUE") == 0)
     {
         char *laneToken = strtok(NULL, ",");
+        char *dutyToken = strtok(NULL, ",");
+        char *rampToken = strtok(NULL, ",");
+        char *holdToken = strtok(NULL, ",");
 
         if (laneToken == NULL)
         {
             return;
         }
 
-        handlePreCueCommand(atoi(laneToken));
+        float duty = dutyToken == NULL ? PRECUE_ERM_DUTY : atof(dutyToken);
+        unsigned long rampMs = rampToken == NULL
+                               ? PRECUE_ERM_RAMP_MS
+                               : strtoul(rampToken, NULL, 10);
+        unsigned long holdMs = holdToken == NULL
+                               ? PRECUE_ERM_HOLD_MS
+                               : strtoul(holdToken, NULL, 10);
+
+        handlePreCueCommand(atoi(laneToken), duty, rampMs, holdMs);
         return;
     }
 

@@ -2688,13 +2688,27 @@ MonoBehaviour:
   portName: COM4
   baudRate: 115200
   connectOnStart: 1
+  autoDetectPort: 1
+  reconnectWhenDisconnected: 1
+  reconnectIntervalSeconds: 2
   valve1RestDistanceMM: 80
   valve1PressedDistanceMM: 25
   valve2RestDistanceMM: 80
   valve2PressedDistanceMM: 25
   valve3RestDistanceMM: 80
   valve3PressedDistanceMM: 25
-  printIncomingLines: 1
+  autoCalibrateOnStart: 1
+  pauseGameDuringCalibration: 1
+  startupCalibrationPauseSeconds: 1.5
+  pressEnterDeltaMM: 12
+  releaseDeltaMM: 6
+  useDiscreteToFStates: 1
+  useTeensyDebugPressBits: 0
+  isCalibrated: 0
+  isCalibrating: 0
+  derivePressedStateFromDistance: 0
+  pressAmountThreshold: 0.65
+  printIncomingLines: 0
   printOutgoingCommands: 1
 --- !u!114 &1414622046
 MonoBehaviour:
@@ -2711,6 +2725,14 @@ MonoBehaviour:
   teensySerialInput: {fileID: 1414622045}
   enableHaptics: 1
   printCommands: 1
+  maxSolenoidDuty: 0.8
+  maxSolenoidDurationMs: 250
+  useRampedPreCue: 1
+  preCueErmDuty: 0.25
+  preCueErmRampMs: 800
+  preCueErmHoldMs: 120
+  maxErmDuty: 0.45
+  maxErmRampMs: 1200
 --- !u!114 &1414622047
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2724,10 +2746,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitySolenoidTester
   hapticFeedbackManager: {fileID: 1414622046}
-  testDuty: 0.7
-  testDurationMs: 300
-  normalPhase: 0
-  shiftedPhase: 1
+  testDuty: 0.8
+  testDurationMs: 125
+  normalPhase: 1
+  shiftedPhase: 0
   enableKeyboardTesting: 1
 --- !u!1 &1476594531
 GameObject:
@@ -3797,11 +3819,18 @@ MonoBehaviour:
   hitPlane1: {fileID: 1084728750}
   hitPlane2: {fileID: 576142329}
   hitPlane3: {fileID: 235335200}
-  spawnInterval: 0.8
+  spawnInterval: 2
   noteTravelTime: 1.5
+  waitForPreviousFingeringToResolve: 1
+  useDistanceBasedPreCue: 1
+  preCueDistanceFromTarget: 1
+  fallbackPreCueLeadTime: 0.85
   lane1Color: {r: 0, g: 1, b: 0, a: 1}
-  lane2Color: {r: 0, g: 1, b: 1, a: 1}
+  lane2Color: {r: 0.1882353, g: 0.627451, b: 1, a: 1}
   lane3Color: {r: 1, g: 0, b: 0, a: 1}
+  lane1LineMaterial: {fileID: 2100000, guid: 3d823791324dfd4458707c2738803e9b, type: 2}
+  lane2LineMaterial: {fileID: 2100000, guid: 7ea3a1c06d908fc449eeb9bce0f55798, type: 2}
+  lane3LineMaterial: {fileID: 2100000, guid: 51e98de0529e1e54f97bcee1bbe4a730, type: 2}
   holdSafetyBuffer: 0.2
 --- !u!114 &1740641790
 MonoBehaviour:
@@ -4981,7 +5010,11 @@ MonoBehaviour:
   laneIndex: 1
   pressedLocalOffset: {x: 0, y: -0.18, z: 0}
   motionSpeed: 8
+  releaseMotionSpeed: 14
   useAnalogValveAmount: 1
+  followSolenoidRelease: 1
+  solenoidDutyForFullRelease: 0.35
+  solenoidDutyDeadZone: 0.02
 --- !u!114 &810020403682491982
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4997,7 +5030,11 @@ MonoBehaviour:
   laneIndex: 0
   pressedLocalOffset: {x: 0, y: -0.18, z: 0}
   motionSpeed: 8
+  releaseMotionSpeed: 14
   useAnalogValveAmount: 1
+  followSolenoidRelease: 1
+  solenoidDutyForFullRelease: 0.35
+  solenoidDutyDeadZone: 0.02
 --- !u!1 &810020403682491983 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6400996076825264593, guid: 2f438cd8023804842ae3f779e31d5fdb, type: 3}
@@ -5018,7 +5055,11 @@ MonoBehaviour:
   laneIndex: 2
   pressedLocalOffset: {x: 0, y: -0.18, z: 0}
   motionSpeed: 8
+  releaseMotionSpeed: 14
   useAnalogValveAmount: 1
+  followSolenoidRelease: 1
+  solenoidDutyForFullRelease: 0.35
+  solenoidDutyDeadZone: 0.02
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

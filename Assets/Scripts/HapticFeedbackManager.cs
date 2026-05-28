@@ -1,3 +1,4 @@
+using System.Globalization;
 using UnityEngine;
 
 public class HapticFeedbackManager : MonoBehaviour
@@ -14,10 +15,41 @@ public class HapticFeedbackManager : MonoBehaviour
     public bool enableHaptics = true;
     public bool printCommands = true;
 
+    [Header("hardware safety caps")]
+    [Range(0f, 1f)]
+    public float maxSolenoidDuty = SolenoidPulseSettings.MaxRecommendedDuty;
+    public int maxSolenoidDurationMs = SolenoidPulseSettings.MaxRecommendedDurationMs;
+
+    [Header("ERM pre-cue ramp")]
+    public bool useRampedPreCue = true;
+    [Range(0f, 1f)]
+    public float preCueErmDuty = 0.25f;
+    public int preCueErmRampMs = 800;
+    public int preCueErmHoldMs = 120;
+    [Range(0f, 1f)]
+    public float maxErmDuty = 0.45f;
+    public int maxErmRampMs = 1200;
+
     private bool emergencyStopped = false;
 
     void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            bool thisLivesWithSerialInput = GetComponent<TeensySerialInput>() != null;
+            bool instanceLivesWithSerialInput = Instance.GetComponent<TeensySerialInput>() != null;
+
+            if (thisLivesWithSerialInput && !instanceLivesWithSerialInput)
+            {
+                Instance.enabled = false;
+                Instance = this;
+                return;
+            }
+
+            enabled = false;
+            return;
+        }
+
         Instance = this;
     }
 
@@ -31,7 +63,25 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void SendPreCue(int laneIndex)
     {
-        Send("PRECUE," + GetTeensyChannelNumber(laneIndex));
+        int channelNumber = GetTeensyChannelNumber(laneIndex);
+
+        if (!useRampedPreCue)
+        {
+            Send("PRECUE," + channelNumber);
+            return;
+        }
+
+        float safeDuty = Mathf.Clamp(preCueErmDuty, 0f, Mathf.Clamp01(maxErmDuty));
+        int safeRampMs = Mathf.Clamp(preCueErmRampMs, 1, Mathf.Max(1, maxErmRampMs));
+        int safeHoldMs = Mathf.Clamp(preCueErmHoldMs, 0, 500);
+
+        Send(
+            "PRECUE," +
+            channelNumber + "," +
+            safeDuty.ToString("0.00", CultureInfo.InvariantCulture) + "," +
+            safeRampMs + "," +
+            safeHoldMs
+        );
     }
 
     public void SendTapComplete(int laneIndex, bool perfect)
@@ -70,11 +120,28 @@ public class HapticFeedbackManager : MonoBehaviour
     public void TestSolenoid(int channelIndex, float duty, int phase, int durationMs)
     {
         int channelNumber = GetTeensyChannelNumber(channelIndex);
-        duty = Mathf.Clamp01(duty);
-        phase = phase == 0 ? 0 : 1;
-        durationMs = Mathf.Max(1, durationMs);
+        float safeMaxDuty = Mathf.Clamp(
+            maxSolenoidDuty,
+            0f,
+            SolenoidPulseSettings.MaxRecommendedDuty
+        );
+        int safeMaxDurationMs = Mathf.Clamp(
+            maxSolenoidDurationMs,
+            1,
+            SolenoidPulseSettings.MaxRecommendedDurationMs
+        );
 
-        Send("SOL," + channelNumber + "," + duty.ToString("0.00") + "," + phase + "," + durationMs);
+        duty = Mathf.Clamp(duty, 0f, safeMaxDuty);
+        phase = phase == 0 ? 0 : 1;
+        durationMs = Mathf.Clamp(durationMs, 1, safeMaxDurationMs);
+
+        Send(
+            "SOL," +
+            channelNumber + "," +
+            duty.ToString("0.00", CultureInfo.InvariantCulture) + "," +
+            phase + "," +
+            durationMs
+        );
     }
 
     public void AllOff()
@@ -153,5 +220,16 @@ public class HapticFeedbackManager : MonoBehaviour
     void OnValidate()
     {
         TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
+        maxSolenoidDuty = Mathf.Clamp(maxSolenoidDuty, 0f, SolenoidPulseSettings.MaxRecommendedDuty);
+        maxSolenoidDurationMs = Mathf.Clamp(
+            maxSolenoidDurationMs,
+            1,
+            SolenoidPulseSettings.MaxRecommendedDurationMs
+        );
+        maxErmDuty = Mathf.Clamp(maxErmDuty, 0f, 0.45f);
+        preCueErmDuty = Mathf.Clamp(preCueErmDuty, 0f, maxErmDuty);
+        maxErmRampMs = Mathf.Clamp(maxErmRampMs, 1, 1200);
+        preCueErmRampMs = Mathf.Clamp(preCueErmRampMs, 1, maxErmRampMs);
+        preCueErmHoldMs = Mathf.Clamp(preCueErmHoldMs, 0, 500);
     }
 }

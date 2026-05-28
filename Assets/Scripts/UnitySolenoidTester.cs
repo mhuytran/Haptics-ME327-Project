@@ -13,8 +13,8 @@ public class UnitySolenoidTester : MonoBehaviour
     public TeensyHardwareChannel[] hardwarePinout = TeensyHardwarePinout.CreateDefaultChannels();
 
     [Header("global fallback pulse")]
-    public float testDuty = 0.35f;
-    public int testDurationMs = 300;
+    public float testDuty = 0.80f;
+    public int testDurationMs = 125;
 
     [Header("phase")]
     public int normalPhase = TeensyHardwarePinout.ActiveSolenoidPhase;
@@ -33,8 +33,8 @@ public class UnitySolenoidTester : MonoBehaviour
     [Header("note cue tuning")]
     public bool applyPreCueTuningToSpawner = true;
     public bool useDistanceBasedPreCue = true;
-    public float preCueDistanceFromTarget = 0.45f;
-    public float fallbackPreCueLeadTime = 0.35f;
+    public float preCueDistanceFromTarget = 1.0f;
+    public float fallbackPreCueLeadTime = 0.85f;
 
     [Header("animation during tests")]
     public bool animateValveOnTest = true;

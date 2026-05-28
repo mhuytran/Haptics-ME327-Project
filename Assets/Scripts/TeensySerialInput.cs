@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Globalization;
 using System.IO.Ports;
 using System.Threading;
 using UnityEngine;
@@ -11,6 +13,9 @@ public class TeensySerialInput : MonoBehaviour
     public string portName = "COM3";
     public int baudRate = 115200;
     public bool connectOnStart = true;
+    public bool autoDetectPort = true;
+    public bool reconnectWhenDisconnected = true;
+    public float reconnectIntervalSeconds = 2f;
 
     [Header("Teensy pinout from trumpal_teensy_code")]
     public TeensyHardwareChannel[] hardwarePinout = TeensyHardwarePinout.CreateDefaultChannels();
@@ -25,8 +30,19 @@ public class TeensySerialInput : MonoBehaviour
     public float valve3RestDistanceMM = 80f;
     public float valve3PressedDistanceMM = 25f;
 
-    [Header("Unity-side press threshold")]
-    public bool derivePressedStateFromDistance = true;
+    [Header("ToF auto calibration")]
+    public bool autoCalibrateOnStart = true;
+    public bool pauseGameDuringCalibration = true;
+    public float startupCalibrationPauseSeconds = 1.5f;
+    public float pressEnterDeltaMM = 12f;
+    public float releaseDeltaMM = 6f;
+    public bool useDiscreteToFStates = true;
+    public bool useTeensyDebugPressBits = false;
+    public bool isCalibrated = false;
+    public bool isCalibrating = false;
+
+    [Header("legacy press threshold")]
+    public bool derivePressedStateFromDistance = false;
     [Range(0f, 1f)]
     public float pressAmountThreshold = 0.65f;
 
@@ -37,6 +53,7 @@ public class TeensySerialInput : MonoBehaviour
     private SerialPort serialPort;
     private Thread readThread;
     private volatile bool keepReading = false;
+    private float nextReconnectTime = 0f;
 
     private readonly object writeLock = new object();
     private readonly object stateLock = new object();
@@ -49,8 +66,24 @@ public class TeensySerialInput : MonoBehaviour
     private int latestD2 = 255;
     private int latestD3 = 255;
 
+    private float latestS1 = 0f;
+    private float latestS2 = 0f;
+    private float latestS3 = 0f;
+
+    private float latestE1 = 0f;
+    private float latestE2 = 0f;
+    private float latestE3 = 0f;
+
+    private bool[] calibratedPressedStates = new bool[3];
+
     void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            enabled = false;
+            return;
+        }
+
         Instance = this;
     }
 
@@ -60,10 +93,17 @@ public class TeensySerialInput : MonoBehaviour
         {
             Connect();
         }
+
+        if (autoCalibrateOnStart)
+        {
+            StartCoroutine(AutoCalibrateStartup());
+        }
     }
 
     void Update()
     {
+        TryReconnectIfNeeded();
+
         bool v1;
         bool v2;
         bool v3;
@@ -71,6 +111,14 @@ public class TeensySerialInput : MonoBehaviour
         int d1;
         int d2;
         int d3;
+
+        float s1;
+        float s2;
+        float s3;
+
+        float e1;
+        float e2;
+        float e3;
 
         lock (stateLock)
         {
@@ -81,29 +129,215 @@ public class TeensySerialInput : MonoBehaviour
             d1 = latestD1;
             d2 = latestD2;
             d3 = latestD3;
+
+            s1 = latestS1;
+            s2 = latestS2;
+            s3 = latestS3;
+
+            e1 = latestE1;
+            e2 = latestE2;
+            e3 = latestE3;
         }
 
         float a1 = DistanceToPressAmount(d1, valve1RestDistanceMM, valve1PressedDistanceMM);
         float a2 = DistanceToPressAmount(d2, valve2RestDistanceMM, valve2PressedDistanceMM);
         float a3 = DistanceToPressAmount(d3, valve3RestDistanceMM, valve3PressedDistanceMM);
 
-        if (derivePressedStateFromDistance)
+        if (isCalibrating)
         {
-            v1 = v1 || a1 >= pressAmountThreshold;
-            v2 = v2 || a2 >= pressAmountThreshold;
-            v3 = v3 || a3 >= pressAmountThreshold;
+            v1 = false;
+            v2 = false;
+            v3 = false;
+
+            a1 = 0f;
+            a2 = 0f;
+            a3 = 0f;
+        }
+        else if (useDiscreteToFStates && isCalibrated)
+        {
+            v1 = GetDiscretePressedState(0, d1);
+            v2 = GetDiscretePressedState(1, d2);
+            v3 = GetDiscretePressedState(2, d3);
+
+            a1 = v1 ? 1f : 0f;
+            a2 = v2 ? 1f : 0f;
+            a3 = v3 ? 1f : 0f;
+        }
+        else if (derivePressedStateFromDistance)
+        {
+            v1 = a1 >= pressAmountThreshold || (useTeensyDebugPressBits && v1);
+            v2 = a2 >= pressAmountThreshold || (useTeensyDebugPressBits && v2);
+            v3 = a3 >= pressAmountThreshold || (useTeensyDebugPressBits && v3);
+        }
+        else if (!useTeensyDebugPressBits)
+        {
+            v1 = false;
+            v2 = false;
+            v3 = false;
         }
 
-        ApplyValveStateFromTeensyChannel(1, v1, a1, d1);
-        ApplyValveStateFromTeensyChannel(2, v2, a2, d2);
-        ApplyValveStateFromTeensyChannel(3, v3, a3, d3);
+        ApplyValveStateFromTeensyChannel(1, v1, a1, d1, s1, e1);
+        ApplyValveStateFromTeensyChannel(2, v2, a2, d2, s2, e2);
+        ApplyValveStateFromTeensyChannel(3, v3, a3, d3, s3, e3);
+    }
+
+    IEnumerator AutoCalibrateStartup()
+    {
+        isCalibrating = true;
+        isCalibrated = false;
+        ValveInputState.ClearAll();
+
+        float previousTimeScale = Time.timeScale;
+
+        if (pauseGameDuringCalibration)
+        {
+            Time.timeScale = 0f;
+        }
+
+        float[] sums = new float[3];
+        int[] sampleCounts = new int[3];
+        float endTime = Time.realtimeSinceStartup + Mathf.Max(0.1f, startupCalibrationPauseSeconds);
+
+        while (Time.realtimeSinceStartup < endTime)
+        {
+            if (pauseGameDuringCalibration)
+            {
+                Time.timeScale = 0f;
+            }
+
+            int d1;
+            int d2;
+            int d3;
+
+            lock (stateLock)
+            {
+                d1 = latestD1;
+                d2 = latestD2;
+                d3 = latestD3;
+            }
+
+            AddCalibrationSample(0, d1, sums, sampleCounts);
+            AddCalibrationSample(1, d2, sums, sampleCounts);
+            AddCalibrationSample(2, d3, sums, sampleCounts);
+
+            yield return null;
+        }
+
+        ApplyCalibrationSamples(sums, sampleCounts);
+
+        for (int i = 0; i < calibratedPressedStates.Length; i++)
+        {
+            calibratedPressedStates[i] = false;
+        }
+
+        ValveInputState.ClearAll();
+        isCalibrated = true;
+        isCalibrating = false;
+
+        if (pauseGameDuringCalibration)
+        {
+            Time.timeScale = previousTimeScale <= 0f ? 1f : previousTimeScale;
+        }
+
+        Debug.Log(
+            "ToF auto-calibrated rest distances: " +
+            valve1RestDistanceMM.ToString("0.0") + "mm, " +
+            valve2RestDistanceMM.ToString("0.0") + "mm, " +
+            valve3RestDistanceMM.ToString("0.0") + "mm"
+        );
+    }
+
+    void AddCalibrationSample(int laneIndex, int distanceMM, float[] sums, int[] sampleCounts)
+    {
+        if (!IsValidDistance(distanceMM))
+        {
+            return;
+        }
+
+        sums[laneIndex] += distanceMM;
+        sampleCounts[laneIndex] += 1;
+    }
+
+    void ApplyCalibrationSamples(float[] sums, int[] sampleCounts)
+    {
+        valve1RestDistanceMM = GetCalibratedRestDistance(0, sums, sampleCounts, valve1RestDistanceMM);
+        valve2RestDistanceMM = GetCalibratedRestDistance(1, sums, sampleCounts, valve2RestDistanceMM);
+        valve3RestDistanceMM = GetCalibratedRestDistance(2, sums, sampleCounts, valve3RestDistanceMM);
+
+        valve1PressedDistanceMM = Mathf.Max(1f, valve1RestDistanceMM - pressEnterDeltaMM);
+        valve2PressedDistanceMM = Mathf.Max(1f, valve2RestDistanceMM - pressEnterDeltaMM);
+        valve3PressedDistanceMM = Mathf.Max(1f, valve3RestDistanceMM - pressEnterDeltaMM);
+    }
+
+    float GetCalibratedRestDistance(
+        int laneIndex,
+        float[] sums,
+        int[] sampleCounts,
+        float fallbackRestDistanceMM
+    )
+    {
+        if (sampleCounts[laneIndex] <= 0)
+        {
+            return fallbackRestDistanceMM;
+        }
+
+        return sums[laneIndex] / sampleCounts[laneIndex];
+    }
+
+    bool GetDiscretePressedState(int laneIndex, int distanceMM)
+    {
+        if (!IsValidDistance(distanceMM))
+        {
+            return calibratedPressedStates[laneIndex];
+        }
+
+        float restDistanceMM = GetRestDistance(laneIndex);
+        float enterPressedDistanceMM = restDistanceMM - Mathf.Max(1f, pressEnterDeltaMM);
+        float exitPressedDistanceMM = restDistanceMM - Mathf.Max(0.5f, releaseDeltaMM);
+        bool wasPressed = calibratedPressedStates[laneIndex];
+        bool pressed = wasPressed
+            ? distanceMM <= exitPressedDistanceMM
+            : distanceMM <= enterPressedDistanceMM;
+
+        calibratedPressedStates[laneIndex] = pressed;
+        return pressed;
+    }
+
+    float GetRestDistance(int laneIndex)
+    {
+        if (laneIndex == 0) return valve1RestDistanceMM;
+        if (laneIndex == 1) return valve2RestDistanceMM;
+        return valve3RestDistanceMM;
+    }
+
+    bool IsValidDistance(int distanceMM)
+    {
+        return distanceMM > 0 && distanceMM < 255;
+    }
+
+    void TryReconnectIfNeeded()
+    {
+        if (!connectOnStart || !reconnectWhenDisconnected || IsConnected())
+        {
+            return;
+        }
+
+        if (Time.unscaledTime < nextReconnectTime)
+        {
+            return;
+        }
+
+        nextReconnectTime = Time.unscaledTime + Mathf.Max(0.5f, reconnectIntervalSeconds);
+        Connect();
     }
 
     void ApplyValveStateFromTeensyChannel(
         int teensyChannelNumber,
         bool pressed,
         float amount,
-        int distanceMM
+        int distanceMM,
+        float solenoidDuty,
+        float ermDuty
     )
     {
         TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
@@ -116,6 +350,8 @@ public class TeensySerialInput : MonoBehaviour
         ValveInputState.SetTeensyValve(laneIndex, pressed);
         ValveInputState.SetTeensyValveAmount(laneIndex, amount);
         ValveInputState.SetTeensyValveDistanceMM(laneIndex, distanceMM);
+        ValveInputState.SetTeensySolenoidDuty(laneIndex, solenoidDuty);
+        ValveInputState.SetTeensyErmDuty(laneIndex, ermDuty);
     }
 
     float DistanceToPressAmount(int distanceMM, float restDistanceMM, float pressedDistanceMM)
@@ -137,16 +373,80 @@ public class TeensySerialInput : MonoBehaviour
         return Mathf.Clamp01(amount);
     }
 
+    public bool IsConnected()
+    {
+        return serialPort != null && serialPort.IsOpen;
+    }
+
     public void Connect()
     {
-        if (serialPort != null && serialPort.IsOpen)
+        if (IsConnected())
         {
             return;
         }
 
+        string[] candidatePorts = GetCandidatePorts();
+
+        foreach (string candidatePort in candidatePorts)
+        {
+            if (TryConnectPort(candidatePort))
+            {
+                return;
+            }
+        }
+
+        Debug.LogWarning("Could not connect to Teensy. Checked: " + string.Join(", ", candidatePorts));
+    }
+
+    string[] GetCandidatePorts()
+    {
+        if (!autoDetectPort)
+        {
+            return new string[] { portName };
+        }
+
+        string[] availablePorts = SerialPort.GetPortNames();
+        string[] candidatePorts = new string[Mathf.Max(1, availablePorts.Length + 1)];
+
+        candidatePorts[0] = portName;
+        int index = 1;
+
+        for (int i = 0; i < availablePorts.Length; i++)
+        {
+            if (availablePorts[i] == portName)
+            {
+                continue;
+            }
+
+            if (index >= candidatePorts.Length)
+            {
+                break;
+            }
+
+            candidatePorts[index] = availablePorts[i];
+            index++;
+        }
+
+        if (index == candidatePorts.Length)
+        {
+            return candidatePorts;
+        }
+
+        string[] trimmedPorts = new string[index];
+
+        for (int i = 0; i < index; i++)
+        {
+            trimmedPorts[i] = candidatePorts[i];
+        }
+
+        return trimmedPorts;
+    }
+
+    bool TryConnectPort(string candidatePort)
+    {
         try
         {
-            serialPort = new SerialPort(portName, baudRate);
+            serialPort = new SerialPort(candidatePort, baudRate);
             serialPort.ReadTimeout = 50;
             serialPort.WriteTimeout = 50;
             serialPort.NewLine = "\n";
@@ -154,6 +454,7 @@ public class TeensySerialInput : MonoBehaviour
             serialPort.RtsEnable = true;
 
             serialPort.Open();
+            portName = candidatePort;
 
             keepReading = true;
             readThread = new Thread(ReadSerialLoop);
@@ -161,10 +462,13 @@ public class TeensySerialInput : MonoBehaviour
             readThread.Start();
 
             Debug.Log("Connected to Teensy on " + portName);
+            return true;
         }
         catch (Exception exception)
         {
-            Debug.LogError("Could not connect to Teensy on " + portName + ": " + exception.Message);
+            Debug.LogWarning("Could not connect to Teensy on " + candidatePort + ": " + exception.Message);
+            serialPort = null;
+            return false;
         }
     }
 
@@ -276,8 +580,47 @@ public class TeensySerialInput : MonoBehaviour
                 {
                     int.TryParse(value, out latestD3);
                 }
+                else if (key == "S1")
+                {
+                    latestS1 = ParseSerialFloat(value, latestS1);
+                }
+                else if (key == "S2")
+                {
+                    latestS2 = ParseSerialFloat(value, latestS2);
+                }
+                else if (key == "S3")
+                {
+                    latestS3 = ParseSerialFloat(value, latestS3);
+                }
+                else if (key == "E1")
+                {
+                    latestE1 = ParseSerialFloat(value, latestE1);
+                }
+                else if (key == "E2")
+                {
+                    latestE2 = ParseSerialFloat(value, latestE2);
+                }
+                else if (key == "E3")
+                {
+                    latestE3 = ParseSerialFloat(value, latestE3);
+                }
             }
         }
+    }
+
+    float ParseSerialFloat(string value, float fallback)
+    {
+        if (float.TryParse(
+            value,
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out float parsed
+        ))
+        {
+            return parsed;
+        }
+
+        return fallback;
     }
 
     public void SendLine(string command)

@@ -6,10 +6,16 @@ public class FlyingNote : MonoBehaviour
     public float targetHitTime;
     public bool resolved = false;
 
+    [Header("fingering group")]
+    public int fingeringGroupId = -1;
+    public int requiredValveMask = 0;
+    public string fingeringName = "";
+    public Color noteColor = Color.white;
+
     [Header("pre-cue")]
     public bool useDistanceBasedPreCue = true;
-    public float preCueDistanceFromTarget = 0.45f;
-    public float preCueLeadTime = 0.35f;
+    public float preCueDistanceFromTarget = 1.0f;
+    public float preCueLeadTime = 0.85f;
     private bool preCueSent = false;
 
     [Header("hold note")]
@@ -68,6 +74,10 @@ public class FlyingNote : MonoBehaviour
     )
     {
         laneIndex = lane;
+        fingeringGroupId = -1;
+        requiredValveMask = 1 << lane;
+        fingeringName = "Valve " + (lane + 1);
+
         spawnPosition = spawn;
         targetPosition = target;
         hitEffectPosition = hitPosition;
@@ -115,6 +125,12 @@ public class FlyingNote : MonoBehaviour
             if (holdStarted)
             {
                 bool stillHolding = ValveInputState.GetValve(laneIndex);
+
+                if (gameManager != null)
+                {
+                    stillHolding = gameManager.IsFingeringHeld(this);
+                }
+
                 float holdEndTime = targetHitTime + holdDuration;
 
                 if (!stillHolding && Time.time < holdEndTime)
@@ -182,6 +198,28 @@ public class FlyingNote : MonoBehaviour
         return Mathf.Max(0f, timeUntilHit);
     }
 
+    public void SetFingeringGroup(int groupId, int valveMask, string name)
+    {
+        fingeringGroupId = groupId;
+        requiredValveMask = valveMask == 0 ? 1 << laneIndex : valveMask;
+        fingeringName = string.IsNullOrEmpty(name) ? "Valve " + (laneIndex + 1) : name;
+    }
+
+    public void SetNoteColor(Color color)
+    {
+        noteColor = color;
+    }
+
+    public int GetRequiredValveMask()
+    {
+        if (requiredValveMask != 0)
+        {
+            return requiredValveMask;
+        }
+
+        return 1 << laneIndex;
+    }
+
     public void ResolveTapHit(string rating)
     {
         if (resolved)
@@ -190,6 +228,37 @@ public class FlyingNote : MonoBehaviour
         }
 
         TriggerTapSmash(IsPerfectRating(rating));
+
+        resolved = true;
+        gameManager.UnregisterNote(this);
+
+        Destroy(gameObject);
+    }
+
+    public void ResolveHoldCompleteFromGroup()
+    {
+        if (resolved)
+        {
+            return;
+        }
+
+        StopHoldSmash();
+        TriggerHoldEndSmash();
+
+        resolved = true;
+        gameManager.UnregisterNote(this);
+
+        Destroy(gameObject);
+    }
+
+    public void ResolveMissFromGroup()
+    {
+        if (resolved)
+        {
+            return;
+        }
+
+        StopHoldSmash();
 
         resolved = true;
         gameManager.UnregisterNote(this);

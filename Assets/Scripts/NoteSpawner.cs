@@ -63,18 +63,24 @@ public class NoteSpawner : MonoBehaviour
     public Transform hitPlane3;
 
     [Header("note timing")]
-    public float spawnInterval = 0.8f;
+    public float spawnInterval = 2.0f;
     public float noteTravelTime = 1.5f;
+    public bool waitForPreviousFingeringToResolve = true;
 
     [Header("haptic cue tuning")]
     public bool useDistanceBasedPreCue = true;
-    public float preCueDistanceFromTarget = 0.45f;
-    public float fallbackPreCueLeadTime = 0.35f;
+    public float preCueDistanceFromTarget = 1.0f;
+    public float fallbackPreCueLeadTime = 0.85f;
 
     [Header("lane colors")]
     public Color lane1Color = Color.green;
-    public Color lane2Color = Color.cyan;
+    public Color lane2Color = new Color(0.1882353f, 0.627451f, 1.0f, 1.0f);
     public Color lane3Color = Color.red;
+
+    [Header("lane color targets")]
+    public Material lane1LineMaterial;
+    public Material lane2LineMaterial;
+    public Material lane3LineMaterial;
 
     [Header("hold-note safety")]
     public float holdSafetyBuffer = 0.15f;
@@ -96,6 +102,7 @@ public class NoteSpawner : MonoBehaviour
 
     private float spawnTimer = 0f;
     private int patternIndex = 0;
+    private int nextFingeringGroupId = 1;
     private int lastRandomFingeringIndex = -1;
 
     private float[] laneHoldBusyUntil = new float[3];
@@ -116,9 +123,26 @@ public class NoteSpawner : MonoBehaviour
         1.4f, 0.0f, 0.7f, 0.0f
     };
 
+    void Start()
+    {
+        if (gameManager == null)
+        {
+            gameManager = UnityEngine.Object.FindAnyObjectByType<RhythmGameManager>();
+        }
+
+        ApplyLanePaletteToMaterials();
+    }
+
     void Update()
     {
         spawnTimer += Time.deltaTime;
+
+        if (waitForPreviousFingeringToResolve &&
+            gameManager != null &&
+            gameManager.HasActiveNotes())
+        {
+            return;
+        }
 
         if (spawnTimer >= spawnInterval)
         {
@@ -158,7 +182,15 @@ public class NoteSpawner : MonoBehaviour
             laneHoldBusyUntil[lane] = targetHitTime + finalHoldDuration + holdSafetyBuffer;
         }
 
-        SpawnLaneNote(lane, targetHitTime, finalHoldDuration);
+        int groupId = nextFingeringGroupId++;
+        SpawnLaneNote(
+            lane,
+            targetHitTime,
+            finalHoldDuration,
+            groupId,
+            1 << lane,
+            "Valve " + (lane + 1)
+        );
     }
 
     void SpawnNextTrumpetFingering()
@@ -174,6 +206,7 @@ public class NoteSpawner : MonoBehaviour
 
         float targetHitTime = Time.time + noteTravelTime;
         float requestedHoldDuration = Mathf.Max(0f, fingering.holdDuration);
+        int requiredValveMask = FingeringToMask(fingering);
         bool requestedHold = requestedHoldDuration > 0.05f;
         bool overlapsExistingHold = requestedHold && FingeringOverlapsExistingHold(fingering, targetHitTime);
 
@@ -186,6 +219,7 @@ public class NoteSpawner : MonoBehaviour
         }
 
         bool spawnedAnyLane = false;
+        int groupId = nextFingeringGroupId++;
 
         for (int lane = 0; lane < 3; lane++)
         {
@@ -194,7 +228,14 @@ public class NoteSpawner : MonoBehaviour
                 continue;
             }
 
-            SpawnLaneNote(lane, targetHitTime, finalHoldDuration);
+            SpawnLaneNote(
+                lane,
+                targetHitTime,
+                finalHoldDuration,
+                groupId,
+                requiredValveMask,
+                fingering.noteName
+            );
             spawnedAnyLane = true;
         }
 
@@ -204,7 +245,14 @@ public class NoteSpawner : MonoBehaviour
         }
     }
 
-    void SpawnLaneNote(int lane, float targetHitTime, float holdDuration)
+    void SpawnLaneNote(
+        int lane,
+        float targetHitTime,
+        float holdDuration,
+        int groupId,
+        int requiredValveMask,
+        string fingeringName
+    )
     {
         Transform spawnPoint = GetSpawnPoint(lane);
         Transform valveTarget = GetValveTarget(lane);
@@ -235,6 +283,7 @@ public class NoteSpawner : MonoBehaviour
 
         note.holdTailColor = noteColor;
         note.holdTailWidth = isHoldNote ? 0.08f : 0.0f;
+        note.SetNoteColor(noteColor);
         note.useDistanceBasedPreCue = useDistanceBasedPreCue;
         note.preCueDistanceFromTarget = preCueDistanceFromTarget;
         note.preCueLeadTime = fallbackPreCueLeadTime;
@@ -254,7 +303,24 @@ public class NoteSpawner : MonoBehaviour
             holdDuration
         );
 
+        note.SetFingeringGroup(groupId, requiredValveMask, fingeringName);
+
         gameManager.RegisterNote(note);
+    }
+
+    int FingeringToMask(TrumpetFingering fingering)
+    {
+        int mask = 0;
+
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if (fingering.UsesLane(lane))
+            {
+                mask |= 1 << lane;
+            }
+        }
+
+        return mask;
     }
 
     TrumpetFingering GetNextFingering()
@@ -375,5 +441,38 @@ public class NoteSpawner : MonoBehaviour
         if (lane == 0) return lane1Color;
         if (lane == 1) return lane2Color;
         return lane3Color;
+    }
+
+    void ApplyLanePaletteToMaterials()
+    {
+        ApplyMaterialColor(lane1LineMaterial, lane1Color);
+        ApplyMaterialColor(lane2LineMaterial, lane2Color);
+        ApplyMaterialColor(lane3LineMaterial, lane3Color);
+    }
+
+    void ApplyMaterialColor(Material material, Color color)
+    {
+        if (material == null)
+        {
+            return;
+        }
+
+        color.a = 1f;
+        material.color = color;
+
+        if (material.HasProperty("_BaseColor"))
+        {
+            material.SetColor("_BaseColor", color);
+        }
+
+        if (material.HasProperty("_Color"))
+        {
+            material.SetColor("_Color", color);
+        }
+    }
+
+    void OnValidate()
+    {
+        ApplyLanePaletteToMaterials();
     }
 }

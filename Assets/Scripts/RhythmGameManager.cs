@@ -49,6 +49,10 @@ public class RhythmGameManager : MonoBehaviour
         new SolenoidPulseSettings()
     };
 
+    [Header("MVP fingering judgment")]
+    public bool requireExactFingering = true;
+    public bool judgeFingeringContinuously = true;
+
     private List<FlyingNote> activeNotes = new List<FlyingNote>();
     private bool[] previousValveStates = new bool[3];
 
@@ -57,7 +61,11 @@ public class RhythmGameManager : MonoBehaviour
 
     void Start()
     {
-        Time.timeScale = 1f;
+        if (TeensySerialInput.Instance == null || !TeensySerialInput.Instance.isCalibrating)
+        {
+            Time.timeScale = 1f;
+        }
+
         EnsureSolenoidSettings();
 
         if (hapticFeedbackManager == null)
@@ -79,21 +87,32 @@ public class RhythmGameManager : MonoBehaviour
             return;
         }
 
+        int currentValveMask = ValveInputState.GetValveMask();
+        bool anyNewPress = false;
+
         for (int lane = 0; lane < 3; lane++)
         {
             bool pressed = ValveInputState.GetValve(lane);
 
             if (pressed && !previousValveStates[lane])
             {
-                bool successfulHit = TryHit(lane);
-
-                if (pushOnAnyValvePressForTuning && !successfulHit)
-                {
-                    SendSolenoidPush(lane);
-                }
+                anyNewPress = true;
             }
 
             previousValveStates[lane] = pressed;
+        }
+
+        if (currentValveMask == 0)
+        {
+            return;
+        }
+
+        bool shouldJudge = anyNewPress || judgeFingeringContinuously;
+        bool successfulHit = shouldJudge && TryHitCurrentFingering(currentValveMask);
+
+        if (pushOnAnyValvePressForTuning && anyNewPress && !successfulHit)
+        {
+            SendSolenoidPushForMask(currentValveMask);
         }
     }
 
@@ -120,6 +139,25 @@ public class RhythmGameManager : MonoBehaviour
         activeNotes.Remove(note);
     }
 
+    public bool HasActiveNotes()
+    {
+        for (int i = activeNotes.Count - 1; i >= 0; i--)
+        {
+            if (activeNotes[i] == null)
+            {
+                activeNotes.RemoveAt(i);
+                continue;
+            }
+
+            if (!activeNotes[i].resolved)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void OnNotePreCue(FlyingNote note)
     {
         if (note == null || gameOver)
@@ -140,6 +178,18 @@ public class RhythmGameManager : MonoBehaviour
 
     public bool TryHit(int lane)
     {
+        int currentValveMask = ValveInputState.GetValveMask();
+
+        if (currentValveMask == 0)
+        {
+            currentValveMask = 1 << lane;
+        }
+
+        return TryHitCurrentFingering(currentValveMask);
+    }
+
+    bool TryHitCurrentFingering(int currentValveMask)
+    {
         if (gameOver)
         {
             return false;
@@ -155,7 +205,9 @@ public class RhythmGameManager : MonoBehaviour
                 continue;
             }
 
-            if (note.laneIndex != lane)
+            int requiredValveMask = note.GetRequiredValveMask();
+
+            if (!IsValveMaskAccepted(requiredValveMask, currentValveMask))
             {
                 continue;
             }
@@ -178,29 +230,184 @@ public class RhythmGameManager : MonoBehaviour
         {
             bool perfect = bestTimingError <= perfectWindow;
             string rating = perfect ? "PERFECT!" : "GOOD!";
-
-            if (sendSolenoidPushOnHit)
-            {
-                SendSolenoidPush(bestNote.laneIndex);
-            }
+            Color feedbackColor = GetFingeringFeedbackColor(bestNote, perfect);
 
             if (bestNote.isHoldNote)
             {
-                SendHoldStart(bestNote.laneIndex);
-                bestNote.StartHold(rating);
-                ShowFeedback(rating, perfect ? Color.green : Color.yellow);
+                SendHoldStartForMask(bestNote.GetRequiredValveMask());
+                StartHoldGroup(bestNote, rating);
+                ShowFeedback(rating, feedbackColor);
             }
             else
             {
-                SendTapComplete(bestNote.laneIndex, perfect);
-                bestNote.ResolveTapHit(rating);
-                RegisterSuccessfulNote(rating, perfect, true);
+                if (sendSolenoidPushOnHit)
+                {
+                    SendSolenoidPushForMask(bestNote.GetRequiredValveMask());
+                }
+
+                SendTapCompleteForMask(bestNote.GetRequiredValveMask(), perfect);
+                ResolveTapGroup(bestNote, rating);
+                RegisterSuccessfulNote(rating, perfect, false);
+                ShowFeedback(rating, feedbackColor);
             }
 
             return true;
         }
 
         return false;
+    }
+
+    public bool IsFingeringHeld(FlyingNote note)
+    {
+        if (note == null)
+        {
+            return false;
+        }
+
+        return IsValveMaskAccepted(note.GetRequiredValveMask(), ValveInputState.GetValveMask());
+    }
+
+    bool IsValveMaskAccepted(int requiredValveMask, int currentValveMask)
+    {
+        if (requiredValveMask == 0 || currentValveMask == 0)
+        {
+            return false;
+        }
+
+        if (requireExactFingering)
+        {
+            return currentValveMask == requiredValveMask;
+        }
+
+        return (currentValveMask & requiredValveMask) == requiredValveMask;
+    }
+
+    void StartHoldGroup(FlyingNote sourceNote, string rating)
+    {
+        List<FlyingNote> groupNotes = GetFingeringGroup(sourceNote);
+
+        foreach (FlyingNote note in groupNotes)
+        {
+            if (note != null)
+            {
+                note.StartHold(rating);
+            }
+        }
+    }
+
+    void ResolveTapGroup(FlyingNote sourceNote, string rating)
+    {
+        List<FlyingNote> groupNotes = GetFingeringGroup(sourceNote);
+
+        foreach (FlyingNote note in groupNotes)
+        {
+            if (note != null)
+            {
+                note.ResolveTapHit(rating);
+            }
+        }
+    }
+
+    void ResolveCompletedHoldGroup(FlyingNote sourceNote)
+    {
+        List<FlyingNote> groupNotes = GetFingeringGroup(sourceNote);
+
+        foreach (FlyingNote note in groupNotes)
+        {
+            if (note == null || note == sourceNote)
+            {
+                continue;
+            }
+
+            note.ResolveHoldCompleteFromGroup();
+        }
+    }
+
+    void ResolveMissedGroup(FlyingNote sourceNote)
+    {
+        List<FlyingNote> groupNotes = GetFingeringGroup(sourceNote);
+
+        foreach (FlyingNote note in groupNotes)
+        {
+            if (note == null || note == sourceNote)
+            {
+                continue;
+            }
+
+            note.ResolveMissFromGroup();
+        }
+    }
+
+    List<FlyingNote> GetFingeringGroup(FlyingNote sourceNote)
+    {
+        List<FlyingNote> groupNotes = new List<FlyingNote>();
+
+        if (sourceNote == null)
+        {
+            return groupNotes;
+        }
+
+        int groupId = sourceNote.fingeringGroupId;
+
+        if (groupId < 0)
+        {
+            groupNotes.Add(sourceNote);
+            return groupNotes;
+        }
+
+        foreach (FlyingNote note in activeNotes)
+        {
+            if (note != null && note.fingeringGroupId == groupId)
+            {
+                groupNotes.Add(note);
+            }
+        }
+
+        if (groupNotes.Count == 0)
+        {
+            groupNotes.Add(sourceNote);
+        }
+
+        return groupNotes;
+    }
+
+    Color GetFingeringFeedbackColor(FlyingNote sourceNote, bool perfect)
+    {
+        List<FlyingNote> groupNotes = GetFingeringGroup(sourceNote);
+
+        if (groupNotes.Count == 0)
+        {
+            return perfect ? Color.green : Color.yellow;
+        }
+
+        Color mixedColor = Color.black;
+        int colorCount = 0;
+
+        foreach (FlyingNote note in groupNotes)
+        {
+            if (note == null)
+            {
+                continue;
+            }
+
+            mixedColor += note.noteColor;
+            colorCount++;
+        }
+
+        if (colorCount <= 0)
+        {
+            return perfect ? Color.green : Color.yellow;
+        }
+
+        mixedColor /= colorCount;
+        mixedColor.a = 1f;
+
+        if (perfect)
+        {
+            return Color.Lerp(mixedColor, Color.white, 0.25f);
+        }
+
+        return mixedColor;
     }
 
     public void OnHoldCompleted(FlyingNote note)
@@ -212,7 +419,8 @@ public class RhythmGameManager : MonoBehaviour
 
         if (note != null)
         {
-            SendHoldComplete(note.laneIndex);
+            SendHoldCompleteForMask(note.GetRequiredValveMask());
+            ResolveCompletedHoldGroup(note);
         }
 
         UnregisterNote(note);
@@ -228,7 +436,8 @@ public class RhythmGameManager : MonoBehaviour
 
         if (note != null)
         {
-            SendMiss(note.laneIndex);
+            SendMissForMask(note.GetRequiredValveMask());
+            ResolveMissedGroup(note);
         }
 
         UnregisterNote(note);
@@ -381,6 +590,61 @@ public class RhythmGameManager : MonoBehaviour
         }
 
         activeNotes.Clear();
+    }
+
+    void SendTapCompleteForMask(int valveMask, bool perfect)
+    {
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) != 0)
+            {
+                SendTapComplete(lane, perfect);
+            }
+        }
+    }
+
+    void SendHoldStartForMask(int valveMask)
+    {
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) != 0)
+            {
+                SendHoldStart(lane);
+            }
+        }
+    }
+
+    void SendHoldCompleteForMask(int valveMask)
+    {
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) != 0)
+            {
+                SendHoldComplete(lane);
+            }
+        }
+    }
+
+    void SendMissForMask(int valveMask)
+    {
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) != 0)
+            {
+                SendMiss(lane);
+            }
+        }
+    }
+
+    void SendSolenoidPushForMask(int valveMask)
+    {
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) != 0)
+            {
+                SendSolenoidPush(lane);
+            }
+        }
     }
 
     void SendTapComplete(int lane, bool perfect)

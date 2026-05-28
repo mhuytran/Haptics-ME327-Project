@@ -12,6 +12,8 @@ public static class ValveInputState
     // 1 = valve fully pressed
     private static float[] teensyValveAmounts = new float[3];
     private static int[] teensyValveDistancesMM = new int[3] { 255, 255, 255 };
+    private static float[] teensySolenoidDuty = new float[3];
+    private static float[] teensyErmDuty = new float[3];
 
     public static bool GetValve(int laneIndex)
     {
@@ -56,6 +58,50 @@ public static class ValveInputState
         {
             return teensyValveDistancesMM[laneIndex];
         }
+    }
+
+    public static float GetSolenoidDuty(int laneIndex)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return 0f;
+        }
+
+        lock (stateLock)
+        {
+            return Mathf.Clamp01(teensySolenoidDuty[laneIndex]);
+        }
+    }
+
+    public static float GetErmDuty(int laneIndex)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return 0f;
+        }
+
+        lock (stateLock)
+        {
+            return Mathf.Clamp01(teensyErmDuty[laneIndex]);
+        }
+    }
+
+    public static int GetValveMask()
+    {
+        int mask = 0;
+
+        lock (stateLock)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                if (keyboardValves[i] || teensyValves[i])
+                {
+                    mask |= 1 << i;
+                }
+            }
+        }
+
+        return mask;
     }
 
     public static void SetKeyboardValve(int laneIndex, bool pressed)
@@ -110,6 +156,32 @@ public static class ValveInputState
         }
     }
 
+    public static void SetTeensySolenoidDuty(int laneIndex, float duty)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return;
+        }
+
+        lock (stateLock)
+        {
+            teensySolenoidDuty[laneIndex] = Mathf.Clamp01(duty);
+        }
+    }
+
+    public static void SetTeensyErmDuty(int laneIndex, float duty)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return;
+        }
+
+        lock (stateLock)
+        {
+            teensyErmDuty[laneIndex] = Mathf.Clamp01(duty);
+        }
+    }
+
     public static void ClearAll()
     {
         lock (stateLock)
@@ -120,6 +192,8 @@ public static class ValveInputState
                 teensyValves[i] = false;
                 teensyValveAmounts[i] = 0f;
                 teensyValveDistancesMM[i] = 255;
+                teensySolenoidDuty[i] = 0f;
+                teensyErmDuty[i] = 0f;
             }
         }
     }

@@ -4,16 +4,19 @@ using UnityEngine;
 [Serializable]
 public class SolenoidPulseSettings
 {
+    public const float MaxRecommendedDuty = 0.80f;
+    public const int MaxRecommendedDurationMs = 250;
+
     [Range(0f, 1f)]
-    public float duty = 0.35f;
+    public float duty = 0.80f;
 
     public int phase = TeensyHardwarePinout.ActiveSolenoidPhase;
-    public int durationMs = 120;
+    public int durationMs = 125;
 
     public void Clamp()
     {
-        duty = Mathf.Clamp01(duty);
+        duty = Mathf.Clamp(duty, 0f, MaxRecommendedDuty);
         phase = phase == 0 ? 0 : 1;
-        durationMs = Mathf.Max(1, durationMs);
+        durationMs = Mathf.Clamp(durationMs, 1, MaxRecommendedDurationMs);
     }
 }
