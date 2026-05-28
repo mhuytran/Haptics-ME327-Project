@@ -15,7 +15,7 @@ public class FlyingNote : MonoBehaviour
     [Header("pre-cue")]
     public bool useDistanceBasedPreCue = false;
     public float preCueDistanceFromTarget = 1.0f;
-    public float preCueLeadTime = 0.35f;
+    public float preCueLeadTime = 0.60f;
     private bool preCueSent = false;
 
     [Header("hold note")]

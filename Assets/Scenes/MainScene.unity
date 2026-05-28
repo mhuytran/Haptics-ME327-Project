@@ -2799,10 +2799,10 @@ MonoBehaviour:
   printCommands: 1
   maxSolenoidDuty: 1
   maxSolenoidDurationMs: 800
-  completionPushDelayMs: 320
+  completionPushDelayMs: 0
   useRampedPreCue: 1
   preCueErmDuty: 1
-  preCueErmRampMs: 250
+  preCueErmRampMs: 500
   preCueErmHoldMs: 200
   preCueErmRampCurve: 0
   maxErmDuty: 1
@@ -2877,7 +2877,7 @@ MonoBehaviour:
   applyPreCueTuningToSpawner: 1
   useDistanceBasedPreCue: 0
   preCueDistanceFromTarget: 1
-  fallbackPreCueLeadTime: 0.35
+  fallbackPreCueLeadTime: 0.6
   animateValveOnTest: 1
   testAnimationPressSeconds: 0.12
   testAnimationReleaseSeconds: 0.45
@@ -3568,10 +3568,10 @@ MonoBehaviour:
   printCommands: 1
   maxSolenoidDuty: 1
   maxSolenoidDurationMs: 800
-  completionPushDelayMs: 320
+  completionPushDelayMs: 0
   useRampedPreCue: 1
   preCueErmDuty: 1
-  preCueErmRampMs: 250
+  preCueErmRampMs: 500
   preCueErmHoldMs: 200
   preCueErmRampCurve: 0
   maxErmDuty: 1
@@ -4022,6 +4022,7 @@ MonoBehaviour:
   spawnMode: 0
   spawnInterval: 2
   noteTravelTime: 2.2
+  minimumNoteHoldDuration: 0.5
   waitForPreviousFingeringToResolve: 1
   allowModeSwitchShortcuts: 1
   toggleSpawnModeKey: 102
@@ -4054,7 +4055,7 @@ MonoBehaviour:
   timingOffsetNudgeSeconds: 0.025
   currentAudioClockTime: 0
   useSongDurationsAsHolds: 1
-  minimumSongHoldDuration: 0.65
+  minimumSongHoldDuration: 0.5
   skipVeryLateSongNotes: 1
   lateSongNoteSkipSeconds: 0.4
   loopSongChart: 0
@@ -4068,7 +4069,7 @@ MonoBehaviour:
   skippedOpenSongNoteCount: 0
   useDistanceBasedPreCue: 0
   preCueDistanceFromTarget: 1
-  fallbackPreCueLeadTime: 0.35
+  fallbackPreCueLeadTime: 0.6
   lane1Color: {r: 0, g: 1, b: 0, a: 1}
   lane2Color: {r: 0.1882353, g: 0.627451, b: 1, a: 1}
   lane3Color: {r: 1, g: 0, b: 0, a: 1}

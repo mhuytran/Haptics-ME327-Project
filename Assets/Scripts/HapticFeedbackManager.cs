@@ -47,7 +47,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     [Header("playable dwell before push-off")]
     [Tooltip("Delay TAPCOMPLETE/HOLDCOMPLETE/MISS commands so the player gets time to press or hold before the solenoid pushes back. Set to 0 for instant push-off.")]
-    public int completionPushDelayMs = 320;
+    public int completionPushDelayMs = 0;
 
     [Header("ERM pre-cue ramp")]
     public bool useRampedPreCue = true;
@@ -55,7 +55,7 @@ public class HapticFeedbackManager : MonoBehaviour
     [Tooltip("Main ERM pre-cue strength. Team 12V feel-test value is 1.00.")]
     public float preCueErmDuty = 1.00f;
     [Tooltip("Gameplay ERM pre-cue ramp time. Long enough to feel the motor ramp, short enough to cue near the note.")]
-    public int preCueErmRampMs = 250;
+    public int preCueErmRampMs = 500;
     [Tooltip("ERM hold time after the ramp completes.")]
     public int preCueErmHoldMs = 200;
     [Tooltip("ERM pre-cue ramp curve. Linear reaches feelable duty quickly for gameplay.")]
@@ -381,11 +381,11 @@ public class HapticFeedbackManager : MonoBehaviour
     {
         maxSolenoidDuty = 1.00f;
         maxSolenoidDurationMs = 800;
-        completionPushDelayMs = 320;
+        completionPushDelayMs = 0;
 
         useRampedPreCue = true;
         preCueErmDuty = 1.00f;
-        preCueErmRampMs = 250;
+        preCueErmRampMs = 500;
         preCueErmHoldMs = 200;
         preCueErmRampCurve = SolenoidRampCurve.Linear;
         maxErmDuty = 1.00f;

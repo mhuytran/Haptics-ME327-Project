@@ -167,7 +167,7 @@ public class NoteSpawner : MonoBehaviour
     [Header("haptic cue tuning")]
     public bool useDistanceBasedPreCue = false;
     public float preCueDistanceFromTarget = 1.0f;
-    public float fallbackPreCueLeadTime = 0.35f;
+    public float fallbackPreCueLeadTime = 0.60f;
 
     [Header("lane colors")]
     public Color lane1Color = Color.green;
@@ -414,7 +414,12 @@ public class NoteSpawner : MonoBehaviour
         bool requestedHold = requestedHoldDuration > 0.05f;
         bool overlapsExistingHold = requestedHold && targetHitTime < laneHoldBusyUntil[lane];
 
-        float finalHoldDuration = overlapsExistingHold ? 0f : requestedHoldDuration;
+        if (overlapsExistingHold)
+        {
+            return;
+        }
+
+        float finalHoldDuration = requestedHoldDuration;
         bool isHoldNote = finalHoldDuration > 0.05f;
 
         if (isHoldNote)
@@ -450,7 +455,12 @@ public class NoteSpawner : MonoBehaviour
         bool requestedHold = requestedHoldDuration > 0.05f;
         bool overlapsExistingHold = requestedHold && FingeringOverlapsExistingHold(fingering, targetHitTime);
 
-        float finalHoldDuration = overlapsExistingHold ? 0f : requestedHoldDuration;
+        if (overlapsExistingHold)
+        {
+            return;
+        }
+
+        float finalHoldDuration = requestedHoldDuration;
         bool isHoldNote = finalHoldDuration > 0.05f;
 
         if (isHoldNote)
