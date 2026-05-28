@@ -59,12 +59,18 @@ public class TeensySerialInput : MonoBehaviour
     public bool useDiscreteToFStates = true;
     [Tooltip("Debug only. Uses Teensy's raw V1/V2/V3 bits instead of Unity's calibrated ToF states.")]
     public bool useTeensyDebugPressBits = false;
-    [Tooltip("Recommended for bench testing. If Unity calibration is wrong but Teensy's raw V1/V2/V3 says pressed, still count the valve as pressed.")]
-    public bool acceptTeensyPressBitsAsFallback = true;
+    [Tooltip("Debug only. Leave off for MVP. Raw Teensy V bits use the fixed THRESH value and can pin valves down when real rest distance is below that value.")]
+    public bool acceptTeensyPressBitsAsFallback = false;
     [Tooltip("Read-only runtime status.")]
     public bool isCalibrated = false;
     [Tooltip("Read-only runtime status.")]
     public bool isCalibrating = false;
+    [Tooltip("Wait this long for live D1/D2/D3 data before sampling calibration. Prevents stale 80/65 fallback if serial is still connecting.")]
+    public float calibrationWaitForDataSeconds = 4f;
+    [Tooltip("For close-mounted sensors, cap press delta to this fraction of calibrated rest. 0.25 turns a 33 mm rest into roughly a 25 mm press threshold.")]
+    public float closeSensorPressDeltaFraction = 0.25f;
+    [Tooltip("Smallest allowed press threshold delta after auto calibration. Keep small for close-mounted sensors.")]
+    public float minimumPressEnterDeltaMM = 1.5f;
 
     [Header("legacy press threshold")]
     public bool derivePressedStateFromDistance = false;
@@ -116,6 +122,7 @@ public class TeensySerialInput : MonoBehaviour
     private float latestE3 = 0f;
 
     private bool[] calibratedPressedStates = new bool[3];
+    private bool[] laneHasLiveCalibration = new bool[3];
     private bool legacyTesterWarningShown = false;
 
     void Awake()
@@ -181,6 +188,13 @@ public class TeensySerialInput : MonoBehaviour
             e3 = latestE3;
         }
 
+        if (isCalibrated)
+        {
+            TryLazyCalibrateLane(0, d1);
+            TryLazyCalibrateLane(1, d2);
+            TryLazyCalibrateLane(2, d3);
+        }
+
         float a1 = DistanceToPressAmount(d1, valve1RestDistanceMM, valve1PressedDistanceMM);
         float a2 = DistanceToPressAmount(d2, valve2RestDistanceMM, valve2PressedDistanceMM);
         float a3 = DistanceToPressAmount(d3, valve3RestDistanceMM, valve3PressedDistanceMM);
@@ -197,20 +211,9 @@ public class TeensySerialInput : MonoBehaviour
         }
         else if (useDiscreteToFStates && isCalibrated)
         {
-            bool rawV1 = v1;
-            bool rawV2 = v2;
-            bool rawV3 = v3;
-
             v1 = GetDiscretePressedState(0, d1);
             v2 = GetDiscretePressedState(1, d2);
             v3 = GetDiscretePressedState(2, d3);
-
-            if (acceptTeensyPressBitsAsFallback)
-            {
-                v1 = v1 || rawV1;
-                v2 = v2 || rawV2;
-                v3 = v3 || rawV3;
-            }
 
             a1 = v1 ? 1f : 0f;
             a2 = v2 ? 1f : 0f;
@@ -248,6 +251,11 @@ public class TeensySerialInput : MonoBehaviour
         isCalibrated = false;
         ValveInputState.ClearAll();
 
+        for (int i = 0; i < laneHasLiveCalibration.Length; i++)
+        {
+            laneHasLiveCalibration[i] = false;
+        }
+
         float previousTimeScale = Time.timeScale;
 
         if (pauseGameDuringCalibration)
@@ -257,6 +265,18 @@ public class TeensySerialInput : MonoBehaviour
 
         float[] sums = new float[3];
         int[] sampleCounts = new int[3];
+        float waitForDataEndTime = Time.realtimeSinceStartup + Mathf.Max(0f, calibrationWaitForDataSeconds);
+
+        while (Time.realtimeSinceStartup < waitForDataEndTime && !HasAnyValidLiveDistance())
+        {
+            if (pauseGameDuringCalibration)
+            {
+                Time.timeScale = 0f;
+            }
+
+            yield return null;
+        }
+
         float endTime = Time.realtimeSinceStartup + Mathf.Max(0.1f, startupCalibrationPauseSeconds);
 
         while (Time.realtimeSinceStartup < endTime)
@@ -325,6 +345,10 @@ public class TeensySerialInput : MonoBehaviour
         valve2RestDistanceMM = GetCalibratedRestDistance(1, sums, sampleCounts, valve2RestDistanceMM);
         valve3RestDistanceMM = GetCalibratedRestDistance(2, sums, sampleCounts, valve3RestDistanceMM);
 
+        laneHasLiveCalibration[0] = sampleCounts[0] > 0;
+        laneHasLiveCalibration[1] = sampleCounts[1] > 0;
+        laneHasLiveCalibration[2] = sampleCounts[2] > 0;
+
         ApplyPressedThresholdsFromCalibratedRest();
     }
 
@@ -361,11 +385,47 @@ public class TeensySerialInput : MonoBehaviour
         return pressed;
     }
 
+    void TryLazyCalibrateLane(int laneIndex, int distanceMM)
+    {
+        if (laneIndex < 0 || laneIndex >= laneHasLiveCalibration.Length)
+        {
+            return;
+        }
+
+        if (laneHasLiveCalibration[laneIndex] || !IsValidDistance(distanceMM))
+        {
+            return;
+        }
+
+        SetRestDistance(laneIndex, distanceMM);
+        ApplyPressedThresholdsFromCalibratedRest();
+        calibratedPressedStates[laneIndex] = false;
+        laneHasLiveCalibration[laneIndex] = true;
+
+        Debug.Log("Lazy ToF calibrated valve " + (laneIndex + 1) + " rest to " + distanceMM + " mm");
+    }
+
     float GetRestDistance(int laneIndex)
     {
         if (laneIndex == 0) return valve1RestDistanceMM;
         if (laneIndex == 1) return valve2RestDistanceMM;
         return valve3RestDistanceMM;
+    }
+
+    void SetRestDistance(int laneIndex, float distanceMM)
+    {
+        if (laneIndex == 0)
+        {
+            valve1RestDistanceMM = distanceMM;
+        }
+        else if (laneIndex == 1)
+        {
+            valve2RestDistanceMM = distanceMM;
+        }
+        else
+        {
+            valve3RestDistanceMM = distanceMM;
+        }
     }
 
     float GetPressedDistance(int laneIndex)
@@ -382,15 +442,45 @@ public class TeensySerialInput : MonoBehaviour
 
     float GetReleaseDistance(int laneIndex)
     {
-        return GetRestDistance(laneIndex) - Mathf.Max(0.5f, releaseDeltaMM);
+        return GetRestDistance(laneIndex) - GetEffectiveReleaseDelta(laneIndex);
     }
 
     void ApplyPressedThresholdsFromCalibratedRest()
     {
-        float clampedDelta = Mathf.Max(1f, pressEnterDeltaMM);
-        valve1PressedDistanceMM = Mathf.Max(1f, valve1RestDistanceMM - clampedDelta);
-        valve2PressedDistanceMM = Mathf.Max(1f, valve2RestDistanceMM - clampedDelta);
-        valve3PressedDistanceMM = Mathf.Max(1f, valve3RestDistanceMM - clampedDelta);
+        valve1PressedDistanceMM = Mathf.Max(1f, valve1RestDistanceMM - GetEffectivePressEnterDelta(0));
+        valve2PressedDistanceMM = Mathf.Max(1f, valve2RestDistanceMM - GetEffectivePressEnterDelta(1));
+        valve3PressedDistanceMM = Mathf.Max(1f, valve3RestDistanceMM - GetEffectivePressEnterDelta(2));
+    }
+
+    bool HasAnyValidLiveDistance()
+    {
+        lock (stateLock)
+        {
+            return IsValidDistance(latestD1) ||
+                IsValidDistance(latestD2) ||
+                IsValidDistance(latestD3);
+        }
+    }
+
+    float GetEffectivePressEnterDelta(int laneIndex)
+    {
+        float restDistance = Mathf.Max(1f, GetRestDistance(laneIndex));
+        float requestedDelta = Mathf.Max(minimumPressEnterDeltaMM, pressEnterDeltaMM);
+        float closeSensorDeltaCap = Mathf.Max(
+            minimumPressEnterDeltaMM,
+            restDistance * Mathf.Clamp(closeSensorPressDeltaFraction, 0.05f, 0.9f)
+        );
+
+        return Mathf.Min(requestedDelta, closeSensorDeltaCap);
+    }
+
+    float GetEffectiveReleaseDelta(int laneIndex)
+    {
+        float pressDelta = GetEffectivePressEnterDelta(laneIndex);
+        float requestedReleaseDelta = Mathf.Clamp(releaseDeltaMM, 0.5f, pressDelta - 0.25f);
+        float closeSensorReleaseCap = Mathf.Max(1f, pressDelta * 0.55f);
+
+        return Mathf.Min(requestedReleaseDelta, closeSensorReleaseCap);
     }
 
     void UpdateLiveToFReadout(
@@ -822,7 +912,10 @@ public class TeensySerialInput : MonoBehaviour
     {
         TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
         startupCalibrationPauseSeconds = Mathf.Max(0.1f, startupCalibrationPauseSeconds);
+        calibrationWaitForDataSeconds = Mathf.Clamp(calibrationWaitForDataSeconds, 0f, 10f);
         pressEnterDeltaMM = Mathf.Max(1f, pressEnterDeltaMM);
+        minimumPressEnterDeltaMM = Mathf.Clamp(minimumPressEnterDeltaMM, 1f, pressEnterDeltaMM);
+        closeSensorPressDeltaFraction = Mathf.Clamp(closeSensorPressDeltaFraction, 0.05f, 0.9f);
         releaseDeltaMM = Mathf.Clamp(releaseDeltaMM, 0.5f, pressEnterDeltaMM - 0.5f);
 
         if (!Application.isPlaying)

@@ -51,7 +51,8 @@ public class RhythmGameManager : MonoBehaviour
 
     [Header("MVP fingering judgment")]
     public bool requireExactFingering = true;
-    public bool judgeFingeringContinuously = true;
+    [Tooltip("Leave off for MVP hardware so a stuck/held ToF state cannot keep auto-hitting future notes. Notes are judged on a new press edge.")]
+    public bool judgeFingeringContinuously = false;
 
     private List<FlyingNote> activeNotes = new List<FlyingNote>();
     private bool[] previousValveStates = new bool[3];

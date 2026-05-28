@@ -2717,22 +2717,25 @@ MonoBehaviour:
     the live ToF rest distance, usually near 80 mm. Pressed threshold = rest - Press
     Enter Delta, so 80 and 15 gives a 65 mm press threshold. If presses do not register,
     lower Press Enter Delta. If idle valves falsely press, raise it.
-  valve1RestDistanceMM: 80
-  valve1PressedDistanceMM: 65
-  valve2RestDistanceMM: 80
-  valve2PressedDistanceMM: 65
-  valve3RestDistanceMM: 80
-  valve3PressedDistanceMM: 65
+  valve1RestDistanceMM: 35.5
+  valve1PressedDistanceMM: 34
+  valve2RestDistanceMM: 32.4
+  valve2PressedDistanceMM: 30.900002
+  valve3RestDistanceMM: 38.8
+  valve3PressedDistanceMM: 37.3
   autoCalibrateOnStart: 1
   pauseGameDuringCalibration: 1
   startupCalibrationPauseSeconds: 1.5
-  pressEnterDeltaMM: 15
-  releaseDeltaMM: 8
+  pressEnterDeltaMM: 1.5
+  releaseDeltaMM: 0.5
   useDiscreteToFStates: 1
   useTeensyDebugPressBits: 0
-  acceptTeensyPressBitsAsFallback: 1
+  acceptTeensyPressBitsAsFallback: 0
   isCalibrated: 0
   isCalibrating: 0
+  calibrationWaitForDataSeconds: 4
+  closeSensorPressDeltaFraction: 0.25
+  minimumPressEnterDeltaMM: 1.5
   derivePressedStateFromDistance: 0
   pressAmountThreshold: 0.65
   printIncomingLines: 0
@@ -3579,7 +3582,7 @@ MonoBehaviour:
   tuneErmHoldMs: 100
   tuneTeamSequenceDelayMs: 1000
   tuneRawTofThresholdMM: 65
-  lastCommandStatus: No haptic command sent yet.
+  lastCommandStatus: 'BLOCKED by command filter: SOL,1,1.00,1,350'
 --- !u!1 &1646561942
 GameObject:
   m_ObjectHideFlags: 0
@@ -3985,7 +3988,7 @@ MonoBehaviour:
     phase: 1
     durationMs: 350
   requireExactFingering: 1
-  judgeFingeringContinuously: 1
+  judgeFingeringContinuously: 0
 --- !u!114 &1740641789
 MonoBehaviour:
   m_ObjectHideFlags: 0

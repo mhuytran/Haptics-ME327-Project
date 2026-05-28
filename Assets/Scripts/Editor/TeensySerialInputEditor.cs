@@ -12,7 +12,7 @@ public class TeensySerialInputEditor : Editor
 
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox(
-            "ToF MVP setup: leave valves released when Play starts. Auto calibration writes live rest distances, then sets press thresholds to rest - Press Enter Delta. Default 15 mm makes an 80 mm rest become a 65 mm press threshold.",
+            "ToF MVP setup: leave valves released when Play starts. Auto calibration waits for live D1/D2/D3 data, writes rest distances, then derives press/release thresholds from those live values. Keep raw Teensy V fallback off unless you are deliberately debugging THRESH.",
             MessageType.Info
         );
 
@@ -39,7 +39,7 @@ public class TeensySerialInputEditor : Editor
             input.pauseGameDuringCalibration = true;
             input.useDiscreteToFStates = true;
             input.useTeensyDebugPressBits = false;
-            input.acceptTeensyPressBitsAsFallback = true;
+            input.acceptTeensyPressBitsAsFallback = false;
             input.derivePressedStateFromDistance = false;
             EditorUtility.SetDirty(input);
         }
