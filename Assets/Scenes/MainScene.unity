@@ -2741,9 +2741,9 @@ MonoBehaviour:
   liveValve1DistanceMM: 255
   liveValve2DistanceMM: 255
   liveValve3DistanceMM: 255
-  liveValve1Pressed: 0
-  liveValve2Pressed: 0
-  liveValve3Pressed: 0
+  liveValve1Pressed: 1
+  liveValve2Pressed: 1
+  liveValve3Pressed: 1
   liveValve1Amount: 0
   liveValve2Amount: 0
   liveValve3Amount: 0
@@ -2783,32 +2783,32 @@ MonoBehaviour:
     ermIn1Pin: 22
     ermIn2Pin: 23
   commandGuide: 'Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE,
-    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, THRESH. Not used by
-    Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.'
-  commandProfile: 1
+    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, THRESH.
+    Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.'
+  commandProfile: 0
   filterOutgoingCommands: 1
   enableHaptics: 1
   printCommands: 1
-  maxSolenoidDuty: 0.8
-  maxSolenoidDurationMs: 250
+  maxSolenoidDuty: 1
+  maxSolenoidDurationMs: 350
   useRampedPreCue: 1
-  preCueErmDuty: 0.25
-  preCueErmRampMs: 800
-  preCueErmHoldMs: 120
+  preCueErmDuty: 1
+  preCueErmRampMs: 1000
+  preCueErmHoldMs: 100
   preCueErmRampCurve: 1
-  maxErmDuty: 0.45
+  maxErmDuty: 1
   maxErmRampMs: 1200
   tuneLane: 1
-  tuneSolenoidDuty: 0.8
-  tuneSolenoidDurationMs: 125
-  tuneSolenoidRampMs: 500
+  tuneSolenoidDuty: 1
+  tuneSolenoidDurationMs: 350
+  tuneSolenoidRampMs: 800
   tuneSolenoidRampCurve: 1
-  tuneSolenoidRampHoldMs: 200
-  tuneErmDuty: 0.25
-  tuneErmDurationMs: 120
-  tuneErmRampMs: 800
+  tuneSolenoidRampHoldMs: 350
+  tuneErmDuty: 1
+  tuneErmDurationMs: 150
+  tuneErmRampMs: 1000
   tuneErmRampCurve: 1
-  tuneErmHoldMs: 120
+  tuneErmHoldMs: 100
   tuneTeamSequenceDelayMs: 1000
   tuneRawTofThresholdMM: 65
   lastCommandStatus: No haptic command sent yet.
@@ -2849,29 +2849,31 @@ MonoBehaviour:
     solenoidPhasePin: 7
     ermIn1Pin: 22
     ermIn2Pin: 23
-  testDuty: 0.8
-  testDurationMs: 125
+  testDuty: 1
+  testDurationMs: 350
   normalPhase: 1
   shiftedPhase: 0
   usePerLanePulseSettings: 1
   applyPulseSettingsToGameplay: 1
   solenoidPulseSettings:
-  - duty: 0.8
+  - duty: 1
     phase: 1
-    durationMs: 125
-  - duty: 0.8
+    durationMs: 350
+  - duty: 1
     phase: 1
-    durationMs: 125
-  - duty: 0.8
+    durationMs: 350
+  - duty: 1
     phase: 1
-    durationMs: 125
+    durationMs: 350
   applyPreCueTuningToSpawner: 1
   useDistanceBasedPreCue: 1
   preCueDistanceFromTarget: 1
   fallbackPreCueLeadTime: 0.85
   animateValveOnTest: 1
   testAnimationPressSeconds: 0.12
+  testAnimationReleaseSeconds: 0.45
   enableKeyboardTesting: 1
+  useTeamSequenceForKeyboardTesting: 1
 --- !u!1 &1476594531
 GameObject:
   m_ObjectHideFlags: 0
@@ -3549,32 +3551,32 @@ MonoBehaviour:
     ermIn1Pin: 22
     ermIn2Pin: 23
   commandGuide: 'Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE,
-    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, THRESH. Not used by
-    Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.'
-  commandProfile: 1
+    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, THRESH.
+    Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.'
+  commandProfile: 0
   filterOutgoingCommands: 1
   enableHaptics: 1
   printCommands: 1
-  maxSolenoidDuty: 0.8
-  maxSolenoidDurationMs: 250
+  maxSolenoidDuty: 1
+  maxSolenoidDurationMs: 350
   useRampedPreCue: 1
-  preCueErmDuty: 0.25
-  preCueErmRampMs: 800
-  preCueErmHoldMs: 120
+  preCueErmDuty: 1
+  preCueErmRampMs: 1000
+  preCueErmHoldMs: 100
   preCueErmRampCurve: 1
-  maxErmDuty: 0.45
+  maxErmDuty: 1
   maxErmRampMs: 1200
   tuneLane: 1
-  tuneSolenoidDuty: 0.8
-  tuneSolenoidDurationMs: 125
-  tuneSolenoidRampMs: 500
+  tuneSolenoidDuty: 1
+  tuneSolenoidDurationMs: 350
+  tuneSolenoidRampMs: 800
   tuneSolenoidRampCurve: 1
-  tuneSolenoidRampHoldMs: 200
-  tuneErmDuty: 0.25
-  tuneErmDurationMs: 120
-  tuneErmRampMs: 800
+  tuneSolenoidRampHoldMs: 350
+  tuneErmDuty: 1
+  tuneErmDurationMs: 150
+  tuneErmRampMs: 1000
   tuneErmRampCurve: 1
-  tuneErmHoldMs: 120
+  tuneErmHoldMs: 100
   tuneTeamSequenceDelayMs: 1000
   tuneRawTofThresholdMM: 65
   lastCommandStatus: No haptic command sent yet.
@@ -3973,15 +3975,15 @@ MonoBehaviour:
   sendSolenoidPushOnHit: 0
   pushOnAnyValvePressForTuning: 0
   solenoidPushSettings:
-  - duty: 0.8
+  - duty: 1
     phase: 1
-    durationMs: 125
-  - duty: 0.8
+    durationMs: 350
+  - duty: 1
     phase: 1
-    durationMs: 125
-  - duty: 0.8
+    durationMs: 350
+  - duty: 1
     phase: 1
-    durationMs: 125
+    durationMs: 350
   requireExactFingering: 1
   judgeFingeringContinuously: 1
 --- !u!114 &1740641789
@@ -4046,7 +4048,7 @@ MonoBehaviour:
   skipVeryLateSongNotes: 1
   lateSongNoteSkipSeconds: 0.4
   loopSongChart: 0
-  loadedSongTitle:
+  loadedSongTitle: 
   loadedSongNoteCount: 0
   nextSongNoteIndex: 0
   currentSongTime: 0
@@ -4066,7 +4068,7 @@ MonoBehaviour:
   holdSafetyBuffer: 0.2
   useTrumpetFingerings: 1
   randomizeFingerings: 1
-  lastSpawnedFingering:
+  lastSpawnedFingering: 
   validFingerings:
   - noteName: F / Bb - 1
     valve1: 1

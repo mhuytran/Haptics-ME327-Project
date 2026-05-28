@@ -79,21 +79,26 @@ const bool ENABLE_TUNING_COMMANDS = true;
 
 // ------------------------------------------------------------
 // Gameplay solenoid push-off tuning.
-// These defaults are intentionally conservative for an MVP bench test.
-// Raise only after confirming the mechanism does not heat, bind, or slap.
+// Matches the team's 12V feel-test sequence:
+// TEST,1000,1,100,1,1000,800,1,350,1
 // ------------------------------------------------------------
 const float MAX_SOLENOID_DUTY = 1.00f;
-const unsigned long DEFAULT_SOLENOID_PULSE_MS = 125;
+const unsigned long DEFAULT_SOLENOID_PULSE_MS = 350;
 const unsigned long MAX_SOLENOID_PULSE_MS = 350;
 const unsigned long MAX_SOLENOID_RAMP_MS = 1000;
 const unsigned long MAX_HAPTIC_TEST_DELAY_MS = 5000;
 
-const float TAP_RESET_SOL_DUTY_GOOD = 0.65f;
-const float TAP_RESET_SOL_DUTY_PERFECT = 0.80f;
-const float HOLD_RESET_SOL_DUTY = 0.75f;
+const float TAP_RESET_SOL_DUTY_GOOD = 1.00f;
+const float TAP_RESET_SOL_DUTY_PERFECT = 1.00f;
+const float HOLD_RESET_SOL_DUTY = 1.00f;
 
-const unsigned long TAP_RESET_SOL_MS = 125;
-const unsigned long HOLD_RESET_SOL_MS = 125;
+const unsigned long TAP_RESET_SOL_RAMP_MS = 800;
+const int TAP_RESET_SOL_CURVE = 1;
+const unsigned long TAP_RESET_SOL_MS = 350;
+
+const unsigned long HOLD_RESET_SOL_RAMP_MS = 800;
+const int HOLD_RESET_SOL_CURVE = 1;
+const unsigned long HOLD_RESET_SOL_MS = 350;
 
 // ------------------------------------------------------------
 // ERM gameplay tuning
@@ -739,7 +744,7 @@ void handleTapCompleteCommand(int lane, const char *rating)
     float solDuty = perfect ? TAP_RESET_SOL_DUTY_PERFECT : TAP_RESET_SOL_DUTY_GOOD;
     unsigned long solDuration = TAP_RESET_SOL_MS;
 
-    setSolenoid(channel, solDuty, SOLENOID_ACTIVE_PHASE, solDuration);
+    rampSolenoid(channel, TAP_RESET_SOL_RAMP_MS, TAP_RESET_SOL_CURVE, solDuration, solDuty);
 
     if (perfect)
     {
@@ -783,7 +788,7 @@ void handleHoldCompleteCommand(int lane)
 
     cancelHapticTestSequence(channel);
     setERM(channel, 0.0f, 0);
-    setSolenoid(channel, HOLD_RESET_SOL_DUTY, SOLENOID_ACTIVE_PHASE, HOLD_RESET_SOL_MS);
+    rampSolenoid(channel, HOLD_RESET_SOL_RAMP_MS, HOLD_RESET_SOL_CURVE, HOLD_RESET_SOL_MS, HOLD_RESET_SOL_DUTY);
 }
 
 // ------------------------------------------------------------

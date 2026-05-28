@@ -40,9 +40,9 @@ public class HapticFeedbackManager : MonoBehaviour
     [Header("Solenoid safety caps")]
     [Range(0f, 1f)]
     [Tooltip("Maximum solenoid duty Unity is allowed to send. Firmware also caps this.")]
-    public float maxSolenoidDuty = SolenoidPulseSettings.MaxRecommendedDuty;
+    public float maxSolenoidDuty = 1.00f;
     [Tooltip("Maximum solenoid pulse duration Unity is allowed to send. Firmware also caps this.")]
-    public int maxSolenoidDurationMs = SolenoidPulseSettings.MaxRecommendedDurationMs;
+    public int maxSolenoidDurationMs = 350;
 
     [Header("ERM pre-cue ramp")]
     public bool useRampedPreCue = true;
@@ -64,7 +64,7 @@ public class HapticFeedbackManager : MonoBehaviour
     public int tuneLane = 1;
     [Range(0f, 1f)]
     public float tuneSolenoidDuty = 1.00f;
-    public int tuneSolenoidDurationMs = 125;
+    public int tuneSolenoidDurationMs = 350;
     [Tooltip("Standalone tester TEST rampTimeMs equivalent, sent as SOLRAMP.")]
     public int tuneSolenoidRampMs = 800;
     [Tooltip("Standalone tester func equivalent: Linear = 0, Quadratic = 1, Exponential = 2.")]
@@ -73,7 +73,7 @@ public class HapticFeedbackManager : MonoBehaviour
     public int tuneSolenoidRampHoldMs = 350;
     [Range(0f, 1f)]
     public float tuneErmDuty = 1.00f;
-    public int tuneErmDurationMs = 120;
+    public int tuneErmDurationMs = 150;
     public int tuneErmRampMs = 1000;
     [Tooltip("Team TEST eFunc equivalent for the ERM ramp.")]
     public SolenoidRampCurve tuneErmRampCurve = SolenoidRampCurve.Quadratic;
@@ -370,6 +370,36 @@ public class HapticFeedbackManager : MonoBehaviour
         SendRawTofThreshold(tuneRawTofThresholdMM);
     }
 
+    [ContextMenu("Tune/Apply Team 12V Feel Defaults")]
+    public void ApplyTeam12VFeelDefaults()
+    {
+        maxSolenoidDuty = 1.00f;
+        maxSolenoidDurationMs = 350;
+
+        useRampedPreCue = true;
+        preCueErmDuty = 1.00f;
+        preCueErmRampMs = 1000;
+        preCueErmHoldMs = 100;
+        preCueErmRampCurve = SolenoidRampCurve.Quadratic;
+        maxErmDuty = 1.00f;
+        maxErmRampMs = 1200;
+
+        tuneSolenoidDuty = 1.00f;
+        tuneSolenoidDurationMs = 350;
+        tuneSolenoidRampMs = 800;
+        tuneSolenoidRampCurve = SolenoidRampCurve.Quadratic;
+        tuneSolenoidRampHoldMs = 350;
+
+        tuneErmDuty = 1.00f;
+        tuneErmDurationMs = 150;
+        tuneErmRampMs = 1000;
+        tuneErmRampCurve = SolenoidRampCurve.Quadratic;
+        tuneErmHoldMs = 100;
+        tuneTeamSequenceDelayMs = 1000;
+
+        OnValidate();
+    }
+
     public void AllOff()
     {
         Send("X");
@@ -441,8 +471,15 @@ public class HapticFeedbackManager : MonoBehaviour
             Debug.Log("Haptic command: " + command);
         }
 
-        lastCommandStatus = "Sent: " + command;
-        teensySerialInput.SendLine(command);
+        bool sent = teensySerialInput.SendLine(command);
+        lastCommandStatus = sent
+            ? "Sent: " + command
+            : "NOT SENT, Teensy serial is disconnected: " + command;
+
+        if (!sent && printCommands)
+        {
+            Debug.LogWarning(lastCommandStatus);
+        }
     }
 
     bool IsCommandAllowed(string command)

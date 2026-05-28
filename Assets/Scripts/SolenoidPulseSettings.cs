@@ -8,10 +8,10 @@ public class SolenoidPulseSettings
     public const int MaxRecommendedDurationMs = 350;
 
     [Range(0f, 1f)]
-    public float duty = 0.80f;
+    public float duty = 1.00f;
 
     public int phase = TeensyHardwarePinout.ActiveSolenoidPhase;
-    public int durationMs = 125;
+    public int durationMs = MaxRecommendedDurationMs;
 
     public void Clamp()
     {

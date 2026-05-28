@@ -13,8 +13,8 @@ public class UnitySolenoidTester : MonoBehaviour
     public TeensyHardwareChannel[] hardwarePinout = TeensyHardwarePinout.CreateDefaultChannels();
 
     [Header("global fallback pulse")]
-    public float testDuty = 0.80f;
-    public int testDurationMs = 125;
+    public float testDuty = 1.00f;
+    public int testDurationMs = 350;
 
     [Header("phase")]
     public int normalPhase = TeensyHardwarePinout.ActiveSolenoidPhase;
@@ -39,9 +39,14 @@ public class UnitySolenoidTester : MonoBehaviour
     [Header("animation during tests")]
     public bool animateValveOnTest = true;
     public float testAnimationPressSeconds = 0.12f;
+    public float testAnimationReleaseSeconds = 0.45f;
 
     [Header("debug")]
     public bool enableKeyboardTesting = true;
+    [Tooltip("Number keys 1/2/3 run the full team ERM-delay-solenoid sequence. Hold Ctrl with a number key for solenoid-only.")]
+    public bool useTeamSequenceForKeyboardTesting = true;
+
+    private Coroutine[] debugAnimationRoutines = new Coroutine[3];
 
     void Start()
     {
@@ -82,21 +87,26 @@ public class UnitySolenoidTester : MonoBehaviour
             Keyboard.current.leftShiftKey.isPressed ||
             Keyboard.current.rightShiftKey.isPressed;
 
+        bool ctrlHeld =
+            Keyboard.current.leftCtrlKey.isPressed ||
+            Keyboard.current.rightCtrlKey.isPressed;
+
         int phase = shiftHeld ? shiftedPhase : normalPhase;
+        bool forceSolenoidOnly = ctrlHeld;
 
         if (Keyboard.current.digit1Key.wasPressedThisFrame)
         {
-            TestSolenoid1(phase);
+            RunKeyboardHapticTest(0, phase, forceSolenoidOnly);
         }
 
         if (Keyboard.current.digit2Key.wasPressedThisFrame)
         {
-            TestSolenoid2(phase);
+            RunKeyboardHapticTest(1, phase, forceSolenoidOnly);
         }
 
         if (Keyboard.current.digit3Key.wasPressedThisFrame)
         {
-            TestSolenoid3(phase);
+            RunKeyboardHapticTest(2, phase, forceSolenoidOnly);
         }
 
         if (Keyboard.current.xKey.wasPressedThisFrame &&
@@ -139,6 +149,8 @@ public class UnitySolenoidTester : MonoBehaviour
 
     public void AllOff()
     {
+        ClearDebugAnimation();
+
         if (hapticFeedbackManager == null)
         {
             hapticFeedbackManager = HapticFeedbackManager.Instance;
@@ -148,6 +160,17 @@ public class UnitySolenoidTester : MonoBehaviour
         {
             hapticFeedbackManager.AllOff();
         }
+    }
+
+    void RunKeyboardHapticTest(int channelIndex, int phase, bool forceSolenoidOnly)
+    {
+        if (useTeamSequenceForKeyboardTesting && !forceSolenoidOnly)
+        {
+            TestTeamSequence(channelIndex);
+            return;
+        }
+
+        TestSolenoid(channelIndex, phase);
     }
 
     void TestSolenoid1(int phase)
@@ -196,10 +219,17 @@ public class UnitySolenoidTester : MonoBehaviour
 
         hapticFeedbackManager.TestSolenoid(channelIndex, duty, phase, durationMs);
 
-        if (animateValveOnTest)
-        {
-            StartCoroutine(AnimateValveTest(channelIndex));
-        }
+        StartDebugAnimation(
+            channelIndex,
+            false,
+            0f,
+            0,
+            0,
+            0,
+            duty,
+            0,
+            durationMs
+        );
 
         int teensyChannelNumber = TeensyHardwarePinout.LaneToUnityChannelNumber(
             channelIndex,
@@ -215,17 +245,167 @@ public class UnitySolenoidTester : MonoBehaviour
         );
     }
 
-    IEnumerator AnimateValveTest(int channelIndex)
+    void TestTeamSequence(int channelIndex)
     {
-        float endTime = Time.time + Mathf.Max(0.01f, testAnimationPressSeconds);
-
-        while (Time.time < endTime)
+        if (hapticFeedbackManager == null)
         {
-            ValveInputState.SetTeensyValveAmount(channelIndex, 1f);
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager == null)
+        {
+            Debug.LogWarning("No HapticFeedbackManager found. Cannot run team haptic sequence.");
+            return;
+        }
+
+        hapticFeedbackManager.TestTeamHapticSequence(
+            channelIndex,
+            hapticFeedbackManager.tuneErmRampMs,
+            hapticFeedbackManager.tuneErmRampCurve,
+            hapticFeedbackManager.tuneErmHoldMs,
+            hapticFeedbackManager.tuneErmDuty,
+            hapticFeedbackManager.tuneTeamSequenceDelayMs,
+            hapticFeedbackManager.tuneSolenoidRampMs,
+            hapticFeedbackManager.tuneSolenoidRampCurve,
+            hapticFeedbackManager.tuneSolenoidRampHoldMs,
+            hapticFeedbackManager.tuneSolenoidDuty
+        );
+
+        StartDebugAnimation(
+            channelIndex,
+            true,
+            hapticFeedbackManager.tuneErmDuty,
+            hapticFeedbackManager.tuneErmRampMs,
+            hapticFeedbackManager.tuneErmHoldMs,
+            hapticFeedbackManager.tuneTeamSequenceDelayMs,
+            hapticFeedbackManager.tuneSolenoidDuty,
+            hapticFeedbackManager.tuneSolenoidRampMs,
+            hapticFeedbackManager.tuneSolenoidRampHoldMs
+        );
+
+        int teensyChannelNumber = TeensyHardwarePinout.LaneToUnityChannelNumber(
+            channelIndex,
+            hardwarePinout
+        );
+
+        Debug.Log(
+            "Testing full haptic sequence on channel " + teensyChannelNumber +
+            " using ERM ramp=" + hapticFeedbackManager.tuneErmRampMs +
+            "ms hold=" + hapticFeedbackManager.tuneErmHoldMs +
+            " duty=" + hapticFeedbackManager.tuneErmDuty +
+            ", delay=" + hapticFeedbackManager.tuneTeamSequenceDelayMs +
+            "ms, solenoid ramp=" + hapticFeedbackManager.tuneSolenoidRampMs +
+            "ms hold=" + hapticFeedbackManager.tuneSolenoidRampHoldMs +
+            " duty=" + hapticFeedbackManager.tuneSolenoidDuty
+        );
+    }
+
+    void StartDebugAnimation(
+        int channelIndex,
+        bool includesErm,
+        float ermDuty,
+        int ermRampMs,
+        int ermHoldMs,
+        int delayMs,
+        float solenoidDuty,
+        int solenoidRampMs,
+        int solenoidHoldMs
+    )
+    {
+        if (!animateValveOnTest)
+        {
+            return;
+        }
+
+        if (channelIndex < 0 || channelIndex >= debugAnimationRoutines.Length)
+        {
+            return;
+        }
+
+        if (debugAnimationRoutines[channelIndex] != null)
+        {
+            StopCoroutine(debugAnimationRoutines[channelIndex]);
+        }
+
+        debugAnimationRoutines[channelIndex] = StartCoroutine(
+            AnimateValveHapticSequence(
+                channelIndex,
+                includesErm,
+                ermDuty,
+                ermRampMs,
+                ermHoldMs,
+                delayMs,
+                solenoidDuty,
+                solenoidRampMs,
+                solenoidHoldMs
+            )
+        );
+    }
+
+    IEnumerator AnimateValveHapticSequence(
+        int channelIndex,
+        bool includesErm,
+        float ermDuty,
+        int ermRampMs,
+        int ermHoldMs,
+        int delayMs,
+        float solenoidDuty,
+        int solenoidRampMs,
+        int solenoidHoldMs
+    )
+    {
+        float startTime = Time.time;
+        float ermSeconds = includesErm
+            ? Mathf.Max(0f, ermRampMs + ermHoldMs) / 1000f
+            : 0f;
+        float releaseStartSeconds = includesErm
+            ? Mathf.Max(testAnimationPressSeconds, (ermRampMs + ermHoldMs + delayMs) / 1000f)
+            : Mathf.Max(0.01f, testAnimationPressSeconds);
+
+        while (Time.time - startTime < releaseStartSeconds)
+        {
+            float elapsed = Time.time - startTime;
+            ValveInputState.SetDebugValve(channelIndex, true, 1f);
+            ValveInputState.SetDebugSolenoidDuty(channelIndex, 0f);
+            ValveInputState.SetDebugErmDuty(
+                channelIndex,
+                includesErm && elapsed <= ermSeconds ? ermDuty : 0f
+            );
+
             yield return null;
         }
 
-        ValveInputState.SetTeensyValveAmount(channelIndex, 0f);
+        float releaseSeconds = Mathf.Max(
+            0.05f,
+            Mathf.Max(testAnimationReleaseSeconds, (solenoidRampMs + solenoidHoldMs) / 1000f)
+        );
+        float releaseStartTime = Time.time;
+
+        while (Time.time - releaseStartTime < releaseSeconds)
+        {
+            ValveInputState.SetDebugValve(channelIndex, false, 0f);
+            ValveInputState.SetDebugSolenoidDuty(channelIndex, solenoidDuty);
+            ValveInputState.SetDebugErmDuty(channelIndex, 0f);
+
+            yield return null;
+        }
+
+        ValveInputState.ClearDebugLane(channelIndex);
+        debugAnimationRoutines[channelIndex] = null;
+    }
+
+    void ClearDebugAnimation()
+    {
+        for (int i = 0; i < debugAnimationRoutines.Length; i++)
+        {
+            if (debugAnimationRoutines[i] != null)
+            {
+                StopCoroutine(debugAnimationRoutines[i]);
+                debugAnimationRoutines[i] = null;
+            }
+
+            ValveInputState.ClearDebugLane(i);
+        }
     }
 
     public void ApplyTuningToGameplay()
@@ -299,8 +479,17 @@ public class UnitySolenoidTester : MonoBehaviour
     void OnValidate()
     {
         TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
+        testDuty = Mathf.Clamp01(testDuty);
+        testDurationMs = Mathf.Clamp(testDurationMs, 1, SolenoidPulseSettings.MaxRecommendedDurationMs);
+        testAnimationPressSeconds = Mathf.Max(0.01f, testAnimationPressSeconds);
+        testAnimationReleaseSeconds = Mathf.Max(0.05f, testAnimationReleaseSeconds);
         EnsureSolenoidSettings();
         ApplyPinoutToReferences();
         ApplyTuningToGameplay();
+    }
+
+    void OnDisable()
+    {
+        ClearDebugAnimation();
     }
 }

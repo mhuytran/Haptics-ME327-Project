@@ -773,18 +773,19 @@ public class TeensySerialInput : MonoBehaviour
         return fallback;
     }
 
-    public void SendLine(string command)
+    public bool SendLine(string command)
     {
         if (string.IsNullOrWhiteSpace(command))
         {
-            return;
+            return false;
         }
 
         lock (writeLock)
         {
             if (serialPort == null || !serialPort.IsOpen)
             {
-                return;
+                Debug.LogWarning("Teensy serial is not connected. Not sent: " + command);
+                return false;
             }
 
             try
@@ -795,10 +796,13 @@ public class TeensySerialInput : MonoBehaviour
                 {
                     Debug.Log("Teensy OUT: " + command);
                 }
+
+                return true;
             }
             catch (Exception exception)
             {
                 Debug.LogWarning("Teensy serial write issue: " + exception.Message);
+                return false;
             }
         }
     }
