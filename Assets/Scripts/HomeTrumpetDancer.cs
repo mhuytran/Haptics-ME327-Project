@@ -19,6 +19,9 @@ public class HomeTrumpetDancer : MonoBehaviour
     [Header("disable conflicting gameplay scripts")]
     public bool disableGameplayValveAnimators = true;
 
+    [Header("render safety")]
+    public bool repairValveRenderersOnStart = true;
+
     [Header("valve press direction")]
     public Vector3 localPressDirection = new Vector3(0f, -1f, 0f);
     public float pressDepth = 0.35f;
@@ -89,6 +92,11 @@ public class HomeTrumpetDancer : MonoBehaviour
         }
 
         CacheRestPositions();
+
+        if (repairValveRenderersOnStart)
+        {
+            RepairValveRenderers();
+        }
 
         if (!autoAnimateValves)
         {
@@ -288,6 +296,14 @@ public class HomeTrumpetDancer : MonoBehaviour
         DisableTrumpetValveAnimator(valve1);
         DisableTrumpetValveAnimator(valve2);
         DisableTrumpetValveAnimator(valve3);
+    }
+
+    void RepairValveRenderers()
+    {
+        string status;
+        ValveRenderRepair.EnsureVisible(valve1, "Valve 1", out status);
+        ValveRenderRepair.EnsureVisible(valve2, "Valve 2", out status);
+        ValveRenderRepair.EnsureVisible(valve3, "Valve 3", out status);
     }
 
     void DisableTrumpetValveAnimator(Transform valve)

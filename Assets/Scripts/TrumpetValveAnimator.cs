@@ -21,6 +21,10 @@ public class TrumpetValveAnimator : MonoBehaviour
     [Tooltip("Off for hardware runs so haptic test routines cannot make valves appear pressed on their own.")]
     public bool allowDebugValveAnimation = false;
 
+    [Header("render safety")]
+    [Tooltip("Repairs hidden or missing valve renderers at startup. Useful when prefab overrides drop a valve mesh.")]
+    public bool repairValveRendererOnStart = true;
+
     [Header("visual anti-jitter")]
     [Tooltip("How long a new pressed visual state must stay stable before the model moves.")]
     public float visualPressDebounceSeconds = 0.12f;
@@ -50,6 +54,7 @@ public class TrumpetValveAnimator : MonoBehaviour
     public float targetPressAmount = 0f;
     [Range(0f, 1f)]
     public float latestSolenoidDuty = 0f;
+    public string rendererHealthReadout = "";
 
     private Vector3 restLocalPosition;
     private float displayedPressAmount = 0f;
@@ -61,6 +66,16 @@ public class TrumpetValveAnimator : MonoBehaviour
     void Start()
     {
         RefreshPinoutReadout();
+
+        if (repairValveRendererOnStart)
+        {
+            ValveRenderRepair.EnsureVisible(
+                transform,
+                "Valve " + (laneIndex + 1),
+                out rendererHealthReadout
+            );
+        }
+
         restLocalPosition = transform.localPosition;
         pendingPressAmountSince = Time.unscaledTime;
     }
