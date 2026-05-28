@@ -85,8 +85,8 @@ public class TeensySerialInput : MonoBehaviour
     public float calibrationRestPercentile = 0.75f;
     [Tooltip("Minimum live samples before percentile calibration is trusted for a lane.")]
     public int minimumCalibrationSamplesPerLane = 5;
-    [Tooltip("Reject startup rest calibration above this distance. Valve 2 can sit near 96 mm on the current rig, so keep this above that real rest value.")]
-    public float maxReasonableRestDistanceMM = 140f;
+    [Tooltip("Reject startup rest calibration above this distance. A VL6180X reading near 96 mm is usually saturated or pointed at the wrong surface for this valve rig.")]
+    public float maxReasonableRestDistanceMM = 90f;
     [Tooltip("When a lane calibrates above Max Reasonable Rest Distance, keep the previous rest value and wait for a valid live value instead.")]
     public bool rejectOutOfRangeCalibration = true;
     [Tooltip("If a lane was calibrated to a stale close value but live released distance is much farther away, re-baseline it during play.")]
@@ -659,8 +659,10 @@ public class TeensySerialInput : MonoBehaviour
 
         float currentRest = GetRestDistance(laneIndex);
         float requiredJump = Mathf.Max(1f, restRebaselineDeltaMM);
+        bool currentRestIsSuspicious = !IsReasonableRestDistance(currentRest);
+        bool liveDistanceIsMuchFarther = distanceMM > currentRest + requiredJump;
 
-        if (distanceMM <= currentRest + requiredJump)
+        if (!currentRestIsSuspicious && !liveDistanceIsMuchFarther)
         {
             ResetRestRebaselineCandidate(laneIndex);
             return;

@@ -48,7 +48,7 @@ bool tofAvailable[3] = {false, false, false};
 unsigned long lastTofRetryTime = 0;
 const unsigned long TOF_RETRY_INTERVAL_MS = 1000;
 const bool AUTO_REMAP_BAD_TOF_CHANNELS = true;
-const uint8_t MAX_REASONABLE_TOF_REST_MM = 140;
+const uint8_t MAX_REASONABLE_TOF_REST_MM = 90;
 
 // ------------------------------------------------------------
 // Raw ToF press detection

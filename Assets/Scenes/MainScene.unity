@@ -2719,8 +2719,8 @@ MonoBehaviour:
     lower Press Enter Delta. If idle valves falsely press, raise it.
   valve1RestDistanceMM: 35.5
   valve1PressedDistanceMM: 34
-  valve2RestDistanceMM: 96
-  valve2PressedDistanceMM: 94.5
+  valve2RestDistanceMM: 80
+  valve2PressedDistanceMM: 78.5
   valve3RestDistanceMM: 38.8
   valve3PressedDistanceMM: 37.3
   autoCalibrateOnStart: 1
@@ -2741,7 +2741,7 @@ MonoBehaviour:
   releaseDebounceSeconds: 0.04
   calibrationRestPercentile: 0.75
   minimumCalibrationSamplesPerLane: 5
-  maxReasonableRestDistanceMM: 140
+  maxReasonableRestDistanceMM: 90
   rejectOutOfRangeCalibration: 1
   allowLiveRestRebaseline: 1
   restRebaselineDeltaMM: 8
