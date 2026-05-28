@@ -91,10 +91,12 @@ const unsigned long MAX_HAPTIC_TEST_DELAY_MS = 5000;
 const float TAP_RESET_SOL_DUTY_GOOD = 1.00f;
 const float TAP_RESET_SOL_DUTY_PERFECT = 1.00f;
 const float HOLD_RESET_SOL_DUTY = 1.00f;
+const float MISS_RESET_SOL_DUTY = 1.00f;
 
 const unsigned long TAP_RESET_SOL_MS = 220;
 
 const unsigned long HOLD_RESET_SOL_MS = 220;
+const unsigned long MISS_RESET_SOL_MS = 220;
 
 // ------------------------------------------------------------
 // ERM gameplay tuning
@@ -104,8 +106,8 @@ const unsigned long MAX_ERM_PULSE_MS = 500;
 const unsigned long MAX_ERM_RAMP_MS = 1200;
 
 const float PRECUE_ERM_DUTY = 1.00f;
-const unsigned long PRECUE_ERM_RAMP_MS = 80;
-const unsigned long PRECUE_ERM_HOLD_MS = 450;
+const unsigned long PRECUE_ERM_RAMP_MS = 250;
+const unsigned long PRECUE_ERM_HOLD_MS = 200;
 const int PRECUE_ERM_CURVE = 0;
 
 const float GOOD_ERM_DUTY = 0.25f;
@@ -789,8 +791,8 @@ void handleHoldCompleteCommand(int lane)
 
 // ------------------------------------------------------------
 // Gameplay command: note miss
-// No solenoid push-off by default.
-// ERM gives miss vibration only.
+// Push the valve back regardless of rating so every completed note state
+// gives the user a clear physical release cue.
 // ------------------------------------------------------------
 void handleMissCommand(int lane)
 {
@@ -802,6 +804,7 @@ void handleMissCommand(int lane)
     }
 
     cancelHapticTestSequence(channel);
+    setSolenoid(channel, MISS_RESET_SOL_DUTY, SOLENOID_ACTIVE_PHASE, MISS_RESET_SOL_MS);
     setERM(channel, MISS_ERM_DUTY, MISS_ERM_MS);
 }
 
@@ -811,7 +814,7 @@ void handleMissCommand(int lane)
 // MVP:
 // X
 // PRECUE,1
-// PRECUE,1,1.00,80,450,0
+// PRECUE,1,1.00,250,200,0
 // TAPCOMPLETE,1,PERFECT
 // TAPCOMPLETE,1,GOOD
 // HOLDSTART,1

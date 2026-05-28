@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Collections;
 using UnityEngine;
 
 public enum HapticCommandProfile
@@ -44,15 +45,19 @@ public class HapticFeedbackManager : MonoBehaviour
     [Tooltip("Maximum solenoid pulse duration Unity is allowed to send. Firmware also caps this.")]
     public int maxSolenoidDurationMs = 350;
 
+    [Header("playable dwell before push-off")]
+    [Tooltip("Delay TAPCOMPLETE/HOLDCOMPLETE/MISS commands so the player gets time to press or hold before the solenoid pushes back. Set to 0 for instant push-off.")]
+    public int completionPushDelayMs = 320;
+
     [Header("ERM pre-cue ramp")]
     public bool useRampedPreCue = true;
     [Range(0f, 1f)]
     [Tooltip("Main ERM pre-cue strength. Team 12V feel-test value is 1.00.")]
     public float preCueErmDuty = 1.00f;
-    [Tooltip("Fast gameplay ERM pre-cue ramp time. Keep the long 1000 ms profile for TEST/bench tuning only.")]
-    public int preCueErmRampMs = 80;
+    [Tooltip("Gameplay ERM pre-cue ramp time. Long enough to feel the motor ramp, short enough to cue near the note.")]
+    public int preCueErmRampMs = 250;
     [Tooltip("ERM hold time after the ramp completes.")]
-    public int preCueErmHoldMs = 450;
+    public int preCueErmHoldMs = 200;
     [Tooltip("ERM pre-cue ramp curve. Linear reaches feelable duty quickly for gameplay.")]
     public SolenoidRampCurve preCueErmRampCurve = SolenoidRampCurve.Linear;
     [Range(0f, 1f)]
@@ -85,6 +90,7 @@ public class HapticFeedbackManager : MonoBehaviour
     public string lastCommandStatus = "No haptic command sent yet.";
 
     private bool emergencyStopped = false;
+    private int delayedCompletionGeneration = 0;
 
     void Awake()
     {
@@ -142,7 +148,7 @@ public class HapticFeedbackManager : MonoBehaviour
     public void SendTapComplete(int laneIndex, bool perfect)
     {
         string rating = perfect ? "PERFECT" : "GOOD";
-        Send("TAPCOMPLETE," + GetTeensyChannelNumber(laneIndex) + "," + rating);
+        SendCompletionAfterPlayableDwell("TAPCOMPLETE," + GetTeensyChannelNumber(laneIndex) + "," + rating);
     }
 
     public void SendHoldStart(int laneIndex)
@@ -152,12 +158,12 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void SendHoldComplete(int laneIndex)
     {
-        Send("HOLDCOMPLETE," + GetTeensyChannelNumber(laneIndex));
+        SendCompletionAfterPlayableDwell("HOLDCOMPLETE," + GetTeensyChannelNumber(laneIndex));
     }
 
     public void SendMiss(int laneIndex)
     {
-        Send("MISS," + GetTeensyChannelNumber(laneIndex));
+        SendCompletionAfterPlayableDwell("MISS," + GetTeensyChannelNumber(laneIndex));
     }
 
     public void SendSolenoidPush(int laneIndex, SolenoidPulseSettings settings)
@@ -375,11 +381,12 @@ public class HapticFeedbackManager : MonoBehaviour
     {
         maxSolenoidDuty = 1.00f;
         maxSolenoidDurationMs = 350;
+        completionPushDelayMs = 320;
 
         useRampedPreCue = true;
         preCueErmDuty = 1.00f;
-        preCueErmRampMs = 80;
-        preCueErmHoldMs = 450;
+        preCueErmRampMs = 250;
+        preCueErmHoldMs = 200;
         preCueErmRampCurve = SolenoidRampCurve.Linear;
         maxErmDuty = 1.00f;
         maxErmRampMs = 1200;
@@ -402,11 +409,13 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void AllOff()
     {
+        CancelPendingCompletionCommands();
         Send("X");
     }
 
     public void EmergencyAllOff()
     {
+        CancelPendingCompletionCommands();
         emergencyStopped = true;
 
         if (teensySerialInput == null)
@@ -428,6 +437,49 @@ public class HapticFeedbackManager : MonoBehaviour
     public void ResetEmergencyStop()
     {
         emergencyStopped = false;
+    }
+
+    void OnDisable()
+    {
+        CancelPendingCompletionCommands();
+    }
+
+    void SendCompletionAfterPlayableDwell(string command)
+    {
+        int safeDelayMs = Mathf.Clamp(completionPushDelayMs, 0, 1000);
+
+        if (safeDelayMs <= 0 || !isActiveAndEnabled)
+        {
+            Send(command);
+            return;
+        }
+
+        int generation = delayedCompletionGeneration;
+        StartCoroutine(SendCompletionAfterDelay(command, safeDelayMs, generation));
+
+        lastCommandStatus = "Scheduled after " + safeDelayMs + "ms: " + command;
+
+        if (printCommands)
+        {
+            Debug.Log("Scheduled haptic completion after " + safeDelayMs + "ms: " + command);
+        }
+    }
+
+    IEnumerator SendCompletionAfterDelay(string command, int delayMs, int generation)
+    {
+        yield return new WaitForSecondsRealtime(delayMs / 1000f);
+
+        if (generation != delayedCompletionGeneration)
+        {
+            yield break;
+        }
+
+        Send(command);
+    }
+
+    void CancelPendingCompletionCommands()
+    {
+        delayedCompletionGeneration++;
     }
 
     private void Send(string command)
@@ -544,6 +596,7 @@ public class HapticFeedbackManager : MonoBehaviour
             1,
             SolenoidPulseSettings.MaxRecommendedDurationMs
         );
+        completionPushDelayMs = Mathf.Clamp(completionPushDelayMs, 0, 1000);
         maxErmDuty = Mathf.Clamp(maxErmDuty, 0f, 1.0f);
         preCueErmDuty = Mathf.Clamp(preCueErmDuty, 0f, maxErmDuty);
         maxErmRampMs = Mathf.Clamp(maxErmRampMs, 1, 1200);

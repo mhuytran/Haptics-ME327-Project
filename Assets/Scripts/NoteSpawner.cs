@@ -165,7 +165,7 @@ public class NoteSpawner : MonoBehaviour
     [Header("haptic cue tuning")]
     public bool useDistanceBasedPreCue = false;
     public float preCueDistanceFromTarget = 1.0f;
-    public float fallbackPreCueLeadTime = 0.85f;
+    public float fallbackPreCueLeadTime = 0.35f;
 
     [Header("lane colors")]
     public Color lane1Color = Color.green;

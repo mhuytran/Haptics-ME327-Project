@@ -2794,10 +2794,11 @@ MonoBehaviour:
   printCommands: 1
   maxSolenoidDuty: 1
   maxSolenoidDurationMs: 350
+  completionPushDelayMs: 320
   useRampedPreCue: 1
   preCueErmDuty: 1
-  preCueErmRampMs: 80
-  preCueErmHoldMs: 450
+  preCueErmRampMs: 250
+  preCueErmHoldMs: 200
   preCueErmRampCurve: 0
   maxErmDuty: 1
   maxErmRampMs: 1200
@@ -2871,7 +2872,7 @@ MonoBehaviour:
   applyPreCueTuningToSpawner: 1
   useDistanceBasedPreCue: 0
   preCueDistanceFromTarget: 1
-  fallbackPreCueLeadTime: 0.85
+  fallbackPreCueLeadTime: 0.35
   animateValveOnTest: 1
   testAnimationPressSeconds: 0.12
   testAnimationReleaseSeconds: 0.45
@@ -3562,10 +3563,11 @@ MonoBehaviour:
   printCommands: 1
   maxSolenoidDuty: 1
   maxSolenoidDurationMs: 350
+  completionPushDelayMs: 320
   useRampedPreCue: 1
   preCueErmDuty: 1
-  preCueErmRampMs: 80
-  preCueErmHoldMs: 450
+  preCueErmRampMs: 250
+  preCueErmHoldMs: 200
   preCueErmRampCurve: 0
   maxErmDuty: 1
   maxErmRampMs: 1200
@@ -4061,7 +4063,7 @@ MonoBehaviour:
   skippedOpenSongNoteCount: 0
   useDistanceBasedPreCue: 0
   preCueDistanceFromTarget: 1
-  fallbackPreCueLeadTime: 0.85
+  fallbackPreCueLeadTime: 0.35
   lane1Color: {r: 0, g: 1, b: 0, a: 1}
   lane2Color: {r: 0.1882353, g: 0.627451, b: 1, a: 1}
   lane3Color: {r: 1, g: 0, b: 0, a: 1}

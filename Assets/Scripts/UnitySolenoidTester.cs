@@ -34,7 +34,7 @@ public class UnitySolenoidTester : MonoBehaviour
     public bool applyPreCueTuningToSpawner = true;
     public bool useDistanceBasedPreCue = false;
     public float preCueDistanceFromTarget = 1.0f;
-    public float fallbackPreCueLeadTime = 0.85f;
+    public float fallbackPreCueLeadTime = 0.35f;
 
     [Header("animation during tests")]
     public bool animateValveOnTest = true;
