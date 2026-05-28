@@ -49,12 +49,12 @@ public class HapticFeedbackManager : MonoBehaviour
     [Range(0f, 1f)]
     [Tooltip("Main ERM pre-cue strength. Team 12V feel-test value is 1.00.")]
     public float preCueErmDuty = 1.00f;
-    [Tooltip("ERM pre-cue ramp time. Team 12V feel-test value is 1000 ms.")]
-    public int preCueErmRampMs = 1000;
+    [Tooltip("Fast gameplay ERM pre-cue ramp time. Keep the long 1000 ms profile for TEST/bench tuning only.")]
+    public int preCueErmRampMs = 80;
     [Tooltip("ERM hold time after the ramp completes.")]
-    public int preCueErmHoldMs = 100;
-    [Tooltip("ERM pre-cue ramp curve. Team 12V feel-test value is Quadratic.")]
-    public SolenoidRampCurve preCueErmRampCurve = SolenoidRampCurve.Quadratic;
+    public int preCueErmHoldMs = 450;
+    [Tooltip("ERM pre-cue ramp curve. Linear reaches feelable duty quickly for gameplay.")]
+    public SolenoidRampCurve preCueErmRampCurve = SolenoidRampCurve.Linear;
     [Range(0f, 1f)]
     public float maxErmDuty = 1.00f;
     public int maxErmRampMs = 1200;
@@ -64,7 +64,7 @@ public class HapticFeedbackManager : MonoBehaviour
     public int tuneLane = 1;
     [Range(0f, 1f)]
     public float tuneSolenoidDuty = 1.00f;
-    public int tuneSolenoidDurationMs = 350;
+    public int tuneSolenoidDurationMs = 220;
     [Tooltip("Standalone tester TEST rampTimeMs equivalent, sent as SOLRAMP.")]
     public int tuneSolenoidRampMs = 800;
     [Tooltip("Standalone tester func equivalent: Linear = 0, Quadratic = 1, Exponential = 2.")]
@@ -370,7 +370,7 @@ public class HapticFeedbackManager : MonoBehaviour
         SendRawTofThreshold(tuneRawTofThresholdMM);
     }
 
-    [ContextMenu("Tune/Apply Team 12V Feel Defaults")]
+    [ContextMenu("Tune/Apply Game-Ready Haptic Defaults")]
     public void ApplyTeam12VFeelDefaults()
     {
         maxSolenoidDuty = 1.00f;
@@ -378,14 +378,14 @@ public class HapticFeedbackManager : MonoBehaviour
 
         useRampedPreCue = true;
         preCueErmDuty = 1.00f;
-        preCueErmRampMs = 1000;
-        preCueErmHoldMs = 100;
-        preCueErmRampCurve = SolenoidRampCurve.Quadratic;
+        preCueErmRampMs = 80;
+        preCueErmHoldMs = 450;
+        preCueErmRampCurve = SolenoidRampCurve.Linear;
         maxErmDuty = 1.00f;
         maxErmRampMs = 1200;
 
         tuneSolenoidDuty = 1.00f;
-        tuneSolenoidDurationMs = 350;
+        tuneSolenoidDurationMs = 220;
         tuneSolenoidRampMs = 800;
         tuneSolenoidRampCurve = SolenoidRampCurve.Quadratic;
         tuneSolenoidRampHoldMs = 350;

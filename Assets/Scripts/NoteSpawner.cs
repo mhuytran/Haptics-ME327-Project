@@ -99,7 +99,7 @@ public class NoteSpawner : MonoBehaviour
     [Header("note timing")]
     public NoteSpawnMode spawnMode = NoteSpawnMode.RandomDebug;
     public float spawnInterval = 2.0f;
-    public float noteTravelTime = 1.5f;
+    public float noteTravelTime = 2.2f;
     public bool waitForPreviousFingeringToResolve = true;
 
     [Header("mode shortcuts")]
@@ -145,7 +145,7 @@ public class NoteSpawner : MonoBehaviour
     public float timingOffsetNudgeSeconds = 0.025f;
     public float currentAudioClockTime = 0f;
     public bool useSongDurationsAsHolds = true;
-    public float minimumSongHoldDuration = 0.45f;
+    public float minimumSongHoldDuration = 0.65f;
     public bool skipVeryLateSongNotes = true;
     public float lateSongNoteSkipSeconds = 0.35f;
     public bool loopSongChart = false;
@@ -163,7 +163,7 @@ public class NoteSpawner : MonoBehaviour
     public int skippedOpenSongNoteCount = 0;
 
     [Header("haptic cue tuning")]
-    public bool useDistanceBasedPreCue = true;
+    public bool useDistanceBasedPreCue = false;
     public float preCueDistanceFromTarget = 1.0f;
     public float fallbackPreCueLeadTime = 0.85f;
 
@@ -219,10 +219,10 @@ public class NoteSpawner : MonoBehaviour
 
     private float[] holdDurationPattern = new float[]
     {
-        0.0f, 0.8f, 0.0f, 1.2f,
-        0.0f, 1.6f, 0.0f, 0.6f,
-        2.0f, 0.0f, 1.0f, 0.0f,
-        1.4f, 0.0f, 0.7f, 0.0f
+        0.0f, 1.12f, 0.0f, 1.68f,
+        0.0f, 2.24f, 0.0f, 0.84f,
+        2.8f, 0.0f, 1.4f, 0.0f,
+        1.96f, 0.0f, 0.98f, 0.0f
     };
 
     void Start()

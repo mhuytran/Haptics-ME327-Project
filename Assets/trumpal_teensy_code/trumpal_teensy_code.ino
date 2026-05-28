@@ -79,11 +79,11 @@ const bool ENABLE_TUNING_COMMANDS = true;
 
 // ------------------------------------------------------------
 // Gameplay solenoid push-off tuning.
-// Matches the team's 12V feel-test sequence:
-// TEST,1000,1,100,1,1000,800,1,350,1
+// Gameplay push-off is intentionally immediate. Long ramps stay available
+// through SOLRAMP/TEST for bench tuning only.
 // ------------------------------------------------------------
 const float MAX_SOLENOID_DUTY = 1.00f;
-const unsigned long DEFAULT_SOLENOID_PULSE_MS = 350;
+const unsigned long DEFAULT_SOLENOID_PULSE_MS = 220;
 const unsigned long MAX_SOLENOID_PULSE_MS = 350;
 const unsigned long MAX_SOLENOID_RAMP_MS = 1000;
 const unsigned long MAX_HAPTIC_TEST_DELAY_MS = 5000;
@@ -92,13 +92,9 @@ const float TAP_RESET_SOL_DUTY_GOOD = 1.00f;
 const float TAP_RESET_SOL_DUTY_PERFECT = 1.00f;
 const float HOLD_RESET_SOL_DUTY = 1.00f;
 
-const unsigned long TAP_RESET_SOL_RAMP_MS = 800;
-const int TAP_RESET_SOL_CURVE = 1;
-const unsigned long TAP_RESET_SOL_MS = 350;
+const unsigned long TAP_RESET_SOL_MS = 220;
 
-const unsigned long HOLD_RESET_SOL_RAMP_MS = 800;
-const int HOLD_RESET_SOL_CURVE = 1;
-const unsigned long HOLD_RESET_SOL_MS = 350;
+const unsigned long HOLD_RESET_SOL_MS = 220;
 
 // ------------------------------------------------------------
 // ERM gameplay tuning
@@ -108,9 +104,9 @@ const unsigned long MAX_ERM_PULSE_MS = 500;
 const unsigned long MAX_ERM_RAMP_MS = 1200;
 
 const float PRECUE_ERM_DUTY = 1.00f;
-const unsigned long PRECUE_ERM_RAMP_MS = 1000;
-const unsigned long PRECUE_ERM_HOLD_MS = 100;
-const int PRECUE_ERM_CURVE = 1;
+const unsigned long PRECUE_ERM_RAMP_MS = 80;
+const unsigned long PRECUE_ERM_HOLD_MS = 450;
+const int PRECUE_ERM_CURVE = 0;
 
 const float GOOD_ERM_DUTY = 0.25f;
 const float PERFECT_ERM_DUTY = 0.35f;
@@ -744,7 +740,7 @@ void handleTapCompleteCommand(int lane, const char *rating)
     float solDuty = perfect ? TAP_RESET_SOL_DUTY_PERFECT : TAP_RESET_SOL_DUTY_GOOD;
     unsigned long solDuration = TAP_RESET_SOL_MS;
 
-    rampSolenoid(channel, TAP_RESET_SOL_RAMP_MS, TAP_RESET_SOL_CURVE, solDuration, solDuty);
+    setSolenoid(channel, solDuty, SOLENOID_ACTIVE_PHASE, solDuration);
 
     if (perfect)
     {
@@ -788,7 +784,7 @@ void handleHoldCompleteCommand(int lane)
 
     cancelHapticTestSequence(channel);
     setERM(channel, 0.0f, 0);
-    rampSolenoid(channel, HOLD_RESET_SOL_RAMP_MS, HOLD_RESET_SOL_CURVE, HOLD_RESET_SOL_MS, HOLD_RESET_SOL_DUTY);
+    setSolenoid(channel, HOLD_RESET_SOL_DUTY, SOLENOID_ACTIVE_PHASE, HOLD_RESET_SOL_MS);
 }
 
 // ------------------------------------------------------------
@@ -815,7 +811,7 @@ void handleMissCommand(int lane)
 // MVP:
 // X
 // PRECUE,1
-// PRECUE,1,1.00,1000,100,1
+// PRECUE,1,1.00,80,450,0
 // TAPCOMPLETE,1,PERFECT
 // TAPCOMPLETE,1,GOOD
 // HOLDSTART,1

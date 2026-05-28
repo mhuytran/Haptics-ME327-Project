@@ -2796,14 +2796,14 @@ MonoBehaviour:
   maxSolenoidDurationMs: 350
   useRampedPreCue: 1
   preCueErmDuty: 1
-  preCueErmRampMs: 1000
-  preCueErmHoldMs: 100
-  preCueErmRampCurve: 1
+  preCueErmRampMs: 80
+  preCueErmHoldMs: 450
+  preCueErmRampCurve: 0
   maxErmDuty: 1
   maxErmRampMs: 1200
   tuneLane: 1
   tuneSolenoidDuty: 1
-  tuneSolenoidDurationMs: 350
+  tuneSolenoidDurationMs: 220
   tuneSolenoidRampMs: 800
   tuneSolenoidRampCurve: 1
   tuneSolenoidRampHoldMs: 350
@@ -2853,7 +2853,7 @@ MonoBehaviour:
     ermIn1Pin: 22
     ermIn2Pin: 23
   testDuty: 1
-  testDurationMs: 350
+  testDurationMs: 220
   normalPhase: 1
   shiftedPhase: 0
   usePerLanePulseSettings: 1
@@ -2861,15 +2861,15 @@ MonoBehaviour:
   solenoidPulseSettings:
   - duty: 1
     phase: 1
-    durationMs: 350
+    durationMs: 220
   - duty: 1
     phase: 1
-    durationMs: 350
+    durationMs: 220
   - duty: 1
     phase: 1
-    durationMs: 350
+    durationMs: 220
   applyPreCueTuningToSpawner: 1
-  useDistanceBasedPreCue: 1
+  useDistanceBasedPreCue: 0
   preCueDistanceFromTarget: 1
   fallbackPreCueLeadTime: 0.85
   animateValveOnTest: 1
@@ -3564,14 +3564,14 @@ MonoBehaviour:
   maxSolenoidDurationMs: 350
   useRampedPreCue: 1
   preCueErmDuty: 1
-  preCueErmRampMs: 1000
-  preCueErmHoldMs: 100
-  preCueErmRampCurve: 1
+  preCueErmRampMs: 80
+  preCueErmHoldMs: 450
+  preCueErmRampCurve: 0
   maxErmDuty: 1
   maxErmRampMs: 1200
   tuneLane: 1
   tuneSolenoidDuty: 1
-  tuneSolenoidDurationMs: 350
+  tuneSolenoidDurationMs: 220
   tuneSolenoidRampMs: 800
   tuneSolenoidRampCurve: 1
   tuneSolenoidRampHoldMs: 350
@@ -3980,13 +3980,13 @@ MonoBehaviour:
   solenoidPushSettings:
   - duty: 1
     phase: 1
-    durationMs: 350
+    durationMs: 220
   - duty: 1
     phase: 1
-    durationMs: 350
+    durationMs: 220
   - duty: 1
     phase: 1
-    durationMs: 350
+    durationMs: 220
   requireExactFingering: 1
   judgeFingeringContinuously: 0
 --- !u!114 &1740641789
@@ -4014,7 +4014,7 @@ MonoBehaviour:
   hitPlane3: {fileID: 235335200}
   spawnMode: 0
   spawnInterval: 2
-  noteTravelTime: 1.5
+  noteTravelTime: 2.2
   waitForPreviousFingeringToResolve: 1
   allowModeSwitchShortcuts: 1
   toggleSpawnModeKey: 102
@@ -4047,7 +4047,7 @@ MonoBehaviour:
   timingOffsetNudgeSeconds: 0.025
   currentAudioClockTime: 0
   useSongDurationsAsHolds: 1
-  minimumSongHoldDuration: 0.5
+  minimumSongHoldDuration: 0.65
   skipVeryLateSongNotes: 1
   lateSongNoteSkipSeconds: 0.4
   loopSongChart: 0
@@ -4059,7 +4059,7 @@ MonoBehaviour:
   deriveSongFingeringsFromPitch: 1
   skipOpenSongNotes: 1
   skippedOpenSongNoteCount: 0
-  useDistanceBasedPreCue: 1
+  useDistanceBasedPreCue: 0
   preCueDistanceFromTarget: 1
   fallbackPreCueLeadTime: 0.85
   lane1Color: {r: 0, g: 1, b: 0, a: 1}
