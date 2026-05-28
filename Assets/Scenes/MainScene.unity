@@ -2719,8 +2719,8 @@ MonoBehaviour:
     lower Press Enter Delta. If idle valves falsely press, raise it.
   valve1RestDistanceMM: 35.5
   valve1PressedDistanceMM: 34
-  valve2RestDistanceMM: 32.4
-  valve2PressedDistanceMM: 30.900002
+  valve2RestDistanceMM: 96
+  valve2PressedDistanceMM: 94.5
   valve3RestDistanceMM: 38.8
   valve3PressedDistanceMM: 37.3
   autoCalibrateOnStart: 1
@@ -2741,8 +2741,11 @@ MonoBehaviour:
   releaseDebounceSeconds: 0.04
   calibrationRestPercentile: 0.75
   minimumCalibrationSamplesPerLane: 5
-  maxReasonableRestDistanceMM: 90
+  maxReasonableRestDistanceMM: 140
   rejectOutOfRangeCalibration: 1
+  allowLiveRestRebaseline: 1
+  restRebaselineDeltaMM: 8
+  restRebaselineStableSeconds: 0.2
   activeValve1TofMuxChannel: 0
   activeValve2TofMuxChannel: 6
   activeValve3TofMuxChannel: 7
@@ -2807,7 +2810,7 @@ MonoBehaviour:
   printCommands: 1
   maxSolenoidDuty: 1
   maxSolenoidDurationMs: 800
-  completionPushDelayMs: 200
+  completionPushDelayMs: 0
   useRampedPreCue: 1
   preCueErmDuty: 1
   preCueErmRampMs: 500
@@ -3576,7 +3579,7 @@ MonoBehaviour:
   printCommands: 1
   maxSolenoidDuty: 1
   maxSolenoidDurationMs: 800
-  completionPushDelayMs: 200
+  completionPushDelayMs: 0
   useRampedPreCue: 1
   preCueErmDuty: 1
   preCueErmRampMs: 500

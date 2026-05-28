@@ -85,10 +85,16 @@ public class TeensySerialInput : MonoBehaviour
     public float calibrationRestPercentile = 0.75f;
     [Tooltip("Minimum live samples before percentile calibration is trusted for a lane.")]
     public int minimumCalibrationSamplesPerLane = 5;
-    [Tooltip("Reject startup rest calibration above this distance. A close-mounted valve reading near 96 mm usually means the wrong mux channel or bad aiming.")]
-    public float maxReasonableRestDistanceMM = 90f;
+    [Tooltip("Reject startup rest calibration above this distance. Valve 2 can sit near 96 mm on the current rig, so keep this above that real rest value.")]
+    public float maxReasonableRestDistanceMM = 140f;
     [Tooltip("When a lane calibrates above Max Reasonable Rest Distance, keep the previous rest value and wait for a valid live value instead.")]
     public bool rejectOutOfRangeCalibration = true;
+    [Tooltip("If a lane was calibrated to a stale close value but live released distance is much farther away, re-baseline it during play.")]
+    public bool allowLiveRestRebaseline = true;
+    [Tooltip("Live released distance must be this much above the stored rest before Unity treats the old rest as stale.")]
+    public float restRebaselineDeltaMM = 8f;
+    [Tooltip("Live released distance must stay stable this long before Unity rewrites the rest baseline.")]
+    public float restRebaselineStableSeconds = 0.20f;
 
     [Header("ToF channel diagnostics")]
     [Tooltip("Latest active mux channel reported by firmware for valve 1.")]
@@ -164,6 +170,8 @@ public class TeensySerialInput : MonoBehaviour
     private bool[] pendingPressedStates = new bool[3];
     private float[] pendingPressedStateSince = new float[3];
     private bool[] laneHasLiveCalibration = new bool[3];
+    private int[] restRebaselineCandidateDistance = new int[3] { 255, 255, 255 };
+    private float[] restRebaselineCandidateSince = new float[3];
     private bool legacyTesterWarningShown = false;
     private float postCalibrationReleaseGuardUntil = 0f;
 
@@ -243,6 +251,9 @@ public class TeensySerialInput : MonoBehaviour
             TryLazyCalibrateLane(0, d1);
             TryLazyCalibrateLane(1, d2);
             TryLazyCalibrateLane(2, d3);
+            TryLiveRestRebaseline(0, d1);
+            TryLiveRestRebaseline(1, d2);
+            TryLiveRestRebaseline(2, d3);
         }
 
         float a1 = DistanceToPressAmount(d1, valve1RestDistanceMM, valve1PressedDistanceMM);
@@ -623,6 +634,77 @@ public class TeensySerialInput : MonoBehaviour
         laneHasLiveCalibration[laneIndex] = true;
 
         Debug.Log("Lazy ToF calibrated valve " + (laneIndex + 1) + " rest to " + distanceMM + " mm");
+    }
+
+    void TryLiveRestRebaseline(int laneIndex, int distanceMM)
+    {
+        if (!allowLiveRestRebaseline ||
+            laneIndex < 0 ||
+            laneIndex >= restRebaselineCandidateDistance.Length)
+        {
+            return;
+        }
+
+        if (!IsValidDistance(distanceMM) || !IsReasonableRestDistance(distanceMM))
+        {
+            ResetRestRebaselineCandidate(laneIndex);
+            return;
+        }
+
+        if (calibratedPressedStates[laneIndex])
+        {
+            ResetRestRebaselineCandidate(laneIndex);
+            return;
+        }
+
+        float currentRest = GetRestDistance(laneIndex);
+        float requiredJump = Mathf.Max(1f, restRebaselineDeltaMM);
+
+        if (distanceMM <= currentRest + requiredJump)
+        {
+            ResetRestRebaselineCandidate(laneIndex);
+            return;
+        }
+
+        float now = Time.realtimeSinceStartup;
+        int candidateDistance = restRebaselineCandidateDistance[laneIndex];
+
+        if (!IsValidDistance(candidateDistance) || Mathf.Abs(candidateDistance - distanceMM) > 2)
+        {
+            restRebaselineCandidateDistance[laneIndex] = distanceMM;
+            restRebaselineCandidateSince[laneIndex] = now;
+            return;
+        }
+
+        if (now - restRebaselineCandidateSince[laneIndex] < Mathf.Max(0f, restRebaselineStableSeconds))
+        {
+            return;
+        }
+
+        SetRestDistance(laneIndex, distanceMM);
+        ApplyPressedThresholdsFromCalibratedRest();
+        calibratedPressedStates[laneIndex] = false;
+        pendingPressedStates[laneIndex] = false;
+        pendingPressedStateSince[laneIndex] = now;
+        laneHasLiveCalibration[laneIndex] = true;
+        ResetRestRebaselineCandidate(laneIndex);
+
+        Debug.LogWarning(
+            "Re-baselined ToF valve " + (laneIndex + 1) +
+            " rest to live released distance " + distanceMM +
+            " mm because the previous rest was stale."
+        );
+    }
+
+    void ResetRestRebaselineCandidate(int laneIndex)
+    {
+        if (laneIndex < 0 || laneIndex >= restRebaselineCandidateDistance.Length)
+        {
+            return;
+        }
+
+        restRebaselineCandidateDistance[laneIndex] = 255;
+        restRebaselineCandidateSince[laneIndex] = 0f;
     }
 
     float GetRestDistance(int laneIndex)
@@ -1207,6 +1289,8 @@ public class TeensySerialInput : MonoBehaviour
         calibrationRestPercentile = Mathf.Clamp(calibrationRestPercentile, 0.5f, 0.95f);
         minimumCalibrationSamplesPerLane = Mathf.Clamp(minimumCalibrationSamplesPerLane, 1, 200);
         maxReasonableRestDistanceMM = Mathf.Clamp(maxReasonableRestDistanceMM, 1f, 254f);
+        restRebaselineDeltaMM = Mathf.Clamp(restRebaselineDeltaMM, 1f, 100f);
+        restRebaselineStableSeconds = Mathf.Clamp(restRebaselineStableSeconds, 0f, 2f);
         analogAmountDeadZone = Mathf.Clamp01(analogAmountDeadZone);
 
         if (!Application.isPlaying)
