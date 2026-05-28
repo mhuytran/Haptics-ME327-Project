@@ -5329,6 +5329,10 @@ MonoBehaviour:
   motionSpeed: 8
   releaseMotionSpeed: 14
   useAnalogValveAmount: 0
+  allowDebugValveAnimation: 0
+  visualPressDebounceSeconds: 0.12
+  visualReleaseDebounceSeconds: 0.1
+  visualAmountDeadZone: 0.05
   followSolenoidRelease: 1
   solenoidDutyForFullRelease: 0.35
   solenoidDutyDeadZone: 0.02
@@ -5377,6 +5381,10 @@ MonoBehaviour:
   motionSpeed: 8
   releaseMotionSpeed: 14
   useAnalogValveAmount: 0
+  allowDebugValveAnimation: 0
+  visualPressDebounceSeconds: 0.12
+  visualReleaseDebounceSeconds: 0.1
+  visualAmountDeadZone: 0.05
   followSolenoidRelease: 1
   solenoidDutyForFullRelease: 0.35
   solenoidDutyDeadZone: 0.02
@@ -5430,6 +5438,10 @@ MonoBehaviour:
   motionSpeed: 8
   releaseMotionSpeed: 14
   useAnalogValveAmount: 0
+  allowDebugValveAnimation: 0
+  visualPressDebounceSeconds: 0.12
+  visualReleaseDebounceSeconds: 0.1
+  visualAmountDeadZone: 0.05
   followSolenoidRelease: 1
   solenoidDutyForFullRelease: 0.35
   solenoidDutyDeadZone: 0.02
