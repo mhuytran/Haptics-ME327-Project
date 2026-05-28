@@ -17,6 +17,10 @@ public class TrumpetValveAnimator : MonoBehaviour
     [Header("analog ToF control")]
     public bool useAnalogValveAmount = false;
 
+    [Header("debug animation source")]
+    [Tooltip("Off for hardware runs so haptic test routines cannot make valves appear pressed on their own.")]
+    public bool allowDebugValveAnimation = false;
+
     [Header("solenoid release follow")]
     public bool followSolenoidRelease = true;
     [Range(0.01f, 1f)]
@@ -51,12 +55,12 @@ public class TrumpetValveAnimator : MonoBehaviour
         {
             // Uses continuous ToF distance from Teensy.
             // 0 = valve up, 1 = valve fully pressed.
-            sensedPressAmount = ValveInputState.GetValveAmount(laneIndex);
+            sensedPressAmount = ValveInputState.GetValveAmount(laneIndex, allowDebugValveAnimation);
         }
         else
         {
             // Uses binary keyboard/Teensy press state.
-            sensedPressAmount = ValveInputState.GetValve(laneIndex) ? 1f : 0f;
+            sensedPressAmount = ValveInputState.GetValve(laneIndex, allowDebugValveAnimation) ? 1f : 0f;
         }
 
         latestDistanceMM = ValveInputState.GetValveDistanceMM(laneIndex);

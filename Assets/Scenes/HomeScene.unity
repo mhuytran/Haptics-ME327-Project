@@ -2194,6 +2194,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HomeTrumpetDancer
   allowedSceneName: HomeScene
+  autoAnimateValves: 0
   valve1: {fileID: 996268127}
   valve2: {fileID: 1037773814}
   valve3: {fileID: 1037773811}
@@ -2255,6 +2256,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HomeTrumpetDancer
   allowedSceneName: HomeScene
+  autoAnimateValves: 0
   valve1: {fileID: 996268127}
   valve2: {fileID: 1037773814}
   valve3: {fileID: 1037773811}
@@ -2306,6 +2308,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HomeTrumpetDancer
   allowedSceneName: HomeScene
+  autoAnimateValves: 0
   valve1: {fileID: 996268127}
   valve2: {fileID: 1037773814}
   valve3: {fileID: 1037773811}
@@ -2357,6 +2360,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HomeTrumpetDancer
   allowedSceneName: HomeScene
+  autoAnimateValves: 0
   valve1: {fileID: 996268127}
   valve2: {fileID: 1037773814}
   valve3: {fileID: 1037773811}

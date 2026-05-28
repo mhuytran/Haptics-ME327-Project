@@ -2804,7 +2804,7 @@ MonoBehaviour:
   commandGuide: 'Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE,
     MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, THRESH.
     Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.'
-  commandProfile: 0
+  commandProfile: 1
   filterOutgoingCommands: 1
   enableHaptics: 1
   printCommands: 1
@@ -2889,7 +2889,7 @@ MonoBehaviour:
   useDistanceBasedPreCue: 0
   preCueDistanceFromTarget: 1
   fallbackPreCueLeadTime: 0.6
-  animateValveOnTest: 1
+  animateValveOnTest: 0
   testAnimationPressSeconds: 0.12
   testAnimationReleaseSeconds: 0.45
   enableKeyboardTesting: 1
@@ -3573,7 +3573,7 @@ MonoBehaviour:
   commandGuide: 'Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE,
     MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, THRESH.
     Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.'
-  commandProfile: 0
+  commandProfile: 1
   filterOutgoingCommands: 1
   enableHaptics: 1
   printCommands: 1
@@ -3600,7 +3600,7 @@ MonoBehaviour:
   tuneErmHoldMs: 100
   tuneTeamSequenceDelayMs: 1000
   tuneRawTofThresholdMM: 65
-  lastCommandStatus: 'BLOCKED by command filter: SOL,1,1.00,1,800'
+  lastCommandStatus: No haptic command sent yet.
 --- !u!1 &1646561942
 GameObject:
   m_ObjectHideFlags: 0

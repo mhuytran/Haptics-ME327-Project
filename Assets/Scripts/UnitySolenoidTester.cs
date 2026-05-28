@@ -37,7 +37,7 @@ public class UnitySolenoidTester : MonoBehaviour
     public float fallbackPreCueLeadTime = 0.60f;
 
     [Header("animation during tests")]
-    public bool animateValveOnTest = true;
+    public bool animateValveOnTest = false;
     public float testAnimationPressSeconds = 0.12f;
     public float testAnimationReleaseSeconds = 0.45f;
 
@@ -312,11 +312,6 @@ public class UnitySolenoidTester : MonoBehaviour
         int solenoidHoldMs
     )
     {
-        if (!animateValveOnTest)
-        {
-            return;
-        }
-
         if (channelIndex < 0 || channelIndex >= debugAnimationRoutines.Length)
         {
             return;
@@ -325,6 +320,13 @@ public class UnitySolenoidTester : MonoBehaviour
         if (debugAnimationRoutines[channelIndex] != null)
         {
             StopCoroutine(debugAnimationRoutines[channelIndex]);
+            debugAnimationRoutines[channelIndex] = null;
+        }
+
+        if (!animateValveOnTest)
+        {
+            ValveInputState.ClearDebugLane(channelIndex);
+            return;
         }
 
         debugAnimationRoutines[channelIndex] = StartCoroutine(

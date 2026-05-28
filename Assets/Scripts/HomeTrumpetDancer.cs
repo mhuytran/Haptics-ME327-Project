@@ -5,6 +5,8 @@ public class HomeTrumpetDancer : MonoBehaviour
 {
     [Header("scene safety")]
     public string allowedSceneName = "HomeScene";
+    [Tooltip("Off for hardware demos so valves do not animate unless real input or an explicit test moves them.")]
+    public bool autoAnimateValves = false;
 
     [Header("valve references")]
     public Transform valve1;
@@ -40,6 +42,7 @@ public class HomeTrumpetDancer : MonoBehaviour
 
     private int patternIndex = 0;
     private float stateTimer = 0f;
+    private bool hasCachedRestPositions = false;
 
     private enum State
     {
@@ -73,6 +76,20 @@ public class HomeTrumpetDancer : MonoBehaviour
             return;
         }
 
+        if (valve1 == null || valve2 == null || valve3 == null)
+        {
+            enabled = false;
+            return;
+        }
+
+        CacheRestPositions();
+
+        if (!autoAnimateValves)
+        {
+            enabled = false;
+            return;
+        }
+
         if (disableGameplayValveAnimators)
         {
             DisableConflictingValveScripts();
@@ -80,7 +97,6 @@ public class HomeTrumpetDancer : MonoBehaviour
 
         localPressDirection = localPressDirection.normalized;
 
-        CacheRestPositions();
         BeginMoveToPattern();
     }
 
@@ -141,6 +157,7 @@ public class HomeTrumpetDancer : MonoBehaviour
         valve1Rest = valve1.localPosition;
         valve2Rest = valve2.localPosition;
         valve3Rest = valve3.localPosition;
+        hasCachedRestPositions = true;
     }
 
     void BeginMoveToPattern()
@@ -227,6 +244,11 @@ public class HomeTrumpetDancer : MonoBehaviour
 
     void OnDisable()
     {
+        if (!hasCachedRestPositions)
+        {
+            return;
+        }
+
         if (valve1 != null) valve1.localPosition = valve1Rest;
         if (valve2 != null) valve2.localPosition = valve2Rest;
         if (valve3 != null) valve3.localPosition = valve3Rest;

@@ -107,18 +107,23 @@ const float MAX_ERM_DUTY = 1.00f;
 const unsigned long MAX_ERM_PULSE_MS = 500;
 const unsigned long MAX_ERM_RAMP_MS = 1200;
 
-const float PRECUE_ERM_DUTY = 1.00f;
+// Keep gameplay ERM duty high enough that every motor reliably starts.
+// Lower steady-state PWM can feel different per motor and may fail to spin.
+const float GAMEPLAY_ERM_DUTY = 1.00f;
+const unsigned long GAMEPLAY_ERM_PULSE_MS = 200;
+
+const float PRECUE_ERM_DUTY = GAMEPLAY_ERM_DUTY;
 const unsigned long PRECUE_ERM_RAMP_MS = 500;
 const unsigned long PRECUE_ERM_HOLD_MS = 200;
 const int PRECUE_ERM_CURVE = 0;
 
-const float GOOD_ERM_DUTY = 0.25f;
-const float PERFECT_ERM_DUTY = 0.35f;
-const float MISS_ERM_DUTY = 0.45f;
+const float GOOD_ERM_DUTY = GAMEPLAY_ERM_DUTY;
+const float PERFECT_ERM_DUTY = GAMEPLAY_ERM_DUTY;
+const float MISS_ERM_DUTY = GAMEPLAY_ERM_DUTY;
 
-const unsigned long GOOD_ERM_MS = 120;
-const unsigned long PERFECT_ERM_MS = 150;
-const unsigned long MISS_ERM_MS = 200;
+const unsigned long GOOD_ERM_MS = GAMEPLAY_ERM_PULSE_MS;
+const unsigned long PERFECT_ERM_MS = GAMEPLAY_ERM_PULSE_MS;
+const unsigned long MISS_ERM_MS = GAMEPLAY_ERM_PULSE_MS;
 
 // ------------------------------------------------------------
 // Actuator state reported back to Unity

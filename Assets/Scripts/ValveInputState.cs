@@ -22,6 +22,11 @@ public static class ValveInputState
 
     public static bool GetValve(int laneIndex)
     {
+        return GetValve(laneIndex, true);
+    }
+
+    public static bool GetValve(int laneIndex, bool includeDebugValves)
+    {
         if (!IsValidLane(laneIndex))
         {
             return false;
@@ -29,11 +34,18 @@ public static class ValveInputState
 
         lock (stateLock)
         {
-            return keyboardValves[laneIndex] || teensyValves[laneIndex] || debugValves[laneIndex];
+            return keyboardValves[laneIndex] ||
+                teensyValves[laneIndex] ||
+                (includeDebugValves && debugValves[laneIndex]);
         }
     }
 
     public static float GetValveAmount(int laneIndex)
+    {
+        return GetValveAmount(laneIndex, true);
+    }
+
+    public static float GetValveAmount(int laneIndex, bool includeDebugValves)
     {
         if (!IsValidLane(laneIndex))
         {
@@ -48,15 +60,19 @@ public static class ValveInputState
                 return 1f;
             }
 
-            if (debugValves[laneIndex])
+            if (includeDebugValves && debugValves[laneIndex])
             {
                 return 1f;
             }
 
-            return Mathf.Max(
-                Mathf.Clamp01(teensyValveAmounts[laneIndex]),
-                Mathf.Clamp01(debugValveAmounts[laneIndex])
-            );
+            float amount = Mathf.Clamp01(teensyValveAmounts[laneIndex]);
+
+            if (includeDebugValves)
+            {
+                amount = Mathf.Max(amount, Mathf.Clamp01(debugValveAmounts[laneIndex]));
+            }
+
+            return amount;
         }
     }
 
