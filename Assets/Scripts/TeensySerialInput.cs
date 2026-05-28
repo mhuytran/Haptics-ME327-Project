@@ -59,6 +59,8 @@ public class TeensySerialInput : MonoBehaviour
     public bool useDiscreteToFStates = true;
     [Tooltip("Debug only. Uses Teensy's raw V1/V2/V3 bits instead of Unity's calibrated ToF states.")]
     public bool useTeensyDebugPressBits = false;
+    [Tooltip("Recommended for bench testing. If Unity calibration is wrong but Teensy's raw V1/V2/V3 says pressed, still count the valve as pressed.")]
+    public bool acceptTeensyPressBitsAsFallback = true;
     [Tooltip("Read-only runtime status.")]
     public bool isCalibrated = false;
     [Tooltip("Read-only runtime status.")]
@@ -114,6 +116,7 @@ public class TeensySerialInput : MonoBehaviour
     private float latestE3 = 0f;
 
     private bool[] calibratedPressedStates = new bool[3];
+    private bool legacyTesterWarningShown = false;
 
     void Awake()
     {
@@ -194,9 +197,20 @@ public class TeensySerialInput : MonoBehaviour
         }
         else if (useDiscreteToFStates && isCalibrated)
         {
+            bool rawV1 = v1;
+            bool rawV2 = v2;
+            bool rawV3 = v3;
+
             v1 = GetDiscretePressedState(0, d1);
             v2 = GetDiscretePressedState(1, d2);
             v3 = GetDiscretePressedState(2, d3);
+
+            if (acceptTeensyPressBitsAsFallback)
+            {
+                v1 = v1 || rawV1;
+                v2 = v2 || rawV2;
+                v3 = v3 || rawV3;
+            }
 
             a1 = v1 ? 1f : 0f;
             a2 = v2 ? 1f : 0f;
@@ -210,9 +224,16 @@ public class TeensySerialInput : MonoBehaviour
         }
         else if (!useTeensyDebugPressBits)
         {
-            v1 = false;
-            v2 = false;
-            v3 = false;
+            if (!acceptTeensyPressBitsAsFallback)
+            {
+                v1 = false;
+                v2 = false;
+                v3 = false;
+            }
+
+            a1 = v1 ? 1f : a1;
+            a2 = v2 ? 1f : a2;
+            a3 = v3 ? 1f : a3;
         }
 
         ApplyValveStateFromTeensyChannel(1, v1, a1, d1, s1, e1);
@@ -646,6 +667,20 @@ public class TeensySerialInput : MonoBehaviour
             Debug.Log("Teensy IN: " + line);
         }
 
+        if (LooksLikeStandaloneTesterOutput(line))
+        {
+            if (!legacyTesterWarningShown)
+            {
+                legacyTesterWarningShown = true;
+                Debug.LogWarning(
+                    "The Teensy is running the standalone haptic tester, not the Unity telemetry firmware. " +
+                    "Flash trumpal_final_code.ino so Unity receives V/D/S/E/TH fields."
+                );
+            }
+
+            return;
+        }
+
         string[] tokens = line.Split(',');
 
         lock (stateLock)
@@ -712,6 +747,15 @@ public class TeensySerialInput : MonoBehaviour
                 }
             }
         }
+    }
+
+    bool LooksLikeStandaloneTesterOutput(string line)
+    {
+        return line.Contains("Haptic Serial Tester") ||
+            line.StartsWith("Actuating ") ||
+            line.StartsWith("Waiting delay ") ||
+            line.StartsWith("Sequence Complete") ||
+            line.StartsWith("ERROR: Unknown command");
     }
 
     float ParseSerialFloat(string value, float fallback)

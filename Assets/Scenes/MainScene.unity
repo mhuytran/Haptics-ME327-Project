@@ -2730,6 +2730,7 @@ MonoBehaviour:
   releaseDeltaMM: 8
   useDiscreteToFStates: 1
   useTeensyDebugPressBits: 0
+  acceptTeensyPressBitsAsFallback: 1
   isCalibrated: 0
   isCalibrating: 0
   derivePressedStateFromDistance: 0
@@ -4006,7 +4007,7 @@ MonoBehaviour:
   hitPlane1: {fileID: 1084728750}
   hitPlane2: {fileID: 576142329}
   hitPlane3: {fileID: 235335200}
-  spawnMode: 1
+  spawnMode: 0
   spawnInterval: 2
   noteTravelTime: 1.5
   waitForPreviousFingeringToResolve: 1

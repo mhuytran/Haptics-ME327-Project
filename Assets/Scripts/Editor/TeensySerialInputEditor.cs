@@ -39,6 +39,7 @@ public class TeensySerialInputEditor : Editor
             input.pauseGameDuringCalibration = true;
             input.useDiscreteToFStates = true;
             input.useTeensyDebugPressBits = false;
+            input.acceptTeensyPressBitsAsFallback = true;
             input.derivePressedStateFromDistance = false;
             EditorUtility.SetDirty(input);
         }

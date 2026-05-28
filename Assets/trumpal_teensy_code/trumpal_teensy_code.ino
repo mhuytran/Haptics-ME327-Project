@@ -45,6 +45,8 @@ const uint8_t TOF_CHANNELS[3] = {0, 6, 7};
 
 Adafruit_VL6180X tof = Adafruit_VL6180X();
 bool tofAvailable[3] = {false, false, false};
+unsigned long lastTofRetryTime = 0;
+const unsigned long TOF_RETRY_INTERVAL_MS = 1000;
 
 // ------------------------------------------------------------
 // Raw ToF press detection
@@ -556,6 +558,33 @@ void initializeTOF()
         if (!selectTCAChannel(channel))
         {
             tofAvailable[i] = false;
+            continue;
+        }
+
+        tofAvailable[i] = tof.begin();
+    }
+}
+
+void retryUnavailableTOF()
+{
+    unsigned long now = millis();
+
+    if (now - lastTofRetryTime < TOF_RETRY_INTERVAL_MS)
+    {
+        return;
+    }
+
+    lastTofRetryTime = now;
+
+    for (int i = 0; i < 3; i++)
+    {
+        if (tofAvailable[i])
+        {
+            continue;
+        }
+
+        if (!selectTCAChannel(TOF_CHANNELS[i]))
+        {
             continue;
         }
 
@@ -1171,6 +1200,7 @@ void loop()
     if (now - lastUnitySendTime >= UNITY_SEND_INTERVAL_MS)
     {
         lastUnitySendTime = now;
+        retryUnavailableTOF();
         sendUnityState();
     }
 }
