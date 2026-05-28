@@ -31,6 +31,16 @@ public class RhythmGameManager : MonoBehaviour
     [Header("haptics")]
     public HapticFeedbackManager hapticFeedbackManager;
 
+    [Header("solenoid push-off tuning")]
+    public bool sendSolenoidPushOnHit = true;
+    public bool pushOnAnyValvePressForTuning = false;
+    public SolenoidPulseSettings[] solenoidPushSettings = new SolenoidPulseSettings[]
+    {
+        new SolenoidPulseSettings(),
+        new SolenoidPulseSettings(),
+        new SolenoidPulseSettings()
+    };
+
     private List<FlyingNote> activeNotes = new List<FlyingNote>();
     private bool[] previousValveStates = new bool[3];
 
@@ -40,6 +50,7 @@ public class RhythmGameManager : MonoBehaviour
     void Start()
     {
         Time.timeScale = 1f;
+        EnsureSolenoidSettings();
 
         if (hapticFeedbackManager == null)
         {
@@ -64,7 +75,12 @@ public class RhythmGameManager : MonoBehaviour
 
             if (pressed && !previousValveStates[lane])
             {
-                TryHit(lane);
+                bool successfulHit = TryHit(lane);
+
+                if (pushOnAnyValvePressForTuning && !successfulHit)
+                {
+                    SendSolenoidPush(lane);
+                }
             }
 
             previousValveStates[lane] = pressed;
@@ -112,11 +128,11 @@ public class RhythmGameManager : MonoBehaviour
         }
     }
 
-    public void TryHit(int lane)
+    public bool TryHit(int lane)
     {
         if (gameOver)
         {
-            return;
+            return false;
         }
 
         FlyingNote bestNote = null;
@@ -145,13 +161,18 @@ public class RhythmGameManager : MonoBehaviour
 
         if (bestNote == null)
         {
-            return;
+            return false;
         }
 
         if (bestTimingError <= goodWindow)
         {
             bool perfect = bestTimingError <= perfectWindow;
             string rating = perfect ? "PERFECT!" : "GOOD!";
+
+            if (sendSolenoidPushOnHit)
+            {
+                SendSolenoidPush(bestNote.laneIndex);
+            }
 
             if (bestNote.isHoldNote)
             {
@@ -165,7 +186,11 @@ public class RhythmGameManager : MonoBehaviour
                 bestNote.ResolveTapHit(rating);
                 RegisterSuccessfulNote(rating, perfect, true);
             }
+
+            return true;
         }
+
+        return false;
     }
 
     public void OnHoldCompleted(FlyingNote note)
@@ -360,6 +385,58 @@ public class RhythmGameManager : MonoBehaviour
         {
             hapticFeedbackManager.SendMiss(lane);
         }
+    }
+
+    void SendSolenoidPush(int lane)
+    {
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager != null)
+        {
+            EnsureSolenoidSettings();
+            hapticFeedbackManager.SendSolenoidPush(lane, solenoidPushSettings[lane]);
+        }
+    }
+
+    void EnsureSolenoidSettings()
+    {
+        if (solenoidPushSettings == null || solenoidPushSettings.Length != 3)
+        {
+            SolenoidPulseSettings[] resizedSettings = new SolenoidPulseSettings[3];
+
+            for (int i = 0; i < resizedSettings.Length; i++)
+            {
+                if (solenoidPushSettings != null && i < solenoidPushSettings.Length)
+                {
+                    resizedSettings[i] = solenoidPushSettings[i];
+                }
+
+                if (resizedSettings[i] == null)
+                {
+                    resizedSettings[i] = new SolenoidPulseSettings();
+                }
+            }
+
+            solenoidPushSettings = resizedSettings;
+        }
+
+        for (int i = 0; i < solenoidPushSettings.Length; i++)
+        {
+            if (solenoidPushSettings[i] == null)
+            {
+                solenoidPushSettings[i] = new SolenoidPulseSettings();
+            }
+
+            solenoidPushSettings[i].Clamp();
+        }
+    }
+
+    void OnValidate()
+    {
+        EnsureSolenoidSettings();
     }
 
     void UpdateMultiplier()

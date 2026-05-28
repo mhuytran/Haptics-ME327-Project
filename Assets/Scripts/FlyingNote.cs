@@ -7,6 +7,8 @@ public class FlyingNote : MonoBehaviour
     public bool resolved = false;
 
     [Header("pre-cue")]
+    public bool useDistanceBasedPreCue = true;
+    public float preCueDistanceFromTarget = 0.45f;
     public float preCueLeadTime = 0.35f;
     private bool preCueSent = false;
 
@@ -145,9 +147,20 @@ public class FlyingNote : MonoBehaviour
             return;
         }
 
-        float timeUntilHit = targetHitTime - Time.time;
+        bool shouldSendPreCue = false;
 
-        if (timeUntilHit <= preCueLeadTime && timeUntilHit > 0f)
+        if (useDistanceBasedPreCue)
+        {
+            float distanceToTarget = Vector3.Distance(transform.position, targetPosition);
+            shouldSendPreCue = distanceToTarget <= preCueDistanceFromTarget;
+        }
+        else
+        {
+            float timeUntilHit = targetHitTime - Time.time;
+            shouldSendPreCue = timeUntilHit <= preCueLeadTime && timeUntilHit > 0f;
+        }
+
+        if (shouldSendPreCue)
         {
             preCueSent = true;
 
@@ -156,6 +169,17 @@ public class FlyingNote : MonoBehaviour
                 gameManager.OnNotePreCue(this);
             }
         }
+    }
+
+    public float GetDistanceToTarget()
+    {
+        return Vector3.Distance(transform.position, targetPosition);
+    }
+
+    public float GetTimeUntilHit()
+    {
+        float timeUntilHit = targetHitTime - Time.time;
+        return Mathf.Max(0f, timeUntilHit);
     }
 
     public void ResolveTapHit(string rating)

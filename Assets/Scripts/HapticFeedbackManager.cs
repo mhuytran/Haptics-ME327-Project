@@ -52,6 +52,18 @@ public class HapticFeedbackManager : MonoBehaviour
         Send("MISS," + (laneIndex + 1));
     }
 
+    public void SendSolenoidPush(int laneIndex, SolenoidPulseSettings settings)
+    {
+        if (settings == null)
+        {
+            Debug.LogWarning("No solenoid pulse settings found for lane " + (laneIndex + 1));
+            return;
+        }
+
+        settings.Clamp();
+        TestSolenoid(laneIndex, settings.duty, settings.phase, settings.durationMs);
+    }
+
     public void TestSolenoid(int channelIndex, float duty, int phase, int durationMs)
     {
         int channelNumber = channelIndex + 1;

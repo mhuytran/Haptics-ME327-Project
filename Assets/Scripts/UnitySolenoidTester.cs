@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -5,14 +6,36 @@ public class UnitySolenoidTester : MonoBehaviour
 {
     [Header("references")]
     public HapticFeedbackManager hapticFeedbackManager;
+    public RhythmGameManager rhythmGameManager;
+    public NoteSpawner noteSpawner;
 
-    [Header("test pulse")]
+    [Header("global fallback pulse")]
     public float testDuty = 0.35f;
     public int testDurationMs = 300;
 
     [Header("phase")]
     public int normalPhase = 0;
     public int shiftedPhase = 1;
+
+    [Header("per-lane pulse tuning")]
+    public bool usePerLanePulseSettings = true;
+    public bool applyPulseSettingsToGameplay = true;
+    public SolenoidPulseSettings[] solenoidPulseSettings = new SolenoidPulseSettings[]
+    {
+        new SolenoidPulseSettings(),
+        new SolenoidPulseSettings(),
+        new SolenoidPulseSettings()
+    };
+
+    [Header("note cue tuning")]
+    public bool applyPreCueTuningToSpawner = true;
+    public bool useDistanceBasedPreCue = true;
+    public float preCueDistanceFromTarget = 0.45f;
+    public float fallbackPreCueLeadTime = 0.35f;
+
+    [Header("animation during tests")]
+    public bool animateValveOnTest = true;
+    public float testAnimationPressSeconds = 0.12f;
 
     [Header("debug")]
     public bool enableKeyboardTesting = true;
@@ -23,6 +46,19 @@ public class UnitySolenoidTester : MonoBehaviour
         {
             hapticFeedbackManager = HapticFeedbackManager.Instance;
         }
+
+        if (rhythmGameManager == null)
+        {
+            rhythmGameManager = Object.FindAnyObjectByType<RhythmGameManager>();
+        }
+
+        if (noteSpawner == null)
+        {
+            noteSpawner = Object.FindAnyObjectByType<NoteSpawner>();
+        }
+
+        EnsureSolenoidSettings();
+        ApplyTuningToGameplay();
     }
 
     void Update()
@@ -137,18 +173,103 @@ public class UnitySolenoidTester : MonoBehaviour
             return;
         }
 
-        hapticFeedbackManager.TestSolenoid(
-            channelIndex,
-            testDuty,
-            phase,
-            testDurationMs
-        );
+        float duty = testDuty;
+        int durationMs = testDurationMs;
+
+        if (usePerLanePulseSettings)
+        {
+            EnsureSolenoidSettings();
+            SolenoidPulseSettings settings = solenoidPulseSettings[channelIndex];
+            duty = settings.duty;
+            durationMs = settings.durationMs;
+
+            if (phase != shiftedPhase)
+            {
+                phase = settings.phase;
+            }
+        }
+
+        hapticFeedbackManager.TestSolenoid(channelIndex, duty, phase, durationMs);
+
+        if (animateValveOnTest)
+        {
+            StartCoroutine(AnimateValveTest(channelIndex));
+        }
 
         Debug.Log(
             "Testing solenoid " + (channelIndex + 1) +
-            " duty=" + testDuty +
+            " duty=" + duty +
             " phase=" + phase +
-            " durationMs=" + testDurationMs
+            " durationMs=" + durationMs
         );
+    }
+
+    IEnumerator AnimateValveTest(int channelIndex)
+    {
+        float endTime = Time.time + Mathf.Max(0.01f, testAnimationPressSeconds);
+
+        while (Time.time < endTime)
+        {
+            ValveInputState.SetTeensyValveAmount(channelIndex, 1f);
+            yield return null;
+        }
+
+        ValveInputState.SetTeensyValveAmount(channelIndex, 0f);
+    }
+
+    public void ApplyTuningToGameplay()
+    {
+        EnsureSolenoidSettings();
+
+        if (applyPulseSettingsToGameplay && rhythmGameManager != null)
+        {
+            rhythmGameManager.solenoidPushSettings = solenoidPulseSettings;
+        }
+
+        if (applyPreCueTuningToSpawner && noteSpawner != null)
+        {
+            noteSpawner.useDistanceBasedPreCue = useDistanceBasedPreCue;
+            noteSpawner.preCueDistanceFromTarget = preCueDistanceFromTarget;
+            noteSpawner.fallbackPreCueLeadTime = fallbackPreCueLeadTime;
+        }
+    }
+
+    void EnsureSolenoidSettings()
+    {
+        if (solenoidPulseSettings == null || solenoidPulseSettings.Length != 3)
+        {
+            SolenoidPulseSettings[] resizedSettings = new SolenoidPulseSettings[3];
+
+            for (int i = 0; i < resizedSettings.Length; i++)
+            {
+                if (solenoidPulseSettings != null && i < solenoidPulseSettings.Length)
+                {
+                    resizedSettings[i] = solenoidPulseSettings[i];
+                }
+
+                if (resizedSettings[i] == null)
+                {
+                    resizedSettings[i] = new SolenoidPulseSettings();
+                }
+            }
+
+            solenoidPulseSettings = resizedSettings;
+        }
+
+        for (int i = 0; i < solenoidPulseSettings.Length; i++)
+        {
+            if (solenoidPulseSettings[i] == null)
+            {
+                solenoidPulseSettings[i] = new SolenoidPulseSettings();
+            }
+
+            solenoidPulseSettings[i].Clamp();
+        }
+    }
+
+    void OnValidate()
+    {
+        EnsureSolenoidSettings();
+        ApplyTuningToGameplay();
     }
 }

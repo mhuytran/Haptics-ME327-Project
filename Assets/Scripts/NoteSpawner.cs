@@ -23,6 +23,11 @@ public class NoteSpawner : MonoBehaviour
     public float spawnInterval = 0.8f;
     public float noteTravelTime = 1.5f;
 
+    [Header("haptic cue tuning")]
+    public bool useDistanceBasedPreCue = true;
+    public float preCueDistanceFromTarget = 0.45f;
+    public float fallbackPreCueLeadTime = 0.35f;
+
     [Header("lane colors")]
     public Color lane1Color = Color.green;
     public Color lane2Color = Color.cyan;
@@ -110,6 +115,9 @@ public class NoteSpawner : MonoBehaviour
 
         note.holdTailColor = noteColor;
         note.holdTailWidth = isHoldNote ? 0.08f : 0.0f;
+        note.useDistanceBasedPreCue = useDistanceBasedPreCue;
+        note.preCueDistanceFromTarget = preCueDistanceFromTarget;
+        note.preCueLeadTime = fallbackPreCueLeadTime;
 
         Vector3 hitPosition = hitPlane != null ? hitPlane.position : valveTarget.position;
         Quaternion hitRotation = hitPlane != null ? hitPlane.rotation : valveTarget.rotation;

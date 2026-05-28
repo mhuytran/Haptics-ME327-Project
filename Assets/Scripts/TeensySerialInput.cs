@@ -22,6 +22,11 @@ public class TeensySerialInput : MonoBehaviour
     public float valve3RestDistanceMM = 80f;
     public float valve3PressedDistanceMM = 25f;
 
+    [Header("Unity-side press threshold")]
+    public bool derivePressedStateFromDistance = true;
+    [Range(0f, 1f)]
+    public float pressAmountThreshold = 0.65f;
+
     [Header("debug")]
     public bool printIncomingLines = false;
     public bool printOutgoingCommands = true;
@@ -78,6 +83,13 @@ public class TeensySerialInput : MonoBehaviour
         float a1 = DistanceToPressAmount(d1, valve1RestDistanceMM, valve1PressedDistanceMM);
         float a2 = DistanceToPressAmount(d2, valve2RestDistanceMM, valve2PressedDistanceMM);
         float a3 = DistanceToPressAmount(d3, valve3RestDistanceMM, valve3PressedDistanceMM);
+
+        if (derivePressedStateFromDistance)
+        {
+            v1 = v1 || a1 >= pressAmountThreshold;
+            v2 = v2 || a2 >= pressAmountThreshold;
+            v3 = v3 || a3 >= pressAmountThreshold;
+        }
 
         ValveInputState.SetTeensyValve(0, v1);
         ValveInputState.SetTeensyValve(1, v2);
