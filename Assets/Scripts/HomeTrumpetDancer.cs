@@ -27,9 +27,9 @@ public class HomeTrumpetDancer : MonoBehaviour
     public float pressDepth = 0.35f;
 
     [Header("timing")]
-    public float transitionTime = 0.18f;
-    public float holdTime = 0.75f;
-    public float restTime = 0.18f;
+    public float transitionTime = 0.08f;
+    public float holdTime = 0.32f;
+    public float restTime = 0.06f;
 
     [Header("motion shape")]
     public AnimationCurve motionCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);

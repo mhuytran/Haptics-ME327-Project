@@ -2201,9 +2201,9 @@ MonoBehaviour:
   disableGameplayValveAnimators: 1
   localPressDirection: {x: 0, y: -1, z: 0}
   pressDepth: 0.35
-  transitionTime: 0.18
-  holdTime: 0.5
-  restTime: 0.07
+  transitionTime: 0.08
+  holdTime: 0.32
+  restTime: 0.06
   motionCurve:
     serializedVersion: 2
     m_Curve:
@@ -2263,9 +2263,9 @@ MonoBehaviour:
   disableGameplayValveAnimators: 1
   localPressDirection: {x: 0, y: -1, z: 0}
   pressDepth: 0.35
-  transitionTime: 0.18
-  holdTime: 0.75
-  restTime: 0.18
+  transitionTime: 0.08
+  holdTime: 0.32
+  restTime: 0.06
   motionCurve:
     serializedVersion: 2
     m_Curve:
@@ -2315,9 +2315,9 @@ MonoBehaviour:
   disableGameplayValveAnimators: 1
   localPressDirection: {x: 0, y: -1, z: 0}
   pressDepth: 0.35
-  transitionTime: 0.18
-  holdTime: 0.75
-  restTime: 0.18
+  transitionTime: 0.08
+  holdTime: 0.32
+  restTime: 0.06
   motionCurve:
     serializedVersion: 2
     m_Curve:
@@ -2367,9 +2367,9 @@ MonoBehaviour:
   disableGameplayValveAnimators: 1
   localPressDirection: {x: 0, y: -1, z: 0}
   pressDepth: 0.35
-  transitionTime: 0.18
-  holdTime: 0.75
-  restTime: 0.18
+  transitionTime: 0.08
+  holdTime: 0.32
+  restTime: 0.06
   motionCurve:
     serializedVersion: 2
     m_Curve:

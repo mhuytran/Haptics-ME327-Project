@@ -5328,12 +5328,12 @@ MonoBehaviour:
     ermIn2Pin: 23
   laneIndex: 1
   pressedLocalOffset: {x: 0, y: -0.18, z: 0}
-  motionSpeed: 8
-  releaseMotionSpeed: 14
+  motionSpeed: 18
+  releaseMotionSpeed: 28
   useAnalogValveAmount: 0
   allowDebugValveAnimation: 0
-  visualPressDebounceSeconds: 0.12
-  visualReleaseDebounceSeconds: 0.1
+  visualPressDebounceSeconds: 0.04
+  visualReleaseDebounceSeconds: 0.03
   visualAmountDeadZone: 0.05
   visualTargetSnapEpsilon: 0.025
   followSolenoidRelease: 0
@@ -5381,12 +5381,12 @@ MonoBehaviour:
     ermIn2Pin: 23
   laneIndex: 0
   pressedLocalOffset: {x: 0, y: -0.18, z: 0}
-  motionSpeed: 8
-  releaseMotionSpeed: 14
+  motionSpeed: 18
+  releaseMotionSpeed: 28
   useAnalogValveAmount: 0
   allowDebugValveAnimation: 0
-  visualPressDebounceSeconds: 0.12
-  visualReleaseDebounceSeconds: 0.1
+  visualPressDebounceSeconds: 0.04
+  visualReleaseDebounceSeconds: 0.03
   visualAmountDeadZone: 0.05
   visualTargetSnapEpsilon: 0.025
   followSolenoidRelease: 0
@@ -5439,12 +5439,12 @@ MonoBehaviour:
     ermIn2Pin: 23
   laneIndex: 2
   pressedLocalOffset: {x: 0, y: -0.18, z: 0}
-  motionSpeed: 8
-  releaseMotionSpeed: 14
+  motionSpeed: 18
+  releaseMotionSpeed: 28
   useAnalogValveAmount: 0
   allowDebugValveAnimation: 0
-  visualPressDebounceSeconds: 0.12
-  visualReleaseDebounceSeconds: 0.1
+  visualPressDebounceSeconds: 0.04
+  visualReleaseDebounceSeconds: 0.03
   visualAmountDeadZone: 0.05
   visualTargetSnapEpsilon: 0.025
   followSolenoidRelease: 0

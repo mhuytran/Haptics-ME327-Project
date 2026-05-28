@@ -11,8 +11,8 @@ public class TrumpetValveAnimator : MonoBehaviour
 
     [Header("valve motion")]
     public Vector3 pressedLocalOffset = new Vector3(0f, -0.18f, 0f);
-    public float motionSpeed = 8.0f;
-    public float releaseMotionSpeed = 14.0f;
+    public float motionSpeed = 18.0f;
+    public float releaseMotionSpeed = 28.0f;
 
     [Header("analog ToF control")]
     public bool useAnalogValveAmount = false;
@@ -27,9 +27,9 @@ public class TrumpetValveAnimator : MonoBehaviour
 
     [Header("visual anti-jitter")]
     [Tooltip("How long a new pressed visual state must stay stable before the model moves.")]
-    public float visualPressDebounceSeconds = 0.12f;
+    public float visualPressDebounceSeconds = 0.04f;
     [Tooltip("How long a new released visual state must stay stable before the model moves.")]
-    public float visualReleaseDebounceSeconds = 0.10f;
+    public float visualReleaseDebounceSeconds = 0.03f;
     [Range(0f, 0.5f)]
     [Tooltip("Tiny analog ToF amounts below this value are treated as released for visuals.")]
     public float visualAmountDeadZone = 0.05f;
