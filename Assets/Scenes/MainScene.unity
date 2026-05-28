@@ -2798,7 +2798,7 @@ MonoBehaviour:
   enableHaptics: 1
   printCommands: 1
   maxSolenoidDuty: 1
-  maxSolenoidDurationMs: 350
+  maxSolenoidDurationMs: 800
   completionPushDelayMs: 320
   useRampedPreCue: 1
   preCueErmDuty: 1
@@ -2809,10 +2809,10 @@ MonoBehaviour:
   maxErmRampMs: 1200
   tuneLane: 1
   tuneSolenoidDuty: 1
-  tuneSolenoidDurationMs: 350
+  tuneSolenoidDurationMs: 800
   tuneSolenoidRampMs: 800
   tuneSolenoidRampCurve: 1
-  tuneSolenoidRampHoldMs: 350
+  tuneSolenoidRampHoldMs: 800
   tuneErmDuty: 1
   tuneErmDurationMs: 150
   tuneErmRampMs: 1000
@@ -2859,7 +2859,7 @@ MonoBehaviour:
     ermIn1Pin: 22
     ermIn2Pin: 23
   testDuty: 1
-  testDurationMs: 220
+  testDurationMs: 800
   normalPhase: 1
   shiftedPhase: 0
   usePerLanePulseSettings: 1
@@ -2867,13 +2867,13 @@ MonoBehaviour:
   solenoidPulseSettings:
   - duty: 1
     phase: 1
-    durationMs: 220
+    durationMs: 800
   - duty: 1
     phase: 1
-    durationMs: 220
+    durationMs: 800
   - duty: 1
     phase: 1
-    durationMs: 220
+    durationMs: 800
   applyPreCueTuningToSpawner: 1
   useDistanceBasedPreCue: 0
   preCueDistanceFromTarget: 1
@@ -3567,7 +3567,7 @@ MonoBehaviour:
   enableHaptics: 1
   printCommands: 1
   maxSolenoidDuty: 1
-  maxSolenoidDurationMs: 350
+  maxSolenoidDurationMs: 800
   completionPushDelayMs: 320
   useRampedPreCue: 1
   preCueErmDuty: 1
@@ -3578,10 +3578,10 @@ MonoBehaviour:
   maxErmRampMs: 1200
   tuneLane: 1
   tuneSolenoidDuty: 1
-  tuneSolenoidDurationMs: 350
+  tuneSolenoidDurationMs: 800
   tuneSolenoidRampMs: 800
   tuneSolenoidRampCurve: 1
-  tuneSolenoidRampHoldMs: 350
+  tuneSolenoidRampHoldMs: 800
   tuneErmDuty: 1
   tuneErmDurationMs: 150
   tuneErmRampMs: 1000
@@ -3589,7 +3589,7 @@ MonoBehaviour:
   tuneErmHoldMs: 100
   tuneTeamSequenceDelayMs: 1000
   tuneRawTofThresholdMM: 65
-  lastCommandStatus: 'BLOCKED by command filter: SOL,1,1.00,1,350'
+  lastCommandStatus: 'BLOCKED by command filter: SOL,1,1.00,1,800'
 --- !u!1 &1646561942
 GameObject:
   m_ObjectHideFlags: 0
@@ -3987,13 +3987,13 @@ MonoBehaviour:
   solenoidPushSettings:
   - duty: 1
     phase: 1
-    durationMs: 220
+    durationMs: 800
   - duty: 1
     phase: 1
-    durationMs: 220
+    durationMs: 800
   - duty: 1
     phase: 1
-    durationMs: 220
+    durationMs: 800
   requireExactFingering: 1
   judgeFingeringContinuously: 0
 --- !u!114 &1740641789

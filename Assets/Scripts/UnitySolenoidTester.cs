@@ -14,7 +14,7 @@ public class UnitySolenoidTester : MonoBehaviour
 
     [Header("global fallback pulse")]
     public float testDuty = 1.00f;
-    public int testDurationMs = 220;
+    public int testDurationMs = 800;
 
     [Header("phase")]
     public int normalPhase = TeensyHardwarePinout.ActiveSolenoidPhase;

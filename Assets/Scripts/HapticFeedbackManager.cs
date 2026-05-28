@@ -43,7 +43,7 @@ public class HapticFeedbackManager : MonoBehaviour
     [Tooltip("Maximum solenoid duty Unity is allowed to send. Firmware also caps this.")]
     public float maxSolenoidDuty = 1.00f;
     [Tooltip("Maximum solenoid pulse duration Unity is allowed to send. Firmware also caps this.")]
-    public int maxSolenoidDurationMs = 350;
+    public int maxSolenoidDurationMs = 800;
 
     [Header("playable dwell before push-off")]
     [Tooltip("Delay TAPCOMPLETE/HOLDCOMPLETE/MISS commands so the player gets time to press or hold before the solenoid pushes back. Set to 0 for instant push-off.")]
@@ -69,13 +69,13 @@ public class HapticFeedbackManager : MonoBehaviour
     public int tuneLane = 1;
     [Range(0f, 1f)]
     public float tuneSolenoidDuty = 1.00f;
-    public int tuneSolenoidDurationMs = 350;
+    public int tuneSolenoidDurationMs = 800;
     [Tooltip("Standalone tester TEST rampTimeMs equivalent, sent as SOLRAMP.")]
     public int tuneSolenoidRampMs = 800;
     [Tooltip("Standalone tester func equivalent: Linear = 0, Quadratic = 1, Exponential = 2.")]
     public SolenoidRampCurve tuneSolenoidRampCurve = SolenoidRampCurve.Quadratic;
     [Tooltip("Standalone tester holdTimeMs equivalent after the ramp reaches peak duty.")]
-    public int tuneSolenoidRampHoldMs = 350;
+    public int tuneSolenoidRampHoldMs = 800;
     [Range(0f, 1f)]
     public float tuneErmDuty = 1.00f;
     public int tuneErmDurationMs = 150;
@@ -380,7 +380,7 @@ public class HapticFeedbackManager : MonoBehaviour
     public void ApplyTeam12VFeelDefaults()
     {
         maxSolenoidDuty = 1.00f;
-        maxSolenoidDurationMs = 350;
+        maxSolenoidDurationMs = 800;
         completionPushDelayMs = 320;
 
         useRampedPreCue = true;
@@ -392,10 +392,10 @@ public class HapticFeedbackManager : MonoBehaviour
         maxErmRampMs = 1200;
 
         tuneSolenoidDuty = 1.00f;
-        tuneSolenoidDurationMs = 350;
+        tuneSolenoidDurationMs = 800;
         tuneSolenoidRampMs = 800;
         tuneSolenoidRampCurve = SolenoidRampCurve.Quadratic;
-        tuneSolenoidRampHoldMs = 350;
+        tuneSolenoidRampHoldMs = 800;
 
         tuneErmDuty = 1.00f;
         tuneErmDurationMs = 150;

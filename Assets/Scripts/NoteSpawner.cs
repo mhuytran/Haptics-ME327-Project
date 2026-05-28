@@ -100,6 +100,8 @@ public class NoteSpawner : MonoBehaviour
     public NoteSpawnMode spawnMode = NoteSpawnMode.RandomDebug;
     public float spawnInterval = 2.0f;
     public float noteTravelTime = 2.2f;
+    [Tooltip("Every non-open note becomes at least this long of a playable hold. Kept at 0.5s minimum so solenoid push-off happens after the user has time to press.")]
+    public float minimumNoteHoldDuration = 0.5f;
     public bool waitForPreviousFingeringToResolve = true;
 
     [Header("mode shortcuts")]
@@ -145,7 +147,7 @@ public class NoteSpawner : MonoBehaviour
     public float timingOffsetNudgeSeconds = 0.025f;
     public float currentAudioClockTime = 0f;
     public bool useSongDurationsAsHolds = true;
-    public float minimumSongHoldDuration = 0.65f;
+    public float minimumSongHoldDuration = 0.5f;
     public bool skipVeryLateSongNotes = true;
     public float lateSongNoteSkipSeconds = 0.35f;
     public bool loopSongChart = false;
@@ -403,7 +405,7 @@ public class NoteSpawner : MonoBehaviour
     void SpawnLegacySingleLaneNote()
     {
         int lane = lanePattern[patternIndex];
-        float requestedHoldDuration = holdDurationPattern[patternIndex];
+        float requestedHoldDuration = GetPlayableHoldDuration(holdDurationPattern[patternIndex]);
 
         patternIndex = (patternIndex + 1) % lanePattern.Length;
 
@@ -443,7 +445,7 @@ public class NoteSpawner : MonoBehaviour
         }
 
         float targetHitTime = Time.time + noteTravelTime;
-        float requestedHoldDuration = Mathf.Max(0f, fingering.holdDuration);
+        float requestedHoldDuration = GetPlayableHoldDuration(fingering.holdDuration);
         int requiredValveMask = FingeringToMask(fingering);
         bool requestedHold = requestedHoldDuration > 0.05f;
         bool overlapsExistingHold = requestedHold && FingeringOverlapsExistingHold(fingering, targetHitTime);
@@ -1179,19 +1181,24 @@ public class NoteSpawner : MonoBehaviour
 
     float GetSongHoldDuration(SongChartNote chartNote)
     {
-        if (!useSongDurationsAsHolds)
-        {
-            return 0f;
-        }
-
-        float duration = Mathf.Max(0f, chartNote.duration);
+        float duration = useSongDurationsAsHolds
+            ? Mathf.Max(0f, chartNote.duration)
+            : 0f;
 
         if (duration < minimumSongHoldDuration)
         {
-            return 0f;
+            duration = minimumSongHoldDuration;
         }
 
-        return duration;
+        return GetPlayableHoldDuration(duration);
+    }
+
+    float GetPlayableHoldDuration(float requestedHoldDuration)
+    {
+        return Mathf.Max(
+            Mathf.Max(0f, requestedHoldDuration),
+            Mathf.Max(0.5f, minimumNoteHoldDuration)
+        );
     }
 
     string BuildSongFingeringName(SongChartNote chartNote, int requiredValveMask)
@@ -1332,6 +1339,8 @@ public class NoteSpawner : MonoBehaviour
     {
         spawnInterval = Mathf.Max(0.05f, spawnInterval);
         noteTravelTime = Mathf.Max(0.1f, noteTravelTime);
+        minimumNoteHoldDuration = Mathf.Max(0.5f, minimumNoteHoldDuration);
+        minimumSongHoldDuration = Mathf.Max(0.5f, minimumSongHoldDuration);
         scheduledAudioStartDelaySeconds = Mathf.Clamp(scheduledAudioStartDelaySeconds, 0.02f, 1.0f);
         timingOffsetNudgeSeconds = Mathf.Clamp(timingOffsetNudgeSeconds, 0.001f, 0.5f);
         ApplyLanePaletteToMaterials();

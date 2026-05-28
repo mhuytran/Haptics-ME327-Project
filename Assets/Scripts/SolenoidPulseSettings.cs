@@ -5,7 +5,7 @@ using UnityEngine;
 public class SolenoidPulseSettings
 {
     public const float MaxRecommendedDuty = 1.00f;
-    public const int MaxRecommendedDurationMs = 350;
+    public const int MaxRecommendedDurationMs = 800;
 
     [Range(0f, 1f)]
     public float duty = 1.00f;
