@@ -102,10 +102,21 @@ public class NoteSpawner : MonoBehaviour
     public float noteTravelTime = 1.5f;
     public bool waitForPreviousFingeringToResolve = true;
 
+    [Header("mode shortcuts")]
+    public bool allowModeSwitchShortcuts = true;
+    [Tooltip("Toggles between SongChart and RandomDebug while the game is running.")]
+    public Key toggleSpawnModeKey = Key.F9;
+    [Tooltip("Immediate switch to RandomDebug.")]
+    public Key randomDebugModeKey = Key.F10;
+    [Tooltip("Immediate switch to SongChart.")]
+    public Key songChartModeKey = Key.F11;
+    public bool clearNotesWhenSwitchingModes = true;
+    public bool startSongWhenSwitchingToSongMode = true;
+
     [Header("song chart mode")]
     [TextArea(4, 7)]
     public string songModeGuide =
-        "RandomDebug keeps spawning generated fingerings. SongChart loads From-The-Start from Resources/TrumpetCharts, plays the audio, and spawns the PDF/OMR note chart in sync. Keyboard testing still uses A/S/D for valves 1/2/3.";
+        "RandomDebug keeps spawning generated fingerings. SongChart loads From-The-Start from Resources/TrumpetCharts, plays the audio, and spawns the PDF/OMR note chart in sync. F9 toggles modes, F10 forces RandomDebug, F11 forces SongChart. Space starts/pauses, R restarts, [/] nudge note timing.";
     public TextAsset songChartJson;
     public string songChartResourcePath = "TrumpetCharts/From-The-Start";
     public AudioSource songAudioSource;
@@ -118,6 +129,21 @@ public class NoteSpawner : MonoBehaviour
     public bool useChartLeadInSeconds = true;
     public float manualLeadInSeconds = 3.0f;
     public float additionalChartOffsetSeconds = 0f;
+    [Header("song sync tuning")]
+    [Tooltip("Schedules playback on Unity's DSP clock so chart timing starts from a stable audio clock.")]
+    public bool useDspClockForSongSync = true;
+    [Tooltip("Reads song position from audio samples instead of the coarser AudioSource.time value.")]
+    public bool useSampleAccurateSongTime = true;
+    [Tooltip("Tiny scheduling delay used when starting from the beginning. This improves audio/chart start stability.")]
+    public float scheduledAudioStartDelaySeconds = 0.10f;
+    public bool allowTimingOffsetShortcuts = true;
+    [Tooltip("Moves future chart notes earlier relative to the audio.")]
+    public Key nudgeChartEarlierKey = Key.LeftBracket;
+    [Tooltip("Moves future chart notes later relative to the audio.")]
+    public Key nudgeChartLaterKey = Key.RightBracket;
+    public Key resetChartOffsetKey = Key.Backslash;
+    public float timingOffsetNudgeSeconds = 0.025f;
+    public float currentAudioClockTime = 0f;
     public bool useSongDurationsAsHolds = true;
     public float minimumSongHoldDuration = 0.45f;
     public bool skipVeryLateSongNotes = true;
@@ -172,6 +198,9 @@ public class NoteSpawner : MonoBehaviour
     private bool songStarted = false;
     private bool songPaused = false;
     private float fallbackSongStartTime = 0f;
+    private float pausedSongTime = 0f;
+    private double scheduledSongDspStartTime = -1.0;
+    private NoteSpawnMode activeSpawnMode;
 
     private int[] lanePattern = new int[]
     {
@@ -198,10 +227,19 @@ public class NoteSpawner : MonoBehaviour
 
         ApplyLanePaletteToMaterials();
         LoadSongChartIfNeeded();
+        activeSpawnMode = spawnMode;
     }
 
     void Update()
     {
+        HandleModeSwitchShortcuts();
+
+        if (spawnMode != activeSpawnMode)
+        {
+            ApplySpawnModeChange(activeSpawnMode, spawnMode, startSongWhenSwitchingToSongMode);
+            activeSpawnMode = spawnMode;
+        }
+
         if (spawnMode == NoteSpawnMode.SongChart)
         {
             UpdateSongChartMode();
@@ -221,6 +259,126 @@ public class NoteSpawner : MonoBehaviour
         {
             spawnTimer = 0f;
             SpawnNextNote();
+        }
+    }
+
+    void HandleModeSwitchShortcuts()
+    {
+        if (!allowModeSwitchShortcuts || Keyboard.current == null)
+        {
+            return;
+        }
+
+        if (WasKeyPressed(toggleSpawnModeKey))
+        {
+            ToggleSpawnMode();
+            return;
+        }
+
+        if (WasKeyPressed(randomDebugModeKey))
+        {
+            SwitchToRandomDebugMode();
+            return;
+        }
+
+        if (WasKeyPressed(songChartModeKey))
+        {
+            SwitchToSongChartMode();
+        }
+    }
+
+    [ContextMenu("Mode/Toggle Song And Random Debug")]
+    public void ToggleSpawnMode()
+    {
+        NoteSpawnMode nextMode = spawnMode == NoteSpawnMode.SongChart
+            ? NoteSpawnMode.RandomDebug
+            : NoteSpawnMode.SongChart;
+
+        SetSpawnMode(nextMode);
+    }
+
+    [ContextMenu("Mode/Switch To Random Debug")]
+    public void SwitchToRandomDebugMode()
+    {
+        SetSpawnMode(NoteSpawnMode.RandomDebug);
+    }
+
+    [ContextMenu("Mode/Switch To Song Chart")]
+    public void SwitchToSongChartMode()
+    {
+        SetSpawnMode(NoteSpawnMode.SongChart);
+    }
+
+    public void SetSpawnMode(NoteSpawnMode nextMode)
+    {
+        if (spawnMode == nextMode)
+        {
+            if (nextMode == NoteSpawnMode.SongChart &&
+                startSongWhenSwitchingToSongMode &&
+                !songStarted &&
+                CanStartSongNow())
+            {
+                StartSong();
+            }
+
+            return;
+        }
+
+        NoteSpawnMode previousMode = spawnMode;
+        spawnMode = nextMode;
+        ApplySpawnModeChange(previousMode, nextMode, startSongWhenSwitchingToSongMode);
+        activeSpawnMode = nextMode;
+    }
+
+    void ApplySpawnModeChange(
+        NoteSpawnMode previousMode,
+        NoteSpawnMode nextMode,
+        bool startSongIfPossible
+    )
+    {
+        if (clearNotesWhenSwitchingModes && gameManager != null)
+        {
+            gameManager.ClearActiveNotes();
+        }
+
+        spawnTimer = 0f;
+        patternIndex = 0;
+        lastRandomFingeringIndex = -1;
+        Array.Clear(laneHoldBusyUntil, 0, laneHoldBusyUntil.Length);
+
+        if (previousMode == NoteSpawnMode.SongChart || nextMode == NoteSpawnMode.RandomDebug)
+        {
+            StopSongPlayback();
+        }
+
+        if (nextMode == NoteSpawnMode.RandomDebug)
+        {
+            currentSongStatus = "RandomDebug mode. Song audio stopped.";
+            return;
+        }
+
+        LoadSongChartIfNeeded();
+        currentSongStatus = "SongChart mode ready. Press " + startPauseSongKey + " or use auto-start.";
+
+        if (startSongIfPossible && CanStartSongNow())
+        {
+            StartSong();
+        }
+    }
+
+    void StopSongPlayback()
+    {
+        songStarted = false;
+        songPaused = false;
+        pausedSongTime = 0f;
+        currentSongTime = 0f;
+        currentAudioClockTime = 0f;
+        nextSongNoteIndex = 0;
+        scheduledSongDspStartTime = -1.0;
+
+        if (songAudioSource != null)
+        {
+            songAudioSource.Stop();
         }
     }
 
@@ -462,6 +620,7 @@ public class NoteSpawner : MonoBehaviour
         }
 
         currentSongTime = GetSongTime();
+        currentAudioClockTime = currentSongTime;
 
         if (songAudioSource != null &&
             songAudioSource.clip != null &&
@@ -537,6 +696,26 @@ public class NoteSpawner : MonoBehaviour
         {
             RestartSong();
         }
+
+        if (!allowTimingOffsetShortcuts)
+        {
+            return;
+        }
+
+        if (WasKeyPressed(nudgeChartEarlierKey))
+        {
+            NudgeChartEarlier();
+        }
+
+        if (WasKeyPressed(nudgeChartLaterKey))
+        {
+            NudgeChartLater();
+        }
+
+        if (WasKeyPressed(resetChartOffsetKey))
+        {
+            ResetChartOffset();
+        }
     }
 
     bool WasKeyPressed(Key key)
@@ -568,17 +747,19 @@ public class NoteSpawner : MonoBehaviour
 
         EnsureSongAudioSource();
 
+        if (gameManager != null)
+        {
+            gameManager.ClearActiveNotes();
+        }
+
         nextSongNoteIndex = 0;
         songStarted = true;
         songPaused = false;
-        fallbackSongStartTime = Time.time;
+        pausedSongTime = 0f;
+        currentSongTime = 0f;
+        currentAudioClockTime = 0f;
 
-        if (songAudioSource != null && songAudioSource.clip != null)
-        {
-            songAudioSource.Stop();
-            songAudioSource.time = 0f;
-            songAudioSource.Play();
-        }
+        PlaySongAudioFrom(0f, true);
 
         currentSongStatus = "Playing " + loadedSongTitle;
     }
@@ -591,13 +772,17 @@ public class NoteSpawner : MonoBehaviour
             return;
         }
 
+        pausedSongTime = GetSongTime();
+        currentSongTime = pausedSongTime;
+        currentAudioClockTime = pausedSongTime;
         songPaused = true;
 
         if (songAudioSource != null)
         {
-            songAudioSource.Pause();
+            songAudioSource.Stop();
         }
 
+        scheduledSongDspStartTime = -1.0;
         currentSongStatus = "Paused " + loadedSongTitle;
     }
 
@@ -613,11 +798,11 @@ public class NoteSpawner : MonoBehaviour
 
         if (songAudioSource != null && songAudioSource.clip != null)
         {
-            songAudioSource.UnPause();
+            PlaySongAudioFrom(pausedSongTime, false);
         }
         else
         {
-            fallbackSongStartTime = Time.time - currentSongTime;
+            fallbackSongStartTime = Time.time - pausedSongTime;
         }
 
         currentSongStatus = "Playing " + loadedSongTitle;
@@ -632,6 +817,39 @@ public class NoteSpawner : MonoBehaviour
         }
 
         StartSong();
+    }
+
+    [ContextMenu("Song/Nudge Chart Earlier")]
+    public void NudgeChartEarlier()
+    {
+        additionalChartOffsetSeconds -= Mathf.Abs(timingOffsetNudgeSeconds);
+        UpdateTimingOffsetStatus("earlier");
+    }
+
+    [ContextMenu("Song/Nudge Chart Later")]
+    public void NudgeChartLater()
+    {
+        additionalChartOffsetSeconds += Mathf.Abs(timingOffsetNudgeSeconds);
+        UpdateTimingOffsetStatus("later");
+    }
+
+    [ContextMenu("Song/Reset Chart Offset")]
+    public void ResetChartOffset()
+    {
+        additionalChartOffsetSeconds = 0f;
+        UpdateTimingOffsetStatus("reset");
+    }
+
+    void UpdateTimingOffsetStatus(string action)
+    {
+        currentSongStatus =
+            "Chart timing " +
+            action +
+            ". Offset=" +
+            additionalChartOffsetSeconds.ToString("0.000") +
+            "s";
+
+        Debug.Log(currentSongStatus);
     }
 
     void LoadSongChartIfNeeded()
@@ -698,12 +916,87 @@ public class NoteSpawner : MonoBehaviour
         }
 
         songAudioSource.playOnAwake = false;
+        songAudioSource.spatialBlend = 0f;
+        songAudioSource.dopplerLevel = 0f;
+    }
+
+    void PlaySongAudioFrom(float songTime, bool allowScheduledStart)
+    {
+        scheduledSongDspStartTime = -1.0;
+        fallbackSongStartTime = Time.time - songTime;
+
+        if (songAudioSource == null || songAudioSource.clip == null)
+        {
+            return;
+        }
+
+        AudioClip clip = songAudioSource.clip;
+        float clampedSongTime = Mathf.Clamp(songTime, 0f, Mathf.Max(0f, clip.length - 0.01f));
+
+        songAudioSource.Stop();
+        SetSongAudioTime(clampedSongTime);
+
+        if (useDspClockForSongSync && allowScheduledStart)
+        {
+            double startDelay = Mathf.Max(0.02f, scheduledAudioStartDelaySeconds);
+            double dspPlayTime = AudioSettings.dspTime + startDelay;
+            scheduledSongDspStartTime = dspPlayTime - clampedSongTime;
+            fallbackSongStartTime = Time.time + (float)startDelay - clampedSongTime;
+            songAudioSource.PlayScheduled(dspPlayTime);
+            return;
+        }
+
+        scheduledSongDspStartTime = AudioSettings.dspTime - clampedSongTime;
+        fallbackSongStartTime = Time.time - clampedSongTime;
+        songAudioSource.Play();
+    }
+
+    void SetSongAudioTime(float songTime)
+    {
+        if (songAudioSource == null || songAudioSource.clip == null)
+        {
+            return;
+        }
+
+        AudioClip clip = songAudioSource.clip;
+        int sample = Mathf.Clamp(
+            Mathf.RoundToInt(songTime * clip.frequency),
+            0,
+            Mathf.Max(0, clip.samples - 1)
+        );
+
+        songAudioSource.timeSamples = sample;
     }
 
     float GetSongTime()
     {
+        if (songPaused)
+        {
+            return pausedSongTime;
+        }
+
         if (songAudioSource != null && songAudioSource.clip != null)
         {
+            AudioClip clip = songAudioSource.clip;
+
+            if (useSampleAccurateSongTime && (songAudioSource.isPlaying || songAudioSource.timeSamples > 0))
+            {
+                return Mathf.Clamp(
+                    (float)songAudioSource.timeSamples / Mathf.Max(1, clip.frequency),
+                    0f,
+                    clip.length
+                );
+            }
+
+            if (useDspClockForSongSync && scheduledSongDspStartTime > 0.0)
+            {
+                return Mathf.Clamp(
+                    (float)(AudioSettings.dspTime - scheduledSongDspStartTime),
+                    0f,
+                    clip.length
+                );
+            }
+
             return songAudioSource.time;
         }
 
@@ -932,6 +1225,10 @@ public class NoteSpawner : MonoBehaviour
 
     void OnValidate()
     {
+        spawnInterval = Mathf.Max(0.05f, spawnInterval);
+        noteTravelTime = Mathf.Max(0.1f, noteTravelTime);
+        scheduledAudioStartDelaySeconds = Mathf.Clamp(scheduledAudioStartDelaySeconds, 0.02f, 1.0f);
+        timingOffsetNudgeSeconds = Mathf.Clamp(timingOffsetNudgeSeconds, 0.001f, 0.5f);
         ApplyLanePaletteToMaterials();
     }
 }

@@ -69,7 +69,7 @@ const unsigned long UNITY_SEND_INTERVAL_MS = 20; // 50 Hz
 // MVP commands are always accepted:
 // X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE, MISS
 // Bench tuning commands can be disabled after the hardware feels right:
-// THRESH, SOL, ERM, ERMRAMP
+// THRESH, SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH
 // Not used in this Unity MVP: READ, STREAM, RATE, A/B/C quick commands,
 // blocking scale playback loops.
 // ------------------------------------------------------------
@@ -83,6 +83,8 @@ const bool ENABLE_TUNING_COMMANDS = true;
 const float MAX_SOLENOID_DUTY = 0.80f;
 const unsigned long DEFAULT_SOLENOID_PULSE_MS = 125;
 const unsigned long MAX_SOLENOID_PULSE_MS = 250;
+const unsigned long MAX_SOLENOID_RAMP_MS = 1000;
+const unsigned long MAX_HAPTIC_TEST_DELAY_MS = 5000;
 
 const float TAP_RESET_SOL_DUTY_GOOD = 0.65f;
 const float TAP_RESET_SOL_DUTY_PERFECT = 0.80f;
@@ -119,15 +121,30 @@ const unsigned long MISS_ERM_MS = 200;
 float solenoidDuty[3] = {0.0f, 0.0f, 0.0f};
 bool solenoidPhase[3] = {SOLENOID_ACTIVE_PHASE, SOLENOID_ACTIVE_PHASE, SOLENOID_ACTIVE_PHASE};
 unsigned long solenoidOffTime[3] = {0, 0, 0};
+bool solenoidRampActive[3] = {false, false, false};
+float solenoidRampStartDuty[3] = {0.0f, 0.0f, 0.0f};
+float solenoidRampTargetDuty[3] = {0.0f, 0.0f, 0.0f};
+int solenoidRampCurve[3] = {0, 0, 0};
+unsigned long solenoidRampStartTime[3] = {0, 0, 0};
+unsigned long solenoidRampDurationMs[3] = {0, 0, 0};
+unsigned long solenoidRampHoldMs[3] = {0, 0, 0};
 
 float ermDuty[3] = {0.0f, 0.0f, 0.0f};
 unsigned long ermOffTime[3] = {0, 0, 0};
 bool ermRampActive[3] = {false, false, false};
 float ermRampStartDuty[3] = {0.0f, 0.0f, 0.0f};
 float ermRampTargetDuty[3] = {0.0f, 0.0f, 0.0f};
+int ermRampCurve[3] = {0, 0, 0};
 unsigned long ermRampStartTime[3] = {0, 0, 0};
 unsigned long ermRampDurationMs[3] = {0, 0, 0};
 unsigned long ermRampHoldMs[3] = {0, 0, 0};
+
+bool hapticTestSequenceActive[3] = {false, false, false};
+unsigned long hapticTestSolenoidStartTime[3] = {0, 0, 0};
+unsigned long hapticTestSolenoidRampMs[3] = {0, 0, 0};
+int hapticTestSolenoidCurve[3] = {0, 0, 0};
+unsigned long hapticTestSolenoidHoldMs[3] = {0, 0, 0};
+float hapticTestSolenoidPeakDuty[3] = {0.0f, 0.0f, 0.0f};
 
 // ------------------------------------------------------------
 // Serial command buffer from Unity
@@ -142,6 +159,43 @@ int dutyToPWM(float dutyFraction)
 {
     dutyFraction = constrain(dutyFraction, 0.0f, 1.0f);
     return (int)(255.0f * dutyFraction);
+}
+
+float applyRampCurve(float t, int curve)
+{
+    t = constrain(t, 0.0f, 1.0f);
+
+    if (curve == 1)
+    {
+        return t * t;
+    }
+
+    if (curve == 2)
+    {
+        if (t <= 0.0f)
+        {
+            return 0.0f;
+        }
+
+        return constrain(pow(2.0f, 10.0f * (t - 1.0f)), 0.0f, 1.0f);
+    }
+
+    return t;
+}
+
+void writeSolenoidDuty(int channel, float dutyFraction)
+{
+    if (channel < 0 || channel > 2)
+    {
+        return;
+    }
+
+    dutyFraction = constrain(dutyFraction, 0.0f, MAX_SOLENOID_DUTY);
+    solenoidDuty[channel] = dutyFraction;
+    solenoidPhase[channel] = SOLENOID_ACTIVE_PHASE;
+
+    digitalWrite(SOLENOID_PHASE[channel], SOLENOID_ACTIVE_PHASE);
+    analogWrite(SOLENOID_PWM[channel], dutyToPWM(dutyFraction));
 }
 
 void writeERMDuty(int channel, float dutyFraction)
@@ -213,15 +267,45 @@ void setSolenoid(int channel, float dutyFraction, bool ignoredPhase, unsigned lo
         durationMs = constrain(durationMs, 1UL, MAX_SOLENOID_PULSE_MS);
     }
 
-    solenoidDuty[channel] = dutyFraction;
-    solenoidPhase[channel] = SOLENOID_ACTIVE_PHASE;
+    solenoidRampActive[channel] = false;
 
-    digitalWrite(SOLENOID_PHASE[channel], SOLENOID_ACTIVE_PHASE);
-    analogWrite(SOLENOID_PWM[channel], dutyToPWM(dutyFraction));
+    writeSolenoidDuty(channel, dutyFraction);
 
     solenoidOffTime[channel] = (durationMs > 0 && dutyFraction > 0.0f)
                                ? millis() + durationMs
                                : 0;
+}
+
+// ------------------------------------------------------------
+// Non-blocking solenoid ramp for bench feel testing.
+// curve: 0 = linear, 1 = quadratic, 2 = exponential.
+// ------------------------------------------------------------
+void rampSolenoid(
+    int channel,
+    unsigned long rampMs,
+    int curve,
+    unsigned long holdMs,
+    float peakDuty
+)
+{
+    if (channel < 0 || channel > 2)
+    {
+        return;
+    }
+
+    rampMs = constrain(rampMs, 1UL, MAX_SOLENOID_RAMP_MS);
+    holdMs = constrain(holdMs, 0UL, MAX_SOLENOID_PULSE_MS);
+    curve = constrain(curve, 0, 2);
+    peakDuty = constrain(peakDuty, 0.0f, MAX_SOLENOID_DUTY);
+
+    solenoidRampStartDuty[channel] = solenoidDuty[channel];
+    solenoidRampTargetDuty[channel] = peakDuty;
+    solenoidRampCurve[channel] = curve;
+    solenoidRampStartTime[channel] = millis();
+    solenoidRampDurationMs[channel] = rampMs;
+    solenoidRampHoldMs[channel] = holdMs;
+    solenoidRampActive[channel] = true;
+    solenoidOffTime[channel] = 0;
 }
 
 // ------------------------------------------------------------
@@ -260,7 +344,13 @@ void setERM(int channel, float dutyFraction, unsigned long durationMs = 0)
 // Non-blocking ERM ramp.
 // Used by note pre-cues so serial input and ToF streaming keep running.
 // ------------------------------------------------------------
-void rampERM(int channel, float targetDuty, unsigned long rampMs, unsigned long holdMs = 0)
+void rampERM(
+    int channel,
+    float targetDuty,
+    unsigned long rampMs,
+    unsigned long holdMs = 0,
+    int curve = 0
+)
 {
     if (!ERM_HARDWARE_CONNECTED)
     {
@@ -274,6 +364,7 @@ void rampERM(int channel, float targetDuty, unsigned long rampMs, unsigned long 
 
     targetDuty = constrain(targetDuty, 0.0f, MAX_ERM_DUTY);
     rampMs = constrain(rampMs, 1UL, MAX_ERM_RAMP_MS);
+    curve = constrain(curve, 0, 2);
 
     if (holdMs > 0)
     {
@@ -282,11 +373,90 @@ void rampERM(int channel, float targetDuty, unsigned long rampMs, unsigned long 
 
     ermRampStartDuty[channel] = ermDuty[channel];
     ermRampTargetDuty[channel] = targetDuty;
+    ermRampCurve[channel] = curve;
     ermRampStartTime[channel] = millis();
     ermRampDurationMs[channel] = rampMs;
     ermRampHoldMs[channel] = holdMs;
     ermRampActive[channel] = true;
     ermOffTime[channel] = 0;
+}
+
+void cancelHapticTestSequence(int channel)
+{
+    if (channel < 0 || channel > 2)
+    {
+        return;
+    }
+
+    hapticTestSequenceActive[channel] = false;
+}
+
+// ------------------------------------------------------------
+// Team serial-tester compatible sequence.
+// TEST runs lane 1 exactly like the team's single-channel tester.
+// TESTCH adds a lane prefix for Unity multi-valve tuning.
+// ------------------------------------------------------------
+void startHapticTestSequence(
+    int channel,
+    unsigned long eRamp,
+    int eFunc,
+    unsigned long eHold,
+    float ePeak,
+    unsigned long delayMs,
+    unsigned long sRamp,
+    int sFunc,
+    unsigned long sHold,
+    float sPeak
+)
+{
+    if (channel < 0 || channel > 2)
+    {
+        return;
+    }
+
+    eRamp = constrain(eRamp, 1UL, MAX_ERM_RAMP_MS);
+    eFunc = constrain(eFunc, 0, 2);
+    eHold = constrain(eHold, 0UL, MAX_ERM_PULSE_MS);
+    ePeak = constrain(ePeak, 0.0f, MAX_ERM_DUTY);
+    delayMs = constrain(delayMs, 0UL, MAX_HAPTIC_TEST_DELAY_MS);
+
+    sRamp = constrain(sRamp, 1UL, MAX_SOLENOID_RAMP_MS);
+    sFunc = constrain(sFunc, 0, 2);
+    sHold = constrain(sHold, 0UL, MAX_SOLENOID_PULSE_MS);
+    sPeak = constrain(sPeak, 0.0f, MAX_SOLENOID_DUTY);
+
+    unsigned long now = millis();
+
+    hapticTestSequenceActive[channel] = true;
+    hapticTestSolenoidStartTime[channel] = now + eRamp + eHold + delayMs;
+    hapticTestSolenoidRampMs[channel] = sRamp;
+    hapticTestSolenoidCurve[channel] = sFunc;
+    hapticTestSolenoidHoldMs[channel] = sHold;
+    hapticTestSolenoidPeakDuty[channel] = sPeak;
+
+    rampERM(channel, ePeak, eRamp, eHold, eFunc);
+}
+
+void updateHapticTestSequence(int channel)
+{
+    if (channel < 0 || channel > 2 || !hapticTestSequenceActive[channel])
+    {
+        return;
+    }
+
+    if (!timeReached(hapticTestSolenoidStartTime[channel]))
+    {
+        return;
+    }
+
+    hapticTestSequenceActive[channel] = false;
+    rampSolenoid(
+        channel,
+        hapticTestSolenoidRampMs[channel],
+        hapticTestSolenoidCurve[channel],
+        hapticTestSolenoidHoldMs[channel],
+        hapticTestSolenoidPeakDuty[channel]
+    );
 }
 
 // ------------------------------------------------------------
@@ -296,6 +466,7 @@ void allOutputsOff()
 {
     for (int i = 0; i < 3; i++)
     {
+        cancelHapticTestSequence(i);
         setSolenoid(i, 0.0f, SOLENOID_ACTIVE_PHASE, 0);
         setERM(i, 0.0f, 0);
     }
@@ -310,6 +481,30 @@ void updateTimedOutputs()
 
     for (int i = 0; i < 3; i++)
     {
+        if (solenoidRampActive[i])
+        {
+            unsigned long elapsed = now - solenoidRampStartTime[i];
+
+            if (elapsed >= solenoidRampDurationMs[i])
+            {
+                writeSolenoidDuty(i, solenoidRampTargetDuty[i]);
+                solenoidRampActive[i] = false;
+
+                solenoidOffTime[i] = solenoidRampTargetDuty[i] > 0.0f
+                                     ? now + solenoidRampHoldMs[i]
+                                     : 0;
+            }
+            else
+            {
+                float t = (float)elapsed / (float)solenoidRampDurationMs[i];
+                float rampT = applyRampCurve(t, solenoidRampCurve[i]);
+                float duty = solenoidRampStartDuty[i] +
+                             (solenoidRampTargetDuty[i] - solenoidRampStartDuty[i]) * rampT;
+
+                writeSolenoidDuty(i, duty);
+            }
+        }
+
         if (ermRampActive[i])
         {
             unsigned long elapsed = now - ermRampStartTime[i];
@@ -319,13 +514,14 @@ void updateTimedOutputs()
                 writeERMDuty(i, ermRampTargetDuty[i]);
                 ermRampActive[i] = false;
 
-                ermOffTime[i] = (ermRampHoldMs[i] > 0 && ermRampTargetDuty[i] > 0.0f)
+                ermOffTime[i] = ermRampTargetDuty[i] > 0.0f
                                 ? now + ermRampHoldMs[i]
                                 : 0;
             }
             else
             {
-                float rampT = (float)elapsed / (float)ermRampDurationMs[i];
+                float t = (float)elapsed / (float)ermRampDurationMs[i];
+                float rampT = applyRampCurve(t, ermRampCurve[i]);
                 float duty = ermRampStartDuty[i] +
                              (ermRampTargetDuty[i] - ermRampStartDuty[i]) * rampT;
 
@@ -333,7 +529,7 @@ void updateTimedOutputs()
             }
         }
 
-        if (solenoidOffTime[i] != 0 && timeReached(solenoidOffTime[i]))
+        if (!solenoidRampActive[i] && solenoidOffTime[i] != 0 && timeReached(solenoidOffTime[i]))
         {
             setSolenoid(i, 0.0f, SOLENOID_ACTIVE_PHASE, 0);
         }
@@ -342,6 +538,8 @@ void updateTimedOutputs()
         {
             setERM(i, 0.0f, 0);
         }
+
+        updateHapticTestSequence(i);
     }
 }
 
@@ -487,6 +685,7 @@ void handlePreCueCommand(
         return;
     }
 
+    cancelHapticTestSequence(channel);
     rampERM(channel, duty, rampMs, holdMs);
 }
 
@@ -503,6 +702,7 @@ void handleTapCompleteCommand(int lane, const char *rating)
         return;
     }
 
+    cancelHapticTestSequence(channel);
     bool perfect = strcmp(rating, "PERFECT") == 0;
 
     float solDuty = perfect ? TAP_RESET_SOL_DUTY_PERFECT : TAP_RESET_SOL_DUTY_GOOD;
@@ -533,6 +733,7 @@ void handleHoldStartCommand(int lane)
         return;
     }
 
+    cancelHapticTestSequence(channel);
     setERM(channel, GOOD_ERM_DUTY, 0);
 }
 
@@ -549,6 +750,7 @@ void handleHoldCompleteCommand(int lane)
         return;
     }
 
+    cancelHapticTestSequence(channel);
     setERM(channel, 0.0f, 0);
     setSolenoid(channel, HOLD_RESET_SOL_DUTY, SOLENOID_ACTIVE_PHASE, HOLD_RESET_SOL_MS);
 }
@@ -567,6 +769,7 @@ void handleMissCommand(int lane)
         return;
     }
 
+    cancelHapticTestSequence(channel);
     setERM(channel, MISS_ERM_DUTY, MISS_ERM_MS);
 }
 
@@ -586,8 +789,11 @@ void handleMissCommand(int lane)
 // Bench tuning when ENABLE_TUNING_COMMANDS is true:
 // THRESH,65
 // SOL,1,0.80,1,125
+// SOLRAMP,1,500,1,200,0.80
 // ERM,1,0.25,120
 // ERMRAMP,1,0.25,800,120
+// TEST,300,1,150,0.5,1000,500,0,200,0.8
+// TESTCH,1,300,1,150,0.5,1000,500,0,200,0.8
 // ------------------------------------------------------------
 void handleLineCommand(char *line)
 {
@@ -601,6 +807,88 @@ void handleLineCommand(char *line)
     if (strcmp(command, "X") == 0)
     {
         allOutputsOff();
+        return;
+    }
+
+    if (ENABLE_TUNING_COMMANDS && strcmp(command, "TEST") == 0)
+    {
+        char *eRampToken = strtok(NULL, ",");
+        char *eFuncToken = strtok(NULL, ",");
+        char *eHoldToken = strtok(NULL, ",");
+        char *ePeakToken = strtok(NULL, ",");
+        char *delayToken = strtok(NULL, ",");
+        char *sRampToken = strtok(NULL, ",");
+        char *sFuncToken = strtok(NULL, ",");
+        char *sHoldToken = strtok(NULL, ",");
+        char *sPeakToken = strtok(NULL, ",");
+
+        if (eRampToken == NULL ||
+            eFuncToken == NULL ||
+            eHoldToken == NULL ||
+            ePeakToken == NULL ||
+            delayToken == NULL ||
+            sRampToken == NULL ||
+            sFuncToken == NULL ||
+            sHoldToken == NULL ||
+            sPeakToken == NULL)
+        {
+            return;
+        }
+
+        startHapticTestSequence(
+            0,
+            strtoul(eRampToken, NULL, 10),
+            atoi(eFuncToken),
+            strtoul(eHoldToken, NULL, 10),
+            atof(ePeakToken),
+            strtoul(delayToken, NULL, 10),
+            strtoul(sRampToken, NULL, 10),
+            atoi(sFuncToken),
+            strtoul(sHoldToken, NULL, 10),
+            atof(sPeakToken)
+        );
+        return;
+    }
+
+    if (ENABLE_TUNING_COMMANDS && strcmp(command, "TESTCH") == 0)
+    {
+        char *laneToken = strtok(NULL, ",");
+        char *eRampToken = strtok(NULL, ",");
+        char *eFuncToken = strtok(NULL, ",");
+        char *eHoldToken = strtok(NULL, ",");
+        char *ePeakToken = strtok(NULL, ",");
+        char *delayToken = strtok(NULL, ",");
+        char *sRampToken = strtok(NULL, ",");
+        char *sFuncToken = strtok(NULL, ",");
+        char *sHoldToken = strtok(NULL, ",");
+        char *sPeakToken = strtok(NULL, ",");
+
+        if (laneToken == NULL ||
+            eRampToken == NULL ||
+            eFuncToken == NULL ||
+            eHoldToken == NULL ||
+            ePeakToken == NULL ||
+            delayToken == NULL ||
+            sRampToken == NULL ||
+            sFuncToken == NULL ||
+            sHoldToken == NULL ||
+            sPeakToken == NULL)
+        {
+            return;
+        }
+
+        startHapticTestSequence(
+            atoi(laneToken) - 1,
+            strtoul(eRampToken, NULL, 10),
+            atoi(eFuncToken),
+            strtoul(eHoldToken, NULL, 10),
+            atof(ePeakToken),
+            strtoul(delayToken, NULL, 10),
+            strtoul(sRampToken, NULL, 10),
+            atoi(sFuncToken),
+            strtoul(sHoldToken, NULL, 10),
+            atof(sPeakToken)
+        );
         return;
     }
 
@@ -645,7 +933,32 @@ void handleLineCommand(char *line)
             ms = strtoul(phaseToken, NULL, 10);
         }
 
+        cancelHapticTestSequence(ch);
         setSolenoid(ch, duty, SOLENOID_ACTIVE_PHASE, ms);
+        return;
+    }
+
+    if (ENABLE_TUNING_COMMANDS && strcmp(command, "SOLRAMP") == 0)
+    {
+        char *chToken = strtok(NULL, ",");
+        char *rampToken = strtok(NULL, ",");
+        char *curveToken = strtok(NULL, ",");
+        char *holdToken = strtok(NULL, ",");
+        char *peakToken = strtok(NULL, ",");
+
+        if (chToken == NULL || rampToken == NULL || curveToken == NULL || holdToken == NULL || peakToken == NULL)
+        {
+            return;
+        }
+
+        int ch = atoi(chToken) - 1;
+        unsigned long rampMs = strtoul(rampToken, NULL, 10);
+        int curve = atoi(curveToken);
+        unsigned long holdMs = strtoul(holdToken, NULL, 10);
+        float peakDuty = atof(peakToken);
+
+        cancelHapticTestSequence(ch);
+        rampSolenoid(ch, rampMs, curve, holdMs, peakDuty);
         return;
     }
 
@@ -664,6 +977,7 @@ void handleLineCommand(char *line)
         float duty = atof(dutyToken);
         unsigned long ms = msToken == NULL ? 0 : strtoul(msToken, NULL, 10);
 
+        cancelHapticTestSequence(ch);
         setERM(ch, duty, ms);
         return;
     }
@@ -674,6 +988,7 @@ void handleLineCommand(char *line)
         char *dutyToken = strtok(NULL, ",");
         char *rampToken = strtok(NULL, ",");
         char *holdToken = strtok(NULL, ",");
+        char *curveToken = strtok(NULL, ",");
 
         if (chToken == NULL || dutyToken == NULL)
         {
@@ -688,8 +1003,10 @@ void handleLineCommand(char *line)
         unsigned long holdMs = holdToken == NULL
                                ? PRECUE_ERM_HOLD_MS
                                : strtoul(holdToken, NULL, 10);
+        int curve = curveToken == NULL ? 0 : atoi(curveToken);
 
-        rampERM(ch, duty, rampMs, holdMs);
+        cancelHapticTestSequence(ch);
+        rampERM(ch, duty, rampMs, holdMs, curve);
         return;
     }
 

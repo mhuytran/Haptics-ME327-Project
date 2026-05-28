@@ -7,6 +7,13 @@ public enum HapticCommandProfile
     MvpAndTuning
 }
 
+public enum SolenoidRampCurve
+{
+    Linear = 0,
+    Quadratic = 1,
+    Exponential = 2
+}
+
 public class HapticFeedbackManager : MonoBehaviour
 {
     public static HapticFeedbackManager Instance { get; private set; }
@@ -20,8 +27,8 @@ public class HapticFeedbackManager : MonoBehaviour
     [Header("MVP command filter")]
     [TextArea(5, 9)]
     public string commandGuide =
-        "Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE, MISS. Needed for bench tuning: SOL, ERM, ERMRAMP, THRESH. Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.";
-    [Tooltip("MvpAndTuning lets inspector tune buttons send SOL/ERM/ERMRAMP/THRESH. MvpOnly blocks those and keeps gameplay commands only.")]
+        "Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE, MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, THRESH. Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.";
+    [Tooltip("MvpAndTuning lets inspector tune buttons send SOL/SOLRAMP/ERM/ERMRAMP/TEST/TESTCH/THRESH. MvpOnly blocks those and keeps gameplay commands only.")]
     public HapticCommandProfile commandProfile = HapticCommandProfile.MvpAndTuning;
     [Tooltip("Leave on so accidental raw/debug commands cannot be sent through this manager.")]
     public bool filterOutgoingCommands = true;
@@ -56,11 +63,21 @@ public class HapticFeedbackManager : MonoBehaviour
     [Range(0f, 1f)]
     public float tuneSolenoidDuty = 0.80f;
     public int tuneSolenoidDurationMs = 125;
+    [Tooltip("Standalone tester TEST rampTimeMs equivalent, sent as SOLRAMP.")]
+    public int tuneSolenoidRampMs = 500;
+    [Tooltip("Standalone tester func equivalent: Linear = 0, Quadratic = 1, Exponential = 2.")]
+    public SolenoidRampCurve tuneSolenoidRampCurve = SolenoidRampCurve.Quadratic;
+    [Tooltip("Standalone tester holdTimeMs equivalent after the ramp reaches peak duty.")]
+    public int tuneSolenoidRampHoldMs = 200;
     [Range(0f, 1f)]
     public float tuneErmDuty = 0.25f;
     public int tuneErmDurationMs = 120;
     public int tuneErmRampMs = 800;
+    [Tooltip("Team TEST eFunc equivalent for the ERM ramp.")]
+    public SolenoidRampCurve tuneErmRampCurve = SolenoidRampCurve.Quadratic;
     public int tuneErmHoldMs = 120;
+    [Tooltip("Team TEST delayMs between the ERM finishing and the solenoid starting.")]
+    public int tuneTeamSequenceDelayMs = 1000;
     public int tuneRawTofThresholdMM = 65;
     [TextArea(2, 4)]
     public string lastCommandStatus = "No haptic command sent yet.";
@@ -179,6 +196,35 @@ public class HapticFeedbackManager : MonoBehaviour
         );
     }
 
+    public void TestSolenoidRamp(
+        int channelIndex,
+        int rampMs,
+        SolenoidRampCurve curve,
+        int holdMs,
+        float peakDuty
+    )
+    {
+        int channelNumber = GetTeensyChannelNumber(channelIndex);
+        float safeMaxDuty = Mathf.Clamp(
+            maxSolenoidDuty,
+            0f,
+            SolenoidPulseSettings.MaxRecommendedDuty
+        );
+
+        rampMs = Mathf.Clamp(rampMs, 1, 1000);
+        holdMs = Mathf.Clamp(holdMs, 0, maxSolenoidDurationMs);
+        peakDuty = Mathf.Clamp(peakDuty, 0f, safeMaxDuty);
+
+        Send(
+            "SOLRAMP," +
+            channelNumber + "," +
+            rampMs + "," +
+            ((int)curve) + "," +
+            holdMs + "," +
+            peakDuty.ToString("0.00", CultureInfo.InvariantCulture)
+        );
+    }
+
     public void TestErm(int channelIndex, float duty, int durationMs)
     {
         int channelNumber = GetTeensyChannelNumber(channelIndex);
@@ -193,7 +239,13 @@ public class HapticFeedbackManager : MonoBehaviour
         );
     }
 
-    public void TestErmRamp(int channelIndex, float duty, int rampMs, int holdMs)
+    public void TestErmRamp(
+        int channelIndex,
+        float duty,
+        int rampMs,
+        int holdMs,
+        SolenoidRampCurve curve = SolenoidRampCurve.Linear
+    )
     {
         int channelNumber = GetTeensyChannelNumber(channelIndex);
         float safeDuty = Mathf.Clamp(duty, 0f, Mathf.Clamp01(maxErmDuty));
@@ -205,7 +257,54 @@ public class HapticFeedbackManager : MonoBehaviour
             channelNumber + "," +
             safeDuty.ToString("0.00", CultureInfo.InvariantCulture) + "," +
             rampMs + "," +
-            holdMs
+            holdMs + "," +
+            ((int)curve)
+        );
+    }
+
+    public void TestTeamHapticSequence(
+        int channelIndex,
+        int ermRampMs,
+        SolenoidRampCurve ermCurve,
+        int ermHoldMs,
+        float ermPeakDuty,
+        int delayMs,
+        int solenoidRampMs,
+        SolenoidRampCurve solenoidCurve,
+        int solenoidHoldMs,
+        float solenoidPeakDuty
+    )
+    {
+        int channelNumber = GetTeensyChannelNumber(channelIndex);
+        float safeMaxSolenoidDuty = Mathf.Clamp(
+            maxSolenoidDuty,
+            0f,
+            SolenoidPulseSettings.MaxRecommendedDuty
+        );
+
+        ermRampMs = Mathf.Clamp(ermRampMs, 1, Mathf.Max(1, maxErmRampMs));
+        ermHoldMs = Mathf.Clamp(ermHoldMs, 0, 500);
+        ermPeakDuty = Mathf.Clamp(ermPeakDuty, 0f, Mathf.Clamp01(maxErmDuty));
+        delayMs = Mathf.Clamp(delayMs, 0, 5000);
+        solenoidRampMs = Mathf.Clamp(solenoidRampMs, 1, 1000);
+        solenoidHoldMs = Mathf.Clamp(solenoidHoldMs, 0, maxSolenoidDurationMs);
+        solenoidPeakDuty = Mathf.Clamp(solenoidPeakDuty, 0f, safeMaxSolenoidDuty);
+
+        string commandPrefix = channelNumber == 1
+            ? "TEST"
+            : "TESTCH," + channelNumber;
+
+        Send(
+            commandPrefix + "," +
+            ermRampMs + "," +
+            ((int)ermCurve) + "," +
+            ermHoldMs + "," +
+            ermPeakDuty.ToString("0.00", CultureInfo.InvariantCulture) + "," +
+            delayMs + "," +
+            solenoidRampMs + "," +
+            ((int)solenoidCurve) + "," +
+            solenoidHoldMs + "," +
+            solenoidPeakDuty.ToString("0.00", CultureInfo.InvariantCulture)
         );
     }
 
@@ -221,6 +320,18 @@ public class HapticFeedbackManager : MonoBehaviour
         TestSolenoid(tuneLane - 1, tuneSolenoidDuty, TeensyHardwarePinout.ActiveSolenoidPhase, tuneSolenoidDurationMs);
     }
 
+    [ContextMenu("Tune/Ramp Selected Solenoid")]
+    public void TuneRampSelectedSolenoid()
+    {
+        TestSolenoidRamp(
+            tuneLane - 1,
+            tuneSolenoidRampMs,
+            tuneSolenoidRampCurve,
+            tuneSolenoidRampHoldMs,
+            tuneSolenoidDuty
+        );
+    }
+
     [ContextMenu("Tune/Pulse Selected ERM")]
     public void TunePulseSelectedErm()
     {
@@ -230,7 +341,24 @@ public class HapticFeedbackManager : MonoBehaviour
     [ContextMenu("Tune/Ramp Selected ERM")]
     public void TuneRampSelectedErm()
     {
-        TestErmRamp(tuneLane - 1, tuneErmDuty, tuneErmRampMs, tuneErmHoldMs);
+        TestErmRamp(tuneLane - 1, tuneErmDuty, tuneErmRampMs, tuneErmHoldMs, tuneErmRampCurve);
+    }
+
+    [ContextMenu("Tune/Team TEST Sequence")]
+    public void TuneTeamTestSequence()
+    {
+        TestTeamHapticSequence(
+            tuneLane - 1,
+            tuneErmRampMs,
+            tuneErmRampCurve,
+            tuneErmHoldMs,
+            tuneErmDuty,
+            tuneTeamSequenceDelayMs,
+            tuneSolenoidRampMs,
+            tuneSolenoidRampCurve,
+            tuneSolenoidRampHoldMs,
+            tuneSolenoidDuty
+        );
     }
 
     [ContextMenu("Tune/Send Raw ToF Debug Threshold")]
@@ -330,8 +458,11 @@ public class HapticFeedbackManager : MonoBehaviour
 
         if (commandProfile == HapticCommandProfile.MvpAndTuning &&
             (commandName == "SOL" ||
+             commandName == "SOLRAMP" ||
              commandName == "ERM" ||
              commandName == "ERMRAMP" ||
+             commandName == "TEST" ||
+             commandName == "TESTCH" ||
              commandName == "THRESH"))
         {
             return true;
@@ -381,10 +512,13 @@ public class HapticFeedbackManager : MonoBehaviour
         tuneLane = Mathf.Clamp(tuneLane, 1, TeensyHardwarePinout.ChannelCount);
         tuneSolenoidDuty = Mathf.Clamp(tuneSolenoidDuty, 0f, maxSolenoidDuty);
         tuneSolenoidDurationMs = Mathf.Clamp(tuneSolenoidDurationMs, 1, maxSolenoidDurationMs);
+        tuneSolenoidRampMs = Mathf.Clamp(tuneSolenoidRampMs, 1, 1000);
+        tuneSolenoidRampHoldMs = Mathf.Clamp(tuneSolenoidRampHoldMs, 0, maxSolenoidDurationMs);
         tuneErmDuty = Mathf.Clamp(tuneErmDuty, 0f, maxErmDuty);
         tuneErmDurationMs = Mathf.Clamp(tuneErmDurationMs, 1, 500);
         tuneErmRampMs = Mathf.Clamp(tuneErmRampMs, 1, maxErmRampMs);
         tuneErmHoldMs = Mathf.Clamp(tuneErmHoldMs, 0, 500);
+        tuneTeamSequenceDelayMs = Mathf.Clamp(tuneTeamSequenceDelayMs, 0, 5000);
         tuneRawTofThresholdMM = Mathf.Clamp(tuneRawTofThresholdMM, 1, 254);
     }
 }

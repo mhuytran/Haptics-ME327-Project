@@ -12,7 +12,7 @@ public class HapticFeedbackManagerEditor : Editor
 
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox(
-            "MVP commands are X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE, and MISS. Bench tuning commands are SOL, ERM, ERMRAMP, and THRESH. Set Command Profile to MvpOnly when tuning is finished.",
+            "MVP commands are X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE, and MISS. Bench tuning commands are SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, and THRESH. TEST matches the team's serial tester on lane 1; TESTCH adds a lane prefix for valves 2/3.",
             MessageType.Info
         );
 
@@ -22,6 +22,15 @@ public class HapticFeedbackManagerEditor : Editor
         {
             manager.TunePulseSelectedSolenoid();
         }
+
+        if (GUILayout.Button("Ramp Solenoid"))
+        {
+            manager.TuneRampSelectedSolenoid();
+        }
+
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.BeginHorizontal();
 
         if (GUILayout.Button("Ramp ERM"))
         {
@@ -37,10 +46,19 @@ public class HapticFeedbackManagerEditor : Editor
 
         EditorGUILayout.BeginHorizontal();
 
+        if (GUILayout.Button("Team TEST Seq"))
+        {
+            manager.TuneTeamTestSequence();
+        }
+
         if (GUILayout.Button("Send ToF Threshold"))
         {
             manager.TuneSendRawTofThreshold();
         }
+
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.BeginHorizontal();
 
         if (GUILayout.Button("All Off"))
         {

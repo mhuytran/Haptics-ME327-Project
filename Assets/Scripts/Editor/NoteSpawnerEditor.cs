@@ -12,7 +12,7 @@ public class NoteSpawnerEditor : Editor
 
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox(
-            "Use Spawn Mode = RandomDebug for generated fingering practice. Use Spawn Mode = SongChart for From-The-Start audio/chart sync. In Play mode, Space starts/pauses and R restarts the song chart.",
+            "Use RandomDebug for generated fingering practice and SongChart for From-The-Start audio/chart sync. In Play mode: F9 toggles modes, F10 forces RandomDebug, F11 forces SongChart, Space starts/pauses, R restarts, [ and ] nudge chart timing.",
             MessageType.Info
         );
 
@@ -20,16 +20,12 @@ public class NoteSpawnerEditor : Editor
 
         if (GUILayout.Button("Random Debug Mode"))
         {
-            Undo.RecordObject(spawner, "Set Random Debug Mode");
-            spawner.spawnMode = NoteSpawner.NoteSpawnMode.RandomDebug;
-            EditorUtility.SetDirty(spawner);
+            SetSpawnerMode(spawner, NoteSpawner.NoteSpawnMode.RandomDebug);
         }
 
         if (GUILayout.Button("Song Chart Mode"))
         {
-            Undo.RecordObject(spawner, "Set Song Chart Mode");
-            spawner.spawnMode = NoteSpawner.NoteSpawnMode.SongChart;
-            EditorUtility.SetDirty(spawner);
+            SetSpawnerMode(spawner, NoteSpawner.NoteSpawnMode.SongChart);
         }
 
         EditorGUILayout.EndHorizontal();
@@ -54,6 +50,46 @@ public class NoteSpawnerEditor : Editor
             }
 
             EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Toggle Mode"))
+            {
+                spawner.ToggleSpawnMode();
+            }
+
+            if (GUILayout.Button("Chart Earlier"))
+            {
+                spawner.NudgeChartEarlier();
+            }
+
+            if (GUILayout.Button("Chart Later"))
+            {
+                spawner.NudgeChartLater();
+            }
+
+            if (GUILayout.Button("Reset Offset"))
+            {
+                spawner.ResetChartOffset();
+            }
+
+            EditorGUILayout.EndHorizontal();
         }
+    }
+
+    void SetSpawnerMode(NoteSpawner spawner, NoteSpawner.NoteSpawnMode mode)
+    {
+        Undo.RecordObject(spawner, "Set Note Spawn Mode");
+
+        if (Application.isPlaying)
+        {
+            spawner.SetSpawnMode(mode);
+        }
+        else
+        {
+            spawner.spawnMode = mode;
+        }
+
+        EditorUtility.SetDirty(spawner);
     }
 }
