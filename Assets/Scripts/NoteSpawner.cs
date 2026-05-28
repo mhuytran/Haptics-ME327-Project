@@ -116,12 +116,12 @@ public class NoteSpawner : MonoBehaviour
     [Header("song chart mode")]
     [TextArea(4, 7)]
     public string songModeGuide =
-        "RandomDebug keeps spawning generated fingerings. SongChart loads From-The-Start from Resources/TrumpetCharts, plays the audio, and spawns the PDF/OMR note chart in sync. F9 toggles modes, F10 forces RandomDebug, F11 forces SongChart. Space starts/pauses, R restarts, [/] nudge note timing.";
+        "RandomDebug keeps spawning generated fingerings. SongChart loads From-The-Start 90 BPM from Resources/TrumpetCharts, plays the audio, and spawns the PDF/OMR note chart in sync. F9 toggles modes, F10 forces RandomDebug, F11 forces SongChart. Space starts/pauses, R restarts, [/] nudge note timing.";
     public TextAsset songChartJson;
-    public string songChartResourcePath = "TrumpetCharts/From-The-Start";
+    public string songChartResourcePath = "TrumpetCharts/From-The-Start-90bpm";
     public AudioSource songAudioSource;
     public AudioClip songAudioClip;
-    public string songAudioResourcePath = "TrumpetCharts/From-The-Start";
+    public string songAudioResourcePath = "TrumpetCharts/From-The-Start-90bpm";
     public bool autoStartSong = true;
     public bool allowSongKeyboardControls = true;
     public Key startPauseSongKey = Key.Space;
@@ -154,6 +154,13 @@ public class NoteSpawner : MonoBehaviour
     public int nextSongNoteIndex = 0;
     public float currentSongTime = 0f;
     public string currentSongStatus = "Song chart not loaded.";
+
+    [Header("song fingering validation")]
+    [Tooltip("Uses pitch names such as C4, B3, E-4, and A-4 to derive real trumpet valve combinations instead of trusting generated lane fills.")]
+    public bool deriveSongFingeringsFromPitch = true;
+    [Tooltip("Open notes use no valves, so this skips them instead of showing a fake valve lane.")]
+    public bool skipOpenSongNotes = true;
+    public int skippedOpenSongNoteCount = 0;
 
     [Header("haptic cue tuning")]
     public bool useDistanceBasedPreCue = true;
@@ -758,6 +765,7 @@ public class NoteSpawner : MonoBehaviour
         pausedSongTime = 0f;
         currentSongTime = 0f;
         currentAudioClockTime = 0f;
+        skippedOpenSongNoteCount = 0;
 
         PlaySongAudioFrom(0f, true);
 
@@ -1014,10 +1022,16 @@ public class NoteSpawner : MonoBehaviour
 
     void SpawnSongChartNote(SongChartNote chartNote, float hitSongTime, float timeUntilHit)
     {
-        int requiredValveMask = LaneArrayToValveMask(chartNote.laneMask);
+        int requiredValveMask = GetSongNoteValveMask(chartNote);
 
         if (requiredValveMask == 0)
         {
+            if (skipOpenSongNotes)
+            {
+                skippedOpenSongNoteCount++;
+                return;
+            }
+
             return;
         }
 
@@ -1047,7 +1061,98 @@ public class NoteSpawner : MonoBehaviour
         currentSongStatus =
             "Playing " + loadedSongTitle +
             " t=" + currentSongTime.ToString("0.00") +
-            " next=" + nextSongNoteIndex + "/" + loadedSongNoteCount;
+            " next=" + nextSongNoteIndex + "/" + loadedSongNoteCount +
+            " openSkipped=" + skippedOpenSongNoteCount;
+    }
+
+    int GetSongNoteValveMask(SongChartNote chartNote)
+    {
+        if (chartNote == null)
+        {
+            return 0;
+        }
+
+        if (deriveSongFingeringsFromPitch &&
+            TryGetTrumpetValveMask(chartNote.pitchName, out int pitchValveMask))
+        {
+            return pitchValveMask;
+        }
+
+        return LaneArrayToValveMask(chartNote.laneMask);
+    }
+
+    bool TryGetTrumpetValveMask(string pitchName, out int valveMask)
+    {
+        valveMask = 0;
+
+        if (string.IsNullOrWhiteSpace(pitchName))
+        {
+            return false;
+        }
+
+        string pitchClass = GetPitchClass(pitchName);
+
+        switch (pitchClass)
+        {
+            case "C":
+            case "G":
+                valveMask = 0;
+                return true;
+            case "C#":
+            case "DB":
+                valveMask = (1 << 0) | (1 << 1) | (1 << 2);
+                return true;
+            case "D":
+                valveMask = (1 << 0) | (1 << 2);
+                return true;
+            case "D#":
+            case "EB":
+                valveMask = (1 << 1) | (1 << 2);
+                return true;
+            case "E":
+                valveMask = (1 << 0) | (1 << 1);
+                return true;
+            case "F":
+                valveMask = 1 << 0;
+                return true;
+            case "F#":
+            case "GB":
+                valveMask = 1 << 1;
+                return true;
+            case "G#":
+            case "AB":
+                valveMask = (1 << 1) | (1 << 2);
+                return true;
+            case "A":
+                valveMask = (1 << 0) | (1 << 1);
+                return true;
+            case "A#":
+            case "BB":
+                valveMask = 1 << 0;
+                return true;
+            case "B":
+                valveMask = 1 << 1;
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    string GetPitchClass(string pitchName)
+    {
+        string trimmedPitch = pitchName.Trim().ToUpperInvariant();
+
+        if (trimmedPitch.Length >= 2 && trimmedPitch[1] == '-')
+        {
+            return trimmedPitch[0] + "B";
+        }
+
+        if (trimmedPitch.Length >= 2 && trimmedPitch[1] == '#')
+        {
+            return trimmedPitch.Substring(0, 2);
+        }
+
+        return trimmedPitch.Substring(0, 1);
     }
 
     int LaneArrayToValveMask(int[] laneMask)

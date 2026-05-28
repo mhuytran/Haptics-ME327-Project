@@ -47,35 +47,37 @@ public class HapticFeedbackManager : MonoBehaviour
     [Header("ERM pre-cue ramp")]
     public bool useRampedPreCue = true;
     [Range(0f, 1f)]
-    [Tooltip("Main ERM pre-cue strength. Partner ramp value is 0.25.")]
-    public float preCueErmDuty = 0.25f;
-    [Tooltip("ERM pre-cue ramp time. Partner ramp value is 800 ms.")]
-    public int preCueErmRampMs = 800;
+    [Tooltip("Main ERM pre-cue strength. Team 12V feel-test value is 1.00.")]
+    public float preCueErmDuty = 1.00f;
+    [Tooltip("ERM pre-cue ramp time. Team 12V feel-test value is 1000 ms.")]
+    public int preCueErmRampMs = 1000;
     [Tooltip("ERM hold time after the ramp completes.")]
-    public int preCueErmHoldMs = 120;
+    public int preCueErmHoldMs = 100;
+    [Tooltip("ERM pre-cue ramp curve. Team 12V feel-test value is Quadratic.")]
+    public SolenoidRampCurve preCueErmRampCurve = SolenoidRampCurve.Quadratic;
     [Range(0f, 1f)]
-    public float maxErmDuty = 0.45f;
+    public float maxErmDuty = 1.00f;
     public int maxErmRampMs = 1200;
 
     [Header("Quick bench tuning")]
     [Range(1, 3)]
     public int tuneLane = 1;
     [Range(0f, 1f)]
-    public float tuneSolenoidDuty = 0.80f;
+    public float tuneSolenoidDuty = 1.00f;
     public int tuneSolenoidDurationMs = 125;
     [Tooltip("Standalone tester TEST rampTimeMs equivalent, sent as SOLRAMP.")]
-    public int tuneSolenoidRampMs = 500;
+    public int tuneSolenoidRampMs = 800;
     [Tooltip("Standalone tester func equivalent: Linear = 0, Quadratic = 1, Exponential = 2.")]
     public SolenoidRampCurve tuneSolenoidRampCurve = SolenoidRampCurve.Quadratic;
     [Tooltip("Standalone tester holdTimeMs equivalent after the ramp reaches peak duty.")]
-    public int tuneSolenoidRampHoldMs = 200;
+    public int tuneSolenoidRampHoldMs = 350;
     [Range(0f, 1f)]
-    public float tuneErmDuty = 0.25f;
+    public float tuneErmDuty = 1.00f;
     public int tuneErmDurationMs = 120;
-    public int tuneErmRampMs = 800;
+    public int tuneErmRampMs = 1000;
     [Tooltip("Team TEST eFunc equivalent for the ERM ramp.")]
     public SolenoidRampCurve tuneErmRampCurve = SolenoidRampCurve.Quadratic;
-    public int tuneErmHoldMs = 120;
+    public int tuneErmHoldMs = 100;
     [Tooltip("Team TEST delayMs between the ERM finishing and the solenoid starting.")]
     public int tuneTeamSequenceDelayMs = 1000;
     public int tuneRawTofThresholdMM = 65;
@@ -132,7 +134,8 @@ public class HapticFeedbackManager : MonoBehaviour
             channelNumber + "," +
             safeDuty.ToString("0.00", CultureInfo.InvariantCulture) + "," +
             safeRampMs + "," +
-            safeHoldMs
+            safeHoldMs + "," +
+            ((int)preCueErmRampCurve)
         );
     }
 
@@ -504,7 +507,7 @@ public class HapticFeedbackManager : MonoBehaviour
             1,
             SolenoidPulseSettings.MaxRecommendedDurationMs
         );
-        maxErmDuty = Mathf.Clamp(maxErmDuty, 0f, 0.45f);
+        maxErmDuty = Mathf.Clamp(maxErmDuty, 0f, 1.0f);
         preCueErmDuty = Mathf.Clamp(preCueErmDuty, 0f, maxErmDuty);
         maxErmRampMs = Mathf.Clamp(maxErmRampMs, 1, 1200);
         preCueErmRampMs = Mathf.Clamp(preCueErmRampMs, 1, maxErmRampMs);

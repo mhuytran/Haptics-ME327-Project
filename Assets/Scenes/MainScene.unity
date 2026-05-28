@@ -2782,30 +2782,34 @@ MonoBehaviour:
     ermIn1Pin: 22
     ermIn2Pin: 23
   commandGuide: 'Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE,
-    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, THRESH. Not used by
-    Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.'
+    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, THRESH.
+    Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale
+    loops.'
   commandProfile: 1
   filterOutgoingCommands: 1
   enableHaptics: 1
   printCommands: 1
-  maxSolenoidDuty: 0.8
-  maxSolenoidDurationMs: 250
+  maxSolenoidDuty: 1
+  maxSolenoidDurationMs: 350
   useRampedPreCue: 1
-  preCueErmDuty: 0.25
-  preCueErmRampMs: 800
-  preCueErmHoldMs: 120
-  maxErmDuty: 0.45
+  preCueErmDuty: 1
+  preCueErmRampMs: 1000
+  preCueErmHoldMs: 100
+  preCueErmRampCurve: 1
+  maxErmDuty: 1
   maxErmRampMs: 1200
   tuneLane: 1
-  tuneSolenoidDuty: 0.8
+  tuneSolenoidDuty: 1
   tuneSolenoidDurationMs: 125
-  tuneSolenoidRampMs: 500
+  tuneSolenoidRampMs: 800
   tuneSolenoidRampCurve: 1
-  tuneSolenoidRampHoldMs: 200
-  tuneErmDuty: 0.25
+  tuneSolenoidRampHoldMs: 350
+  tuneErmDuty: 1
   tuneErmDurationMs: 120
-  tuneErmRampMs: 800
-  tuneErmHoldMs: 120
+  tuneErmRampMs: 1000
+  tuneErmRampCurve: 1
+  tuneErmHoldMs: 100
+  tuneTeamSequenceDelayMs: 1000
   tuneRawTofThresholdMM: 65
   lastCommandStatus: No haptic command sent yet.
 --- !u!114 &1414622047
@@ -3545,30 +3549,34 @@ MonoBehaviour:
     ermIn1Pin: 22
     ermIn2Pin: 23
   commandGuide: 'Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE,
-    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, THRESH. Not used by
-    Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.'
+    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, THRESH.
+    Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale
+    loops.'
   commandProfile: 1
   filterOutgoingCommands: 1
   enableHaptics: 1
   printCommands: 1
-  maxSolenoidDuty: 0.8
-  maxSolenoidDurationMs: 250
+  maxSolenoidDuty: 1
+  maxSolenoidDurationMs: 350
   useRampedPreCue: 1
-  preCueErmDuty: 0.25
-  preCueErmRampMs: 800
-  preCueErmHoldMs: 120
-  maxErmDuty: 0.45
+  preCueErmDuty: 1
+  preCueErmRampMs: 1000
+  preCueErmHoldMs: 100
+  preCueErmRampCurve: 1
+  maxErmDuty: 1
   maxErmRampMs: 1200
   tuneLane: 1
-  tuneSolenoidDuty: 0.8
+  tuneSolenoidDuty: 1
   tuneSolenoidDurationMs: 125
-  tuneSolenoidRampMs: 500
+  tuneSolenoidRampMs: 800
   tuneSolenoidRampCurve: 1
-  tuneSolenoidRampHoldMs: 200
-  tuneErmDuty: 0.25
+  tuneSolenoidRampHoldMs: 350
+  tuneErmDuty: 1
   tuneErmDurationMs: 120
-  tuneErmRampMs: 800
-  tuneErmHoldMs: 120
+  tuneErmRampMs: 1000
+  tuneErmRampCurve: 1
+  tuneErmHoldMs: 100
+  tuneTeamSequenceDelayMs: 1000
   tuneRawTofThresholdMM: 65
   lastCommandStatus: No haptic command sent yet.
 --- !u!1 &1646561942
@@ -4005,20 +4013,21 @@ MonoBehaviour:
   noteTravelTime: 1.5
   waitForPreviousFingeringToResolve: 1
   songModeGuide: RandomDebug keeps spawning generated fingerings. SongChart loads
-    From-The-Start from Resources/TrumpetCharts, plays the audio, and spawns the
-    PDF/OMR note chart in sync. Keyboard testing still uses A/S/D for valves 1/2/3.
+    From-The-Start 90 BPM from Resources/TrumpetCharts, plays the audio, and spawns
+    the PDF/OMR note chart in sync. F9 toggles modes, F10 forces RandomDebug, F11
+    forces SongChart. Space starts/pauses, R restarts, [/] nudge note timing.
   songChartJson: {fileID: 0}
-  songChartResourcePath: TrumpetCharts/From-The-Start
+  songChartResourcePath: TrumpetCharts/From-The-Start-90bpm
   songAudioSource: {fileID: 0}
   songAudioClip: {fileID: 0}
-  songAudioResourcePath: TrumpetCharts/From-The-Start
+  songAudioResourcePath: TrumpetCharts/From-The-Start-90bpm
   autoStartSong: 1
   allowSongKeyboardControls: 1
   startPauseSongKey: 1
   restartSongKey: 32
   useChartLeadInSeconds: 1
-  manualLeadInSeconds: 2
-  additionalChartOffsetSeconds: 2.6
+  manualLeadInSeconds: 5.1667
+  additionalChartOffsetSeconds: 0
   useSongDurationsAsHolds: 1
   minimumSongHoldDuration: 0.5
   skipVeryLateSongNotes: 1
@@ -4029,6 +4038,9 @@ MonoBehaviour:
   nextSongNoteIndex: 0
   currentSongTime: 0
   currentSongStatus: Song chart not loaded.
+  deriveSongFingeringsFromPitch: 1
+  skipOpenSongNotes: 1
+  skippedOpenSongNoteCount: 0
   useDistanceBasedPreCue: 1
   preCueDistanceFromTarget: 1
   fallbackPreCueLeadTime: 0.85

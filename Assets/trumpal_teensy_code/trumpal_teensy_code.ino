@@ -80,9 +80,9 @@ const bool ENABLE_TUNING_COMMANDS = true;
 // These defaults are intentionally conservative for an MVP bench test.
 // Raise only after confirming the mechanism does not heat, bind, or slap.
 // ------------------------------------------------------------
-const float MAX_SOLENOID_DUTY = 0.80f;
+const float MAX_SOLENOID_DUTY = 1.00f;
 const unsigned long DEFAULT_SOLENOID_PULSE_MS = 125;
-const unsigned long MAX_SOLENOID_PULSE_MS = 250;
+const unsigned long MAX_SOLENOID_PULSE_MS = 350;
 const unsigned long MAX_SOLENOID_RAMP_MS = 1000;
 const unsigned long MAX_HAPTIC_TEST_DELAY_MS = 5000;
 
@@ -96,13 +96,14 @@ const unsigned long HOLD_RESET_SOL_MS = 125;
 // ------------------------------------------------------------
 // ERM gameplay tuning
 // ------------------------------------------------------------
-const float MAX_ERM_DUTY = 0.45f;
+const float MAX_ERM_DUTY = 1.00f;
 const unsigned long MAX_ERM_PULSE_MS = 500;
 const unsigned long MAX_ERM_RAMP_MS = 1200;
 
-const float PRECUE_ERM_DUTY = 0.25f;
-const unsigned long PRECUE_ERM_RAMP_MS = 800;
-const unsigned long PRECUE_ERM_HOLD_MS = 120;
+const float PRECUE_ERM_DUTY = 1.00f;
+const unsigned long PRECUE_ERM_RAMP_MS = 1000;
+const unsigned long PRECUE_ERM_HOLD_MS = 100;
+const int PRECUE_ERM_CURVE = 1;
 
 const float GOOD_ERM_DUTY = 0.25f;
 const float PERFECT_ERM_DUTY = 0.35f;
@@ -675,7 +676,8 @@ void handlePreCueCommand(
     int lane,
     float duty = PRECUE_ERM_DUTY,
     unsigned long rampMs = PRECUE_ERM_RAMP_MS,
-    unsigned long holdMs = PRECUE_ERM_HOLD_MS
+    unsigned long holdMs = PRECUE_ERM_HOLD_MS,
+    int curve = PRECUE_ERM_CURVE
 )
 {
     int channel = lane - 1;
@@ -686,7 +688,7 @@ void handlePreCueCommand(
     }
 
     cancelHapticTestSequence(channel);
-    rampERM(channel, duty, rampMs, holdMs);
+    rampERM(channel, duty, rampMs, holdMs, curve);
 }
 
 // ------------------------------------------------------------
@@ -779,7 +781,7 @@ void handleMissCommand(int lane)
 // MVP:
 // X
 // PRECUE,1
-// PRECUE,1,0.25,800,120
+// PRECUE,1,1.00,1000,100,1
 // TAPCOMPLETE,1,PERFECT
 // TAPCOMPLETE,1,GOOD
 // HOLDSTART,1
@@ -792,8 +794,8 @@ void handleMissCommand(int lane)
 // SOLRAMP,1,500,1,200,0.80
 // ERM,1,0.25,120
 // ERMRAMP,1,0.25,800,120
-// TEST,300,1,150,0.5,1000,500,0,200,0.8
-// TESTCH,1,300,1,150,0.5,1000,500,0,200,0.8
+// TEST,1000,1,100,1,1000,800,1,350,1
+// TESTCH,1,1000,1,100,1,1000,800,1,350,1
 // ------------------------------------------------------------
 void handleLineCommand(char *line)
 {
@@ -989,6 +991,7 @@ void handleLineCommand(char *line)
         char *rampToken = strtok(NULL, ",");
         char *holdToken = strtok(NULL, ",");
         char *curveToken = strtok(NULL, ",");
+        char *curveToken = strtok(NULL, ",");
 
         if (chToken == NULL || dutyToken == NULL)
         {
@@ -1029,8 +1032,9 @@ void handleLineCommand(char *line)
         unsigned long holdMs = holdToken == NULL
                                ? PRECUE_ERM_HOLD_MS
                                : strtoul(holdToken, NULL, 10);
+        int curve = curveToken == NULL ? PRECUE_ERM_CURVE : atoi(curveToken);
 
-        handlePreCueCommand(atoi(laneToken), duty, rampMs, holdMs);
+        handlePreCueCommand(atoi(laneToken), duty, rampMs, holdMs, curve);
         return;
     }
 

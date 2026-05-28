@@ -4,8 +4,8 @@ using UnityEngine;
 [Serializable]
 public class SolenoidPulseSettings
 {
-    public const float MaxRecommendedDuty = 0.80f;
-    public const int MaxRecommendedDurationMs = 250;
+    public const float MaxRecommendedDuty = 1.00f;
+    public const int MaxRecommendedDurationMs = 350;
 
     [Range(0f, 1f)]
     public float duty = 0.80f;
