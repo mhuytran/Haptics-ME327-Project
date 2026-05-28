@@ -1,7 +1,50 @@
+using System;
 using UnityEngine;
 
 public class NoteSpawner : MonoBehaviour
 {
+    [Serializable]
+    public class TrumpetFingering
+    {
+        public string noteName = "F / Bb";
+        public bool valve1 = true;
+        public bool valve2 = false;
+        public bool valve3 = false;
+        public float holdDuration = 0f;
+
+        public TrumpetFingering()
+        {
+        }
+
+        public TrumpetFingering(
+            string noteName,
+            bool valve1,
+            bool valve2,
+            bool valve3,
+            float holdDuration
+        )
+        {
+            this.noteName = noteName;
+            this.valve1 = valve1;
+            this.valve2 = valve2;
+            this.valve3 = valve3;
+            this.holdDuration = holdDuration;
+        }
+
+        public bool UsesLane(int lane)
+        {
+            if (lane == 0) return valve1;
+            if (lane == 1) return valve2;
+            if (lane == 2) return valve3;
+            return false;
+        }
+
+        public bool IsOpen()
+        {
+            return !valve1 && !valve2 && !valve3;
+        }
+    }
+
     [Header("references")]
     public GameObject notePrefab;
     public RhythmGameManager gameManager;
@@ -36,8 +79,24 @@ public class NoteSpawner : MonoBehaviour
     [Header("hold-note safety")]
     public float holdSafetyBuffer = 0.15f;
 
+    [Header("trumpet fingering generation")]
+    public bool useTrumpetFingerings = true;
+    public bool randomizeFingerings = true;
+    public string lastSpawnedFingering = "";
+    public TrumpetFingering[] validFingerings = new TrumpetFingering[]
+    {
+        new TrumpetFingering("F / Bb - 1", true, false, false, 0f),
+        new TrumpetFingering("F# / B - 2", false, true, false, 0f),
+        new TrumpetFingering("E / A - 1+2", true, true, false, 0.8f),
+        new TrumpetFingering("D / G - 1+3", true, false, true, 0f),
+        new TrumpetFingering("Eb / Ab - 2+3", false, true, true, 1.0f),
+        new TrumpetFingering("C# / F# - 1+2+3", true, true, true, 0f),
+        new TrumpetFingering("C / G - open", false, false, false, 0f)
+    };
+
     private float spawnTimer = 0f;
     private int patternIndex = 0;
+    private int lastRandomFingeringIndex = -1;
 
     private float[] laneHoldBusyUntil = new float[3];
 
@@ -70,14 +129,21 @@ public class NoteSpawner : MonoBehaviour
 
     void SpawnNextNote()
     {
+        if (useTrumpetFingerings)
+        {
+            SpawnNextTrumpetFingering();
+            return;
+        }
+
+        SpawnLegacySingleLaneNote();
+    }
+
+    void SpawnLegacySingleLaneNote()
+    {
         int lane = lanePattern[patternIndex];
         float requestedHoldDuration = holdDurationPattern[patternIndex];
 
         patternIndex = (patternIndex + 1) % lanePattern.Length;
-
-        Transform spawnPoint = GetSpawnPoint(lane);
-        Transform valveTarget = GetValveTarget(lane);
-        Transform hitPlane = GetHitPlane(lane);
 
         float targetHitTime = Time.time + noteTravelTime;
 
@@ -91,6 +157,60 @@ public class NoteSpawner : MonoBehaviour
         {
             laneHoldBusyUntil[lane] = targetHitTime + finalHoldDuration + holdSafetyBuffer;
         }
+
+        SpawnLaneNote(lane, targetHitTime, finalHoldDuration);
+    }
+
+    void SpawnNextTrumpetFingering()
+    {
+        EnsureValidFingerings();
+
+        TrumpetFingering fingering = GetNextFingering();
+
+        if (fingering == null)
+        {
+            return;
+        }
+
+        float targetHitTime = Time.time + noteTravelTime;
+        float requestedHoldDuration = Mathf.Max(0f, fingering.holdDuration);
+        bool requestedHold = requestedHoldDuration > 0.05f;
+        bool overlapsExistingHold = requestedHold && FingeringOverlapsExistingHold(fingering, targetHitTime);
+
+        float finalHoldDuration = overlapsExistingHold ? 0f : requestedHoldDuration;
+        bool isHoldNote = finalHoldDuration > 0.05f;
+
+        if (isHoldNote)
+        {
+            MarkFingeringHoldBusy(fingering, targetHitTime, finalHoldDuration);
+        }
+
+        bool spawnedAnyLane = false;
+
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if (!fingering.UsesLane(lane))
+            {
+                continue;
+            }
+
+            SpawnLaneNote(lane, targetHitTime, finalHoldDuration);
+            spawnedAnyLane = true;
+        }
+
+        if (spawnedAnyLane)
+        {
+            lastSpawnedFingering = fingering.noteName;
+        }
+    }
+
+    void SpawnLaneNote(int lane, float targetHitTime, float holdDuration)
+    {
+        Transform spawnPoint = GetSpawnPoint(lane);
+        Transform valveTarget = GetValveTarget(lane);
+        Transform hitPlane = GetHitPlane(lane);
+
+        bool isHoldNote = holdDuration > 0.05f;
 
         GameObject noteObject = Instantiate(
             notePrefab,
@@ -131,10 +251,102 @@ public class NoteSpawner : MonoBehaviour
             targetHitTime,
             gameManager,
             isHoldNote,
-            finalHoldDuration
+            holdDuration
         );
 
         gameManager.RegisterNote(note);
+    }
+
+    TrumpetFingering GetNextFingering()
+    {
+        int fingeringCount = validFingerings.Length;
+        int maxAttempts = Mathf.Max(1, fingeringCount * 2);
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            int index;
+
+            if (randomizeFingerings)
+            {
+                index = UnityEngine.Random.Range(0, fingeringCount);
+
+                if (fingeringCount > 1 && index == lastRandomFingeringIndex)
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                index = patternIndex;
+                patternIndex = (patternIndex + 1) % fingeringCount;
+            }
+
+            TrumpetFingering fingering = validFingerings[index];
+
+            if (!IsSpawnableFingering(fingering))
+            {
+                continue;
+            }
+
+            lastRandomFingeringIndex = index;
+            return fingering;
+        }
+
+        return null;
+    }
+
+    bool IsSpawnableFingering(TrumpetFingering fingering)
+    {
+        if (fingering == null)
+        {
+            return false;
+        }
+
+        // The current lane UI only renders pressed valves, so open notes are documented
+        // in the list but skipped until there is an open-note visual target.
+        return !fingering.IsOpen();
+    }
+
+    bool FingeringOverlapsExistingHold(TrumpetFingering fingering, float targetHitTime)
+    {
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if (fingering.UsesLane(lane) && targetHitTime < laneHoldBusyUntil[lane])
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void MarkFingeringHoldBusy(TrumpetFingering fingering, float targetHitTime, float holdDuration)
+    {
+        float busyUntil = targetHitTime + holdDuration + holdSafetyBuffer;
+
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if (fingering.UsesLane(lane))
+            {
+                laneHoldBusyUntil[lane] = busyUntil;
+            }
+        }
+    }
+
+    void EnsureValidFingerings()
+    {
+        if (validFingerings == null || validFingerings.Length == 0)
+        {
+            validFingerings = new TrumpetFingering[]
+            {
+                new TrumpetFingering("F / Bb - 1", true, false, false, 0f),
+                new TrumpetFingering("F# / B - 2", false, true, false, 0f),
+                new TrumpetFingering("E / A - 1+2", true, true, false, 0.8f),
+                new TrumpetFingering("D / G - 1+3", true, false, true, 0f),
+                new TrumpetFingering("Eb / Ab - 2+3", false, true, true, 1.0f),
+                new TrumpetFingering("C# / F# - 1+2+3", true, true, true, 0f)
+            };
+        }
     }
 
     Transform GetSpawnPoint(int lane)

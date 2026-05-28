@@ -39,7 +39,8 @@ public class RhythmGameManager : MonoBehaviour
     public HapticFeedbackManager hapticFeedbackManager;
 
     [Header("solenoid push-off tuning")]
-    public bool sendSolenoidPushOnHit = true;
+    [Tooltip("Leave off with trumpal_teensy_code.ino because TAPCOMPLETE/HOLDCOMPLETE already trigger the mapped solenoid pins on the Teensy.")]
+    public bool sendSolenoidPushOnHit = false;
     public bool pushOnAnyValvePressForTuning = false;
     public SolenoidPulseSettings[] solenoidPushSettings = new SolenoidPulseSettings[]
     {

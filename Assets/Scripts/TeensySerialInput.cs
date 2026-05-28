@@ -12,6 +12,9 @@ public class TeensySerialInput : MonoBehaviour
     public int baudRate = 115200;
     public bool connectOnStart = true;
 
+    [Header("Teensy pinout from trumpal_teensy_code")]
+    public TeensyHardwareChannel[] hardwarePinout = TeensyHardwarePinout.CreateDefaultChannels();
+
     [Header("ToF calibration, mm")]
     public float valve1RestDistanceMM = 80f;
     public float valve1PressedDistanceMM = 25f;
@@ -91,13 +94,28 @@ public class TeensySerialInput : MonoBehaviour
             v3 = v3 || a3 >= pressAmountThreshold;
         }
 
-        ValveInputState.SetTeensyValve(0, v1);
-        ValveInputState.SetTeensyValve(1, v2);
-        ValveInputState.SetTeensyValve(2, v3);
+        ApplyValveStateFromTeensyChannel(1, v1, a1, d1);
+        ApplyValveStateFromTeensyChannel(2, v2, a2, d2);
+        ApplyValveStateFromTeensyChannel(3, v3, a3, d3);
+    }
 
-        ValveInputState.SetTeensyValveAmount(0, a1);
-        ValveInputState.SetTeensyValveAmount(1, a2);
-        ValveInputState.SetTeensyValveAmount(2, a3);
+    void ApplyValveStateFromTeensyChannel(
+        int teensyChannelNumber,
+        bool pressed,
+        float amount,
+        int distanceMM
+    )
+    {
+        TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
+
+        int laneIndex = TeensyHardwarePinout.UnityChannelNumberToLaneIndex(
+            teensyChannelNumber,
+            hardwarePinout
+        );
+
+        ValveInputState.SetTeensyValve(laneIndex, pressed);
+        ValveInputState.SetTeensyValveAmount(laneIndex, amount);
+        ValveInputState.SetTeensyValveDistanceMM(laneIndex, distanceMM);
     }
 
     float DistanceToPressAmount(int distanceMM, float restDistanceMM, float pressedDistanceMM)
@@ -301,5 +319,10 @@ public class TeensySerialInput : MonoBehaviour
     void OnDestroy()
     {
         Disconnect();
+    }
+
+    void OnValidate()
+    {
+        TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
     }
 }

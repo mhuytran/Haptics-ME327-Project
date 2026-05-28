@@ -7,7 +7,7 @@ public class SolenoidPulseSettings
     [Range(0f, 1f)]
     public float duty = 0.35f;
 
-    public int phase = 0;
+    public int phase = TeensyHardwarePinout.ActiveSolenoidPhase;
     public int durationMs = 120;
 
     public void Clamp()

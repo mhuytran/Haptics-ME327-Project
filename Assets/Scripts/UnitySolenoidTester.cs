@@ -9,13 +9,16 @@ public class UnitySolenoidTester : MonoBehaviour
     public RhythmGameManager rhythmGameManager;
     public NoteSpawner noteSpawner;
 
+    [Header("Teensy pinout from trumpal_teensy_code")]
+    public TeensyHardwareChannel[] hardwarePinout = TeensyHardwarePinout.CreateDefaultChannels();
+
     [Header("global fallback pulse")]
     public float testDuty = 0.35f;
     public int testDurationMs = 300;
 
     [Header("phase")]
-    public int normalPhase = 0;
-    public int shiftedPhase = 1;
+    public int normalPhase = TeensyHardwarePinout.ActiveSolenoidPhase;
+    public int shiftedPhase = 0;
 
     [Header("per-lane pulse tuning")]
     public bool usePerLanePulseSettings = true;
@@ -58,6 +61,8 @@ public class UnitySolenoidTester : MonoBehaviour
         }
 
         EnsureSolenoidSettings();
+        TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
+        ApplyPinoutToReferences();
         ApplyTuningToGameplay();
     }
 
@@ -196,11 +201,17 @@ public class UnitySolenoidTester : MonoBehaviour
             StartCoroutine(AnimateValveTest(channelIndex));
         }
 
+        int teensyChannelNumber = TeensyHardwarePinout.LaneToUnityChannelNumber(
+            channelIndex,
+            hardwarePinout
+        );
+
         Debug.Log(
-            "Testing solenoid " + (channelIndex + 1) +
+            "Testing solenoid channel " + teensyChannelNumber +
             " duty=" + duty +
             " phase=" + phase +
-            " durationMs=" + durationMs
+            " durationMs=" + durationMs +
+            " on " + TeensyHardwarePinout.GetDebugLabel(channelIndex, hardwarePinout)
         );
     }
 
@@ -220,6 +231,7 @@ public class UnitySolenoidTester : MonoBehaviour
     public void ApplyTuningToGameplay()
     {
         EnsureSolenoidSettings();
+        ApplyPinoutToReferences();
 
         if (applyPulseSettingsToGameplay && rhythmGameManager != null)
         {
@@ -231,6 +243,23 @@ public class UnitySolenoidTester : MonoBehaviour
             noteSpawner.useDistanceBasedPreCue = useDistanceBasedPreCue;
             noteSpawner.preCueDistanceFromTarget = preCueDistanceFromTarget;
             noteSpawner.fallbackPreCueLeadTime = fallbackPreCueLeadTime;
+        }
+    }
+
+    void ApplyPinoutToReferences()
+    {
+        TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
+
+        if (hapticFeedbackManager != null)
+        {
+            hapticFeedbackManager.hardwarePinout = hardwarePinout;
+        }
+
+        TeensySerialInput serialInput = TeensySerialInput.Instance;
+
+        if (serialInput != null)
+        {
+            serialInput.hardwarePinout = hardwarePinout;
         }
     }
 
@@ -269,7 +298,9 @@ public class UnitySolenoidTester : MonoBehaviour
 
     void OnValidate()
     {
+        TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
         EnsureSolenoidSettings();
+        ApplyPinoutToReferences();
         ApplyTuningToGameplay();
     }
 }

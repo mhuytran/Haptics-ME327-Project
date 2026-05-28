@@ -7,6 +7,9 @@ public class HapticFeedbackManager : MonoBehaviour
     [Header("serial source")]
     public TeensySerialInput teensySerialInput;
 
+    [Header("Teensy pinout from trumpal_teensy_code")]
+    public TeensyHardwareChannel[] hardwarePinout = TeensyHardwarePinout.CreateDefaultChannels();
+
     [Header("debug")]
     public bool enableHaptics = true;
     public bool printCommands = true;
@@ -28,35 +31,35 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void SendPreCue(int laneIndex)
     {
-        Send("PRECUE," + (laneIndex + 1));
+        Send("PRECUE," + GetTeensyChannelNumber(laneIndex));
     }
 
     public void SendTapComplete(int laneIndex, bool perfect)
     {
         string rating = perfect ? "PERFECT" : "GOOD";
-        Send("TAPCOMPLETE," + (laneIndex + 1) + "," + rating);
+        Send("TAPCOMPLETE," + GetTeensyChannelNumber(laneIndex) + "," + rating);
     }
 
     public void SendHoldStart(int laneIndex)
     {
-        Send("HOLDSTART," + (laneIndex + 1));
+        Send("HOLDSTART," + GetTeensyChannelNumber(laneIndex));
     }
 
     public void SendHoldComplete(int laneIndex)
     {
-        Send("HOLDCOMPLETE," + (laneIndex + 1));
+        Send("HOLDCOMPLETE," + GetTeensyChannelNumber(laneIndex));
     }
 
     public void SendMiss(int laneIndex)
     {
-        Send("MISS," + (laneIndex + 1));
+        Send("MISS," + GetTeensyChannelNumber(laneIndex));
     }
 
     public void SendSolenoidPush(int laneIndex, SolenoidPulseSettings settings)
     {
         if (settings == null)
         {
-            Debug.LogWarning("No solenoid pulse settings found for lane " + (laneIndex + 1));
+            Debug.LogWarning("No solenoid pulse settings found for " + GetPinoutLabel(laneIndex));
             return;
         }
 
@@ -66,7 +69,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void TestSolenoid(int channelIndex, float duty, int phase, int durationMs)
     {
-        int channelNumber = channelIndex + 1;
+        int channelNumber = GetTeensyChannelNumber(channelIndex);
         duty = Mathf.Clamp01(duty);
         phase = phase == 0 ? 0 : 1;
         durationMs = Mathf.Max(1, durationMs);
@@ -133,5 +136,22 @@ public class HapticFeedbackManager : MonoBehaviour
         }
 
         teensySerialInput.SendLine(command);
+    }
+
+    int GetTeensyChannelNumber(int laneIndex)
+    {
+        TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
+        return TeensyHardwarePinout.LaneToUnityChannelNumber(laneIndex, hardwarePinout);
+    }
+
+    string GetPinoutLabel(int laneIndex)
+    {
+        TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
+        return TeensyHardwarePinout.GetDebugLabel(laneIndex, hardwarePinout);
+    }
+
+    void OnValidate()
+    {
+        TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
     }
 }

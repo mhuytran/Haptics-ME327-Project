@@ -11,6 +11,7 @@ public static class ValveInputState
     // 0 = valve fully up / not pressed
     // 1 = valve fully pressed
     private static float[] teensyValveAmounts = new float[3];
+    private static int[] teensyValveDistancesMM = new int[3] { 255, 255, 255 };
 
     public static bool GetValve(int laneIndex)
     {
@@ -41,6 +42,19 @@ public static class ValveInputState
             }
 
             return Mathf.Clamp01(teensyValveAmounts[laneIndex]);
+        }
+    }
+
+    public static int GetValveDistanceMM(int laneIndex)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return 255;
+        }
+
+        lock (stateLock)
+        {
+            return teensyValveDistancesMM[laneIndex];
         }
     }
 
@@ -83,6 +97,19 @@ public static class ValveInputState
         }
     }
 
+    public static void SetTeensyValveDistanceMM(int laneIndex, int distanceMM)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return;
+        }
+
+        lock (stateLock)
+        {
+            teensyValveDistancesMM[laneIndex] = distanceMM;
+        }
+    }
+
     public static void ClearAll()
     {
         lock (stateLock)
@@ -92,6 +119,7 @@ public static class ValveInputState
                 keyboardValves[i] = false;
                 teensyValves[i] = false;
                 teensyValveAmounts[i] = 0f;
+                teensyValveDistancesMM[i] = 255;
             }
         }
     }
