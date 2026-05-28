@@ -9,7 +9,7 @@ public class UnitySolenoidTester : MonoBehaviour
     public RhythmGameManager rhythmGameManager;
     public NoteSpawner noteSpawner;
 
-    [Header("Teensy pinout from trumpal_teensy_code")]
+    [Header("Teensy pinout from final firmware")]
     public TeensyHardwareChannel[] hardwarePinout = TeensyHardwarePinout.CreateDefaultChannels();
 
     [Header("global fallback pulse")]

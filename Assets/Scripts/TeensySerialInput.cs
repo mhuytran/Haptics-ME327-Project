@@ -12,7 +12,7 @@ public class TeensySerialInput : MonoBehaviour
     [Header("Serial connection")]
     [Tooltip("Fallback COM port. If Auto Detect Port is on, this is tried first and then Unity tries every detected serial port.")]
     public string portName = "COM3";
-    [Tooltip("Must match Serial.begin(...) in trumpal_teensy_code.ino.")]
+    [Tooltip("Must match Serial.begin(...) in Assets/trumpal_final_code/trumpal_final_code.ino.")]
     public int baudRate = 115200;
     [Tooltip("Connect to the Teensy automatically when the scene starts.")]
     public bool connectOnStart = true;
@@ -22,7 +22,7 @@ public class TeensySerialInput : MonoBehaviour
     public bool reconnectWhenDisconnected = true;
     public float reconnectIntervalSeconds = 2f;
 
-    [Header("Teensy pinout from trumpal_teensy_code")]
+    [Header("Teensy pinout from final firmware")]
     public TeensyHardwareChannel[] hardwarePinout = TeensyHardwarePinout.CreateDefaultChannels();
 
     [Header("ToF calibration, mm")]
@@ -674,7 +674,7 @@ public class TeensySerialInput : MonoBehaviour
                 legacyTesterWarningShown = true;
                 Debug.LogWarning(
                     "The Teensy is running the standalone haptic tester, not the Unity telemetry firmware. " +
-                    "Flash trumpal_final_code.ino so Unity receives V/D/S/E/TH fields."
+                    "Flash Assets/trumpal_final_code/trumpal_final_code.ino so Unity receives V/D/S/E/TH fields."
                 );
             }
 

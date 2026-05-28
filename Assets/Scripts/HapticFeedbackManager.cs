@@ -21,7 +21,7 @@ public class HapticFeedbackManager : MonoBehaviour
     [Header("serial source")]
     public TeensySerialInput teensySerialInput;
 
-    [Header("Teensy pinout from trumpal_teensy_code")]
+    [Header("Teensy pinout from final firmware")]
     public TeensyHardwareChannel[] hardwarePinout = TeensyHardwarePinout.CreateDefaultChannels();
 
     [Header("MVP command filter")]

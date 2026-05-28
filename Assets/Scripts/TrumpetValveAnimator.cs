@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class TrumpetValveAnimator : MonoBehaviour
 {
-    [Header("Teensy pinout from trumpal_teensy_code")]
+    [Header("Teensy pinout from final firmware")]
     public TeensyHardwareChannel[] hardwarePinout = TeensyHardwarePinout.CreateDefaultChannels();
 
     [Header("input lane")]
