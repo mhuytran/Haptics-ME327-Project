@@ -15,7 +15,7 @@ public class TrumpetValveAnimator : MonoBehaviour
     public float releaseMotionSpeed = 14.0f;
 
     [Header("analog ToF control")]
-    public bool useAnalogValveAmount = true;
+    public bool useAnalogValveAmount = false;
 
     [Header("solenoid release follow")]
     public bool followSolenoidRelease = true;

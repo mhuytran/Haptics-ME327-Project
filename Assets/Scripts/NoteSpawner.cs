@@ -391,6 +391,32 @@ public class NoteSpawner : MonoBehaviour
         }
     }
 
+    void FinishSongPlayback()
+    {
+        currentSongStatus = "Song finished.";
+        songStarted = false;
+        songPaused = false;
+        scheduledSongDspStartTime = -1.0;
+
+        HapticFeedbackManager haptics = HapticFeedbackManager.Instance;
+
+        if (haptics != null)
+        {
+            haptics.AllOff();
+        }
+        else if (TeensySerialInput.Instance != null)
+        {
+            TeensySerialInput.Instance.ShutdownHardwareOutputs();
+        }
+
+        ValveInputState.ClearAll();
+
+        if (gameManager != null)
+        {
+            gameManager.ClearActiveNotes();
+        }
+    }
+
     void SpawnNextNote()
     {
         if (useTrumpetFingerings)
@@ -652,8 +678,7 @@ public class NoteSpawner : MonoBehaviour
             }
             else
             {
-                currentSongStatus = "Song finished.";
-                songStarted = false;
+                FinishSongPlayback();
             }
 
             return;

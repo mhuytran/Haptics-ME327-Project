@@ -108,7 +108,7 @@ public class TeensySerialInput : MonoBehaviour
 
     [Header("ToF animation amount")]
     [Tooltip("Gameplay stays discrete, but valve animation can still show partial ToF travel before the pressed threshold is crossed.")]
-    public bool useAnalogAmountsWhileDiscrete = true;
+    public bool useAnalogAmountsWhileDiscrete = false;
     [Range(0f, 0.5f)]
     [Tooltip("Small analog amount ignored for animation so idle ToF noise does not wiggle valves.")]
     public float analogAmountDeadZone = 0.08f;
@@ -174,6 +174,7 @@ public class TeensySerialInput : MonoBehaviour
     private float[] restRebaselineCandidateSince = new float[3];
     private bool legacyTesterWarningShown = false;
     private float postCalibrationReleaseGuardUntil = 0f;
+    private bool hardwareShutdownSent = false;
 
     void Awake()
     {
@@ -1009,6 +1010,7 @@ public class TeensySerialInput : MonoBehaviour
 
             serialPort.Open();
             portName = candidatePort;
+            hardwareShutdownSent = false;
 
             keepReading = true;
             readThread = new Thread(ReadSerialLoop);
@@ -1051,6 +1053,38 @@ public class TeensySerialInput : MonoBehaviour
         }
 
         serialPort = null;
+    }
+
+    public void ShutdownHardwareOutputs()
+    {
+        ClearCachedInputAndActuatorState();
+
+        if (hardwareShutdownSent || !IsConnected())
+        {
+            return;
+        }
+
+        hardwareShutdownSent = SendLine("X");
+    }
+
+    void ClearCachedInputAndActuatorState()
+    {
+        ValveInputState.ClearAll();
+
+        lock (stateLock)
+        {
+            latestV1 = false;
+            latestV2 = false;
+            latestV3 = false;
+
+            latestS1 = 0f;
+            latestS2 = 0f;
+            latestS3 = 0f;
+
+            latestE1 = 0f;
+            latestE2 = 0f;
+            latestE3 = 0f;
+        }
     }
 
     void ReadSerialLoop()
@@ -1267,13 +1301,25 @@ public class TeensySerialInput : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        SendLine("X");
+        if (Instance != this)
+        {
+            return;
+        }
+
+        ShutdownHardwareOutputs();
         Disconnect();
     }
 
     void OnDestroy()
     {
+        if (Instance != this)
+        {
+            return;
+        }
+
+        ShutdownHardwareOutputs();
         Disconnect();
+        Instance = null;
     }
 
     void OnValidate()

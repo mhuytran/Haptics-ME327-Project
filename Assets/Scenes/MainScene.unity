@@ -2750,7 +2750,7 @@ MonoBehaviour:
   activeValve2TofMuxChannel: 6
   activeValve3TofMuxChannel: 7
   tofHealthReadout: ToF channels not checked yet.
-  useAnalogAmountsWhileDiscrete: 1
+  useAnalogAmountsWhileDiscrete: 0
   analogAmountDeadZone: 0.08
   derivePressedStateFromDistance: 0
   pressAmountThreshold: 0.65
@@ -5328,7 +5328,7 @@ MonoBehaviour:
   pressedLocalOffset: {x: 0, y: -0.18, z: 0}
   motionSpeed: 8
   releaseMotionSpeed: 14
-  useAnalogValveAmount: 1
+  useAnalogValveAmount: 0
   followSolenoidRelease: 1
   solenoidDutyForFullRelease: 0.35
   solenoidDutyDeadZone: 0.02
@@ -5376,7 +5376,7 @@ MonoBehaviour:
   pressedLocalOffset: {x: 0, y: -0.18, z: 0}
   motionSpeed: 8
   releaseMotionSpeed: 14
-  useAnalogValveAmount: 1
+  useAnalogValveAmount: 0
   followSolenoidRelease: 1
   solenoidDutyForFullRelease: 0.35
   solenoidDutyDeadZone: 0.02
@@ -5429,7 +5429,7 @@ MonoBehaviour:
   pressedLocalOffset: {x: 0, y: -0.18, z: 0}
   motionSpeed: 8
   releaseMotionSpeed: 14
-  useAnalogValveAmount: 1
+  useAnalogValveAmount: 0
   followSolenoidRelease: 1
   solenoidDutyForFullRelease: 0.35
   solenoidDutyDeadZone: 0.02
