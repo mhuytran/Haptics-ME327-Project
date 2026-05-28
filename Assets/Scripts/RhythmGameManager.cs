@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 public class RhythmGameManager : MonoBehaviour
 {
@@ -18,6 +20,11 @@ public class RhythmGameManager : MonoBehaviour
     public float lowHealthThreshold = 70f;
     public float baseComboHeal = 2f;
     public float comboHealScale = 0.25f;
+
+    [Header("health debug")]
+    public bool enableInfiniteHealthShortcut = true;
+    public Key infiniteHealthShortcutKey = Key.F8;
+    public bool infiniteHealth = false;
 
     [Header("combo multiplier")]
     public int combo = 0;
@@ -64,6 +71,8 @@ public class RhythmGameManager : MonoBehaviour
 
     void Update()
     {
+        HandleDebugShortcuts();
+
         if (gameOver)
         {
             return;
@@ -223,8 +232,15 @@ public class RhythmGameManager : MonoBehaviour
 
         UnregisterNote(note);
 
-        currentHealth -= missDamage;
-        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+        if (infiniteHealth)
+        {
+            currentHealth = maxHealth;
+        }
+        else
+        {
+            currentHealth -= missDamage;
+            currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+        }
 
         combo = 0;
         previousPointMultiplier = pointMultiplier;
@@ -240,7 +256,7 @@ public class RhythmGameManager : MonoBehaviour
 
         UpdateUI();
 
-        if (currentHealth <= 0f)
+        if (!infiniteHealth && currentHealth <= 0f)
         {
             TriggerGameOver();
         }
@@ -285,6 +301,12 @@ public class RhythmGameManager : MonoBehaviour
 
     void TryRecoverHealthFromCombo()
     {
+        if (infiniteHealth)
+        {
+            currentHealth = maxHealth;
+            return;
+        }
+
         bool healthIsLow = currentHealth < lowHealthThreshold;
         bool inComboMode = pointMultiplier > 1;
 
@@ -299,6 +321,31 @@ public class RhythmGameManager : MonoBehaviour
 
         currentHealth += totalHeal;
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+    }
+
+    void HandleDebugShortcuts()
+    {
+        if (!enableInfiniteHealthShortcut || Keyboard.current == null)
+        {
+            return;
+        }
+
+        KeyControl shortcutKey = Keyboard.current[infiniteHealthShortcutKey];
+
+        if (shortcutKey == null || !shortcutKey.wasPressedThisFrame)
+        {
+            return;
+        }
+
+        infiniteHealth = !infiniteHealth;
+
+        if (infiniteHealth)
+        {
+            currentHealth = maxHealth;
+        }
+
+        UpdateUI();
+        Debug.Log("Infinite health " + (infiniteHealth ? "enabled" : "disabled"));
     }
 
     void TriggerGameOver()
