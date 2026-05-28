@@ -12,7 +12,7 @@ public class HapticFeedbackManagerEditor : Editor
 
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox(
-            "Gameplay defaults are fast and direct: time-based ERM pre-cue, full duty, immediate solenoid push-off. Bench tuning commands remain available: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, and THRESH.",
+            "Gameplay defaults use a grouped ERM pre-cue at full duty, with a short hold so the cue stays distinct from hit feedback. Bench tuning commands remain available: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, and THRESH.",
             MessageType.Info
         );
 

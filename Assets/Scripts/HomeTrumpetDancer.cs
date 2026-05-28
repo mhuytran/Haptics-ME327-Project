@@ -1,8 +1,11 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class HomeTrumpetDancer : MonoBehaviour
 {
+    private static readonly List<HomeTrumpetDancer> activeDrivers = new List<HomeTrumpetDancer>();
+
     [Header("scene safety")]
     public string allowedSceneName = "HomeScene";
     [Tooltip("Off for hardware demos so valves do not animate unless real input or an explicit test moves them.")]
@@ -43,6 +46,7 @@ public class HomeTrumpetDancer : MonoBehaviour
     private int patternIndex = 0;
     private float stateTimer = 0f;
     private bool hasCachedRestPositions = false;
+    private bool restoreRestPositionsOnDisable = true;
 
     private enum State
     {
@@ -72,12 +76,14 @@ public class HomeTrumpetDancer : MonoBehaviour
     {
         if (SceneManager.GetActiveScene().name != allowedSceneName)
         {
+            restoreRestPositionsOnDisable = false;
             enabled = false;
             return;
         }
 
         if (valve1 == null || valve2 == null || valve3 == null)
         {
+            restoreRestPositionsOnDisable = false;
             enabled = false;
             return;
         }
@@ -90,6 +96,13 @@ public class HomeTrumpetDancer : MonoBehaviour
             return;
         }
 
+        if (!TryClaimValveDriver())
+        {
+            restoreRestPositionsOnDisable = false;
+            enabled = false;
+            return;
+        }
+
         if (disableGameplayValveAnimators)
         {
             DisableConflictingValveScripts();
@@ -98,6 +111,56 @@ public class HomeTrumpetDancer : MonoBehaviour
         localPressDirection = localPressDirection.normalized;
 
         BeginMoveToPattern();
+    }
+
+    bool TryClaimValveDriver()
+    {
+        for (int i = activeDrivers.Count - 1; i >= 0; i--)
+        {
+            HomeTrumpetDancer driver = activeDrivers[i];
+
+            if (driver == null || !driver.isActiveAndEnabled)
+            {
+                activeDrivers.RemoveAt(i);
+                continue;
+            }
+
+            if (SharesAnyValveWith(driver))
+            {
+                Debug.LogWarning(
+                    "Disabling duplicate HomeTrumpetDancer on " + name +
+                    " because " + driver.name + " already drives this trumpet rig."
+                );
+                return false;
+            }
+        }
+
+        activeDrivers.Add(this);
+        return true;
+    }
+
+    bool SharesAnyValveWith(HomeTrumpetDancer other)
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        return MatchesValve(other.valve1) ||
+            MatchesValve(other.valve2) ||
+            MatchesValve(other.valve3);
+    }
+
+    bool MatchesValve(Transform otherValve)
+    {
+        if (otherValve == null)
+        {
+            return false;
+        }
+
+        return valve1 == otherValve ||
+            valve2 == otherValve ||
+            valve3 == otherValve;
     }
 
     void Update()
@@ -244,7 +307,9 @@ public class HomeTrumpetDancer : MonoBehaviour
 
     void OnDisable()
     {
-        if (!hasCachedRestPositions)
+        activeDrivers.Remove(this);
+
+        if (!restoreRestPositionsOnDisable || !hasCachedRestPositions)
         {
             return;
         }

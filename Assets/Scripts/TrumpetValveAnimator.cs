@@ -29,9 +29,13 @@ public class TrumpetValveAnimator : MonoBehaviour
     [Range(0f, 0.5f)]
     [Tooltip("Tiny analog ToF amounts below this value are treated as released for visuals.")]
     public float visualAmountDeadZone = 0.05f;
+    [Range(0f, 0.2f)]
+    [Tooltip("Small target changes below this amount are ignored so ToF noise cannot wobble the rendered valve.")]
+    public float visualTargetSnapEpsilon = 0.025f;
 
     [Header("solenoid release follow")]
-    public bool followSolenoidRelease = true;
+    [Tooltip("Usually off for hardware runs. The physical valve motion should come from ToF input; solenoid telemetry can otherwise tug the rendered valve around.")]
+    public bool followSolenoidRelease = false;
     [Range(0.01f, 1f)]
     public float solenoidDutyForFullRelease = 0.35f;
     [Range(0f, 0.1f)]
@@ -50,6 +54,7 @@ public class TrumpetValveAnimator : MonoBehaviour
     private Vector3 restLocalPosition;
     private float displayedPressAmount = 0f;
     private float filteredPressAmount = 0f;
+    private float stableTargetPressAmount = 0f;
     private float pendingPressAmount = 0f;
     private float pendingPressAmountSince = 0f;
 
@@ -60,7 +65,7 @@ public class TrumpetValveAnimator : MonoBehaviour
         pendingPressAmountSince = Time.unscaledTime;
     }
 
-    void Update()
+    void LateUpdate()
     {
         float sensedPressAmount;
 
@@ -80,7 +85,9 @@ public class TrumpetValveAnimator : MonoBehaviour
 
         latestDistanceMM = ValveInputState.GetValveDistanceMM(laneIndex);
         latestSolenoidDuty = ValveInputState.GetSolenoidDuty(laneIndex);
-        targetPressAmount = GetStableTargetPressAmount(sensedPressAmount, latestSolenoidDuty);
+        targetPressAmount = GetJitterHeldTargetPressAmount(
+            GetStableTargetPressAmount(sensedPressAmount, latestSolenoidDuty)
+        );
 
         float amountSpeed = targetPressAmount < displayedPressAmount
             ? Mathf.Max(motionSpeed, releaseMotionSpeed)
@@ -91,6 +98,11 @@ public class TrumpetValveAnimator : MonoBehaviour
             targetPressAmount,
             Mathf.Max(0.01f, amountSpeed) * Time.deltaTime
         );
+
+        if (Mathf.Abs(displayedPressAmount - targetPressAmount) <= 0.001f)
+        {
+            displayedPressAmount = targetPressAmount;
+        }
 
         latestPressAmount = displayedPressAmount;
         RefreshPinoutReadout();
@@ -168,6 +180,19 @@ public class TrumpetValveAnimator : MonoBehaviour
         return Mathf.Clamp01(sensedPressAmount * (1f - releaseAmount));
     }
 
+    float GetJitterHeldTargetPressAmount(float nextTargetPressAmount)
+    {
+        nextTargetPressAmount = Mathf.Clamp01(nextTargetPressAmount);
+
+        if (Mathf.Abs(nextTargetPressAmount - stableTargetPressAmount) <= visualTargetSnapEpsilon)
+        {
+            return stableTargetPressAmount;
+        }
+
+        stableTargetPressAmount = nextTargetPressAmount;
+        return stableTargetPressAmount;
+    }
+
     void RefreshPinoutReadout()
     {
         TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
@@ -183,6 +208,7 @@ public class TrumpetValveAnimator : MonoBehaviour
         visualPressDebounceSeconds = Mathf.Clamp(visualPressDebounceSeconds, 0f, 0.5f);
         visualReleaseDebounceSeconds = Mathf.Clamp(visualReleaseDebounceSeconds, 0f, 0.5f);
         visualAmountDeadZone = Mathf.Clamp01(visualAmountDeadZone);
+        visualTargetSnapEpsilon = Mathf.Clamp(visualTargetSnapEpsilon, 0f, 0.2f);
         solenoidDutyForFullRelease = Mathf.Clamp(solenoidDutyForFullRelease, 0.01f, 1f);
         solenoidDutyDeadZone = Mathf.Clamp(solenoidDutyDeadZone, 0f, 0.1f);
         RefreshPinoutReadout();

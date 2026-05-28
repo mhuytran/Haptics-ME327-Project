@@ -57,9 +57,11 @@ public class HapticFeedbackManager : MonoBehaviour
     [Tooltip("Gameplay ERM pre-cue ramp time. Long enough to feel the motor ramp, short enough to cue near the note.")]
     public int preCueErmRampMs = 500;
     [Tooltip("ERM hold time after the ramp completes.")]
-    public int preCueErmHoldMs = 200;
+    public int preCueErmHoldMs = 80;
     [Tooltip("ERM pre-cue ramp curve. Linear reaches feelable duty quickly for gameplay.")]
     public SolenoidRampCurve preCueErmRampCurve = SolenoidRampCurve.Linear;
+    [Tooltip("Minimum gap before restarting a pre-cue on the same ERM. Prevents dense notes from feeling like noisy retriggers.")]
+    public int preCueRetriggerGuardMs = 120;
     [Range(0f, 1f)]
     public float maxErmDuty = 1.00f;
     public int maxErmRampMs = 1200;
@@ -91,6 +93,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     private bool emergencyStopped = false;
     private int delayedCompletionGeneration = 0;
+    private float[] nextAllowedPreCueTimes = new float[TeensyHardwarePinout.ChannelCount];
 
     void Awake()
     {
@@ -123,10 +126,16 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void SendPreCue(int laneIndex)
     {
+        if (!TeensyHardwarePinout.IsValidLane(laneIndex) || IsPreCueGuardActive(laneIndex))
+        {
+            return;
+        }
+
         int channelNumber = GetTeensyChannelNumber(laneIndex);
 
         if (!useRampedPreCue)
         {
+            MarkPreCueSent(laneIndex);
             Send("PRECUE," + channelNumber);
             return;
         }
@@ -134,6 +143,8 @@ public class HapticFeedbackManager : MonoBehaviour
         float safeDuty = Mathf.Clamp(preCueErmDuty, 0f, Mathf.Clamp01(maxErmDuty));
         int safeRampMs = Mathf.Clamp(preCueErmRampMs, 1, Mathf.Max(1, maxErmRampMs));
         int safeHoldMs = Mathf.Clamp(preCueErmHoldMs, 0, 500);
+
+        MarkPreCueSent(laneIndex);
 
         Send(
             "PRECUE," +
@@ -386,8 +397,9 @@ public class HapticFeedbackManager : MonoBehaviour
         useRampedPreCue = true;
         preCueErmDuty = 1.00f;
         preCueErmRampMs = 500;
-        preCueErmHoldMs = 200;
+        preCueErmHoldMs = 80;
         preCueErmRampCurve = SolenoidRampCurve.Linear;
+        preCueRetriggerGuardMs = 120;
         maxErmDuty = 1.00f;
         maxErmRampMs = 1200;
 
@@ -410,12 +422,14 @@ public class HapticFeedbackManager : MonoBehaviour
     public void AllOff()
     {
         CancelPendingCompletionCommands();
+        ResetPreCueGuards();
         Send("X");
     }
 
     public void EmergencyAllOff()
     {
         CancelPendingCompletionCommands();
+        ResetPreCueGuards();
         emergencyStopped = true;
 
         if (teensySerialInput == null)
@@ -480,6 +494,35 @@ public class HapticFeedbackManager : MonoBehaviour
     void CancelPendingCompletionCommands()
     {
         delayedCompletionGeneration++;
+    }
+
+    bool IsPreCueGuardActive(int laneIndex)
+    {
+        if (!TeensyHardwarePinout.IsValidLane(laneIndex))
+        {
+            return true;
+        }
+
+        return Time.realtimeSinceStartup < nextAllowedPreCueTimes[laneIndex];
+    }
+
+    void MarkPreCueSent(int laneIndex)
+    {
+        if (!TeensyHardwarePinout.IsValidLane(laneIndex))
+        {
+            return;
+        }
+
+        nextAllowedPreCueTimes[laneIndex] =
+            Time.realtimeSinceStartup + Mathf.Max(0, preCueRetriggerGuardMs) / 1000f;
+    }
+
+    void ResetPreCueGuards()
+    {
+        for (int i = 0; i < nextAllowedPreCueTimes.Length; i++)
+        {
+            nextAllowedPreCueTimes[i] = 0f;
+        }
     }
 
     private void Send(string command)
@@ -602,6 +645,7 @@ public class HapticFeedbackManager : MonoBehaviour
         maxErmRampMs = Mathf.Clamp(maxErmRampMs, 1, 1200);
         preCueErmRampMs = Mathf.Clamp(preCueErmRampMs, 1, maxErmRampMs);
         preCueErmHoldMs = Mathf.Clamp(preCueErmHoldMs, 0, 500);
+        preCueRetriggerGuardMs = Mathf.Clamp(preCueRetriggerGuardMs, 0, 500);
         tuneLane = Mathf.Clamp(tuneLane, 1, TeensyHardwarePinout.ChannelCount);
         tuneSolenoidDuty = Mathf.Clamp(tuneSolenoidDuty, 0f, maxSolenoidDuty);
         tuneSolenoidDurationMs = Mathf.Clamp(tuneSolenoidDurationMs, 1, maxSolenoidDurationMs);

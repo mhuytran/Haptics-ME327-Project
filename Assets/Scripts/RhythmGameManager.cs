@@ -55,6 +55,7 @@ public class RhythmGameManager : MonoBehaviour
     public bool judgeFingeringContinuously = false;
 
     private List<FlyingNote> activeNotes = new List<FlyingNote>();
+    private HashSet<int> preCuedFingeringGroups = new HashSet<int>();
     private bool[] previousValveStates = new bool[3];
 
     private int previousPointMultiplier = 1;
@@ -138,6 +139,7 @@ public class RhythmGameManager : MonoBehaviour
     public void UnregisterNote(FlyingNote note)
     {
         activeNotes.Remove(note);
+        ClearPreCueGroupIfInactive(note);
     }
 
     public bool HasActiveNotes()
@@ -166,14 +168,44 @@ public class RhythmGameManager : MonoBehaviour
             return;
         }
 
+        int groupId = note.fingeringGroupId;
+
+        if (groupId >= 0)
+        {
+            if (preCuedFingeringGroups.Contains(groupId))
+            {
+                return;
+            }
+
+            preCuedFingeringGroups.Add(groupId);
+        }
+
+        SendPreCueForMask(note.GetRequiredValveMask());
+    }
+
+    void SendPreCueForMask(int valveMask)
+    {
+        if (valveMask == 0)
+        {
+            return;
+        }
+
         if (hapticFeedbackManager == null)
         {
             hapticFeedbackManager = HapticFeedbackManager.Instance;
         }
 
-        if (hapticFeedbackManager != null)
+        if (hapticFeedbackManager == null)
         {
-            hapticFeedbackManager.SendPreCue(note.laneIndex);
+            return;
+        }
+
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) != 0)
+            {
+                hapticFeedbackManager.SendPreCue(lane);
+            }
         }
     }
 
@@ -591,6 +623,27 @@ public class RhythmGameManager : MonoBehaviour
         }
 
         activeNotes.Clear();
+        preCuedFingeringGroups.Clear();
+    }
+
+    void ClearPreCueGroupIfInactive(FlyingNote note)
+    {
+        if (note == null || note.fingeringGroupId < 0)
+        {
+            return;
+        }
+
+        int groupId = note.fingeringGroupId;
+
+        foreach (FlyingNote activeNote in activeNotes)
+        {
+            if (activeNote != null && activeNote.fingeringGroupId == groupId && !activeNote.resolved)
+            {
+                return;
+            }
+        }
+
+        preCuedFingeringGroups.Remove(groupId);
     }
 
     void SendTapCompleteForMask(int valveMask, bool perfect)

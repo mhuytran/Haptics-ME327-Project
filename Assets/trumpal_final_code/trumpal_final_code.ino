@@ -114,7 +114,7 @@ const unsigned long GAMEPLAY_ERM_PULSE_MS = 200;
 
 const float PRECUE_ERM_DUTY = GAMEPLAY_ERM_DUTY;
 const unsigned long PRECUE_ERM_RAMP_MS = 500;
-const unsigned long PRECUE_ERM_HOLD_MS = 200;
+const unsigned long PRECUE_ERM_HOLD_MS = 80;
 const int PRECUE_ERM_CURVE = 0;
 
 const float GOOD_ERM_DUTY = GAMEPLAY_ERM_DUTY;
@@ -958,7 +958,7 @@ void handleMissCommand(int lane)
 // MVP:
 // X
 // PRECUE,1
-// PRECUE,1,1.00,500,200,0
+// PRECUE,1,1.00,500,80,0
 // TAPCOMPLETE,1,PERFECT
 // TAPCOMPLETE,1,GOOD
 // HOLDSTART,1
