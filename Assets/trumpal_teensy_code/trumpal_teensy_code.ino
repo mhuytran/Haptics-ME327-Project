@@ -83,7 +83,7 @@ const bool ENABLE_TUNING_COMMANDS = true;
 // through SOLRAMP/TEST for bench tuning only.
 // ------------------------------------------------------------
 const float MAX_SOLENOID_DUTY = 1.00f;
-const unsigned long DEFAULT_SOLENOID_PULSE_MS = 220;
+const unsigned long DEFAULT_SOLENOID_PULSE_MS = 350;
 const unsigned long MAX_SOLENOID_PULSE_MS = 350;
 const unsigned long MAX_SOLENOID_RAMP_MS = 1000;
 const unsigned long MAX_HAPTIC_TEST_DELAY_MS = 5000;
@@ -93,10 +93,10 @@ const float TAP_RESET_SOL_DUTY_PERFECT = 1.00f;
 const float HOLD_RESET_SOL_DUTY = 1.00f;
 const float MISS_RESET_SOL_DUTY = 1.00f;
 
-const unsigned long TAP_RESET_SOL_MS = 220;
+const unsigned long TAP_RESET_SOL_MS = 350;
 
-const unsigned long HOLD_RESET_SOL_MS = 220;
-const unsigned long MISS_RESET_SOL_MS = 220;
+const unsigned long HOLD_RESET_SOL_MS = 350;
+const unsigned long MISS_RESET_SOL_MS = 350;
 
 // ------------------------------------------------------------
 // ERM gameplay tuning

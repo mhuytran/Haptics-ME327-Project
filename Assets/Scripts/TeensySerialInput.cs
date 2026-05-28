@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO.Ports;
 using System.Threading;
@@ -70,7 +71,20 @@ public class TeensySerialInput : MonoBehaviour
     [Tooltip("For close-mounted sensors, cap press delta to this fraction of calibrated rest. 0.25 turns a 33 mm rest into roughly a 25 mm press threshold.")]
     public float closeSensorPressDeltaFraction = 0.25f;
     [Tooltip("Smallest allowed press threshold delta after auto calibration. Keep small for close-mounted sensors.")]
-    public float minimumPressEnterDeltaMM = 1.5f;
+    public float minimumPressEnterDeltaMM = 4f;
+
+    [Header("ToF anti-jitter")]
+    [Tooltip("After auto calibration finishes, keep all ToF valves released for this long. This prevents startup sensor settling from twitching valves.")]
+    public float postCalibrationReleaseGuardSeconds = 0.75f;
+    [Tooltip("Distance must stay past the press threshold this long before Unity accepts a valve press.")]
+    public float pressDebounceSeconds = 0.08f;
+    [Tooltip("Distance must stay past the release threshold this long before Unity accepts valve release.")]
+    public float releaseDebounceSeconds = 0.04f;
+    [Range(0.5f, 0.95f)]
+    [Tooltip("Auto calibration uses this percentile of released samples as rest distance. 0.75 ignores low noisy dips that can cause false presses.")]
+    public float calibrationRestPercentile = 0.75f;
+    [Tooltip("Minimum live samples before percentile calibration is trusted for a lane.")]
+    public int minimumCalibrationSamplesPerLane = 5;
 
     [Header("legacy press threshold")]
     public bool derivePressedStateFromDistance = false;
@@ -122,8 +136,11 @@ public class TeensySerialInput : MonoBehaviour
     private float latestE3 = 0f;
 
     private bool[] calibratedPressedStates = new bool[3];
+    private bool[] pendingPressedStates = new bool[3];
+    private float[] pendingPressedStateSince = new float[3];
     private bool[] laneHasLiveCalibration = new bool[3];
     private bool legacyTesterWarningShown = false;
+    private float postCalibrationReleaseGuardUntil = 0f;
 
     void Awake()
     {
@@ -199,7 +216,7 @@ public class TeensySerialInput : MonoBehaviour
         float a2 = DistanceToPressAmount(d2, valve2RestDistanceMM, valve2PressedDistanceMM);
         float a3 = DistanceToPressAmount(d3, valve3RestDistanceMM, valve3PressedDistanceMM);
 
-        if (isCalibrating)
+        if (isCalibrating || IsPostCalibrationReleaseGuardActive())
         {
             v1 = false;
             v2 = false;
@@ -265,6 +282,7 @@ public class TeensySerialInput : MonoBehaviour
 
         float[] sums = new float[3];
         int[] sampleCounts = new int[3];
+        List<int>[] calibrationSamples = CreateCalibrationSampleBuckets();
         float waitForDataEndTime = Time.realtimeSinceStartup + Mathf.Max(0f, calibrationWaitForDataSeconds);
 
         while (Time.realtimeSinceStartup < waitForDataEndTime && !HasAnyValidLiveDistance())
@@ -297,21 +315,18 @@ public class TeensySerialInput : MonoBehaviour
                 d3 = latestD3;
             }
 
-            AddCalibrationSample(0, d1, sums, sampleCounts);
-            AddCalibrationSample(1, d2, sums, sampleCounts);
-            AddCalibrationSample(2, d3, sums, sampleCounts);
+            AddCalibrationSample(0, d1, sums, sampleCounts, calibrationSamples);
+            AddCalibrationSample(1, d2, sums, sampleCounts, calibrationSamples);
+            AddCalibrationSample(2, d3, sums, sampleCounts, calibrationSamples);
 
             yield return null;
         }
 
-        ApplyCalibrationSamples(sums, sampleCounts);
-
-        for (int i = 0; i < calibratedPressedStates.Length; i++)
-        {
-            calibratedPressedStates[i] = false;
-        }
+        ApplyCalibrationSamples(sums, sampleCounts, calibrationSamples);
+        ResetDiscreteToFStates();
 
         ValveInputState.ClearAll();
+        postCalibrationReleaseGuardUntil = Time.realtimeSinceStartup + Mathf.Max(0f, postCalibrationReleaseGuardSeconds);
         isCalibrated = true;
         isCalibrating = false;
 
@@ -328,7 +343,23 @@ public class TeensySerialInput : MonoBehaviour
         );
     }
 
-    void AddCalibrationSample(int laneIndex, int distanceMM, float[] sums, int[] sampleCounts)
+    List<int>[] CreateCalibrationSampleBuckets()
+    {
+        return new List<int>[]
+        {
+            new List<int>(),
+            new List<int>(),
+            new List<int>()
+        };
+    }
+
+    void AddCalibrationSample(
+        int laneIndex,
+        int distanceMM,
+        float[] sums,
+        int[] sampleCounts,
+        List<int>[] calibrationSamples
+    )
     {
         if (!IsValidDistance(distanceMM))
         {
@@ -337,13 +368,21 @@ public class TeensySerialInput : MonoBehaviour
 
         sums[laneIndex] += distanceMM;
         sampleCounts[laneIndex] += 1;
+
+        if (calibrationSamples != null &&
+            laneIndex >= 0 &&
+            laneIndex < calibrationSamples.Length &&
+            calibrationSamples[laneIndex] != null)
+        {
+            calibrationSamples[laneIndex].Add(distanceMM);
+        }
     }
 
-    void ApplyCalibrationSamples(float[] sums, int[] sampleCounts)
+    void ApplyCalibrationSamples(float[] sums, int[] sampleCounts, List<int>[] calibrationSamples)
     {
-        valve1RestDistanceMM = GetCalibratedRestDistance(0, sums, sampleCounts, valve1RestDistanceMM);
-        valve2RestDistanceMM = GetCalibratedRestDistance(1, sums, sampleCounts, valve2RestDistanceMM);
-        valve3RestDistanceMM = GetCalibratedRestDistance(2, sums, sampleCounts, valve3RestDistanceMM);
+        valve1RestDistanceMM = GetCalibratedRestDistance(0, sums, sampleCounts, calibrationSamples, valve1RestDistanceMM);
+        valve2RestDistanceMM = GetCalibratedRestDistance(1, sums, sampleCounts, calibrationSamples, valve2RestDistanceMM);
+        valve3RestDistanceMM = GetCalibratedRestDistance(2, sums, sampleCounts, calibrationSamples, valve3RestDistanceMM);
 
         laneHasLiveCalibration[0] = sampleCounts[0] > 0;
         laneHasLiveCalibration[1] = sampleCounts[1] > 0;
@@ -356,6 +395,7 @@ public class TeensySerialInput : MonoBehaviour
         int laneIndex,
         float[] sums,
         int[] sampleCounts,
+        List<int>[] calibrationSamples,
         float fallbackRestDistanceMM
     )
     {
@@ -364,7 +404,31 @@ public class TeensySerialInput : MonoBehaviour
             return fallbackRestDistanceMM;
         }
 
+        if (calibrationSamples != null &&
+            laneIndex >= 0 &&
+            laneIndex < calibrationSamples.Length &&
+            calibrationSamples[laneIndex] != null &&
+            calibrationSamples[laneIndex].Count >= minimumCalibrationSamplesPerLane)
+        {
+            return GetCalibrationPercentile(calibrationSamples[laneIndex]);
+        }
+
         return sums[laneIndex] / sampleCounts[laneIndex];
+    }
+
+    float GetCalibrationPercentile(List<int> samples)
+    {
+        samples.Sort();
+
+        if (samples.Count <= 0)
+        {
+            return 0f;
+        }
+
+        int index = Mathf.RoundToInt((samples.Count - 1) * calibrationRestPercentile);
+        index = Mathf.Clamp(index, 0, samples.Count - 1);
+
+        return samples[index];
     }
 
     bool GetDiscretePressedState(int laneIndex, int distanceMM)
@@ -377,12 +441,61 @@ public class TeensySerialInput : MonoBehaviour
         float enterPressedDistanceMM = GetPressEnterDistance(laneIndex);
         float exitPressedDistanceMM = GetReleaseDistance(laneIndex);
         bool wasPressed = calibratedPressedStates[laneIndex];
-        bool pressed = wasPressed
+        bool rawPressed = wasPressed
             ? distanceMM <= exitPressedDistanceMM
             : distanceMM <= enterPressedDistanceMM;
 
-        calibratedPressedStates[laneIndex] = pressed;
-        return pressed;
+        return ApplyDiscreteStateDebounce(laneIndex, rawPressed);
+    }
+
+    bool ApplyDiscreteStateDebounce(int laneIndex, bool rawPressed)
+    {
+        bool currentPressed = calibratedPressedStates[laneIndex];
+        float now = Time.realtimeSinceStartup;
+
+        if (rawPressed == currentPressed)
+        {
+            pendingPressedStates[laneIndex] = rawPressed;
+            pendingPressedStateSince[laneIndex] = now;
+            return currentPressed;
+        }
+
+        if (pendingPressedStates[laneIndex] != rawPressed)
+        {
+            pendingPressedStates[laneIndex] = rawPressed;
+            pendingPressedStateSince[laneIndex] = now;
+            return currentPressed;
+        }
+
+        float requiredStableSeconds = rawPressed
+            ? Mathf.Max(0f, pressDebounceSeconds)
+            : Mathf.Max(0f, releaseDebounceSeconds);
+
+        if (now - pendingPressedStateSince[laneIndex] >= requiredStableSeconds)
+        {
+            calibratedPressedStates[laneIndex] = rawPressed;
+            pendingPressedStateSince[laneIndex] = now;
+            return rawPressed;
+        }
+
+        return currentPressed;
+    }
+
+    void ResetDiscreteToFStates()
+    {
+        float now = Time.realtimeSinceStartup;
+
+        for (int i = 0; i < calibratedPressedStates.Length; i++)
+        {
+            calibratedPressedStates[i] = false;
+            pendingPressedStates[i] = false;
+            pendingPressedStateSince[i] = now;
+        }
+    }
+
+    bool IsPostCalibrationReleaseGuardActive()
+    {
+        return Time.realtimeSinceStartup < postCalibrationReleaseGuardUntil;
     }
 
     void TryLazyCalibrateLane(int laneIndex, int distanceMM)
@@ -400,6 +513,8 @@ public class TeensySerialInput : MonoBehaviour
         SetRestDistance(laneIndex, distanceMM);
         ApplyPressedThresholdsFromCalibratedRest();
         calibratedPressedStates[laneIndex] = false;
+        pendingPressedStates[laneIndex] = false;
+        pendingPressedStateSince[laneIndex] = Time.realtimeSinceStartup;
         laneHasLiveCalibration[laneIndex] = true;
 
         Debug.Log("Lazy ToF calibrated valve " + (laneIndex + 1) + " rest to " + distanceMM + " mm");
@@ -917,6 +1032,11 @@ public class TeensySerialInput : MonoBehaviour
         minimumPressEnterDeltaMM = Mathf.Clamp(minimumPressEnterDeltaMM, 1f, pressEnterDeltaMM);
         closeSensorPressDeltaFraction = Mathf.Clamp(closeSensorPressDeltaFraction, 0.05f, 0.9f);
         releaseDeltaMM = Mathf.Clamp(releaseDeltaMM, 0.5f, pressEnterDeltaMM - 0.5f);
+        postCalibrationReleaseGuardSeconds = Mathf.Clamp(postCalibrationReleaseGuardSeconds, 0f, 2f);
+        pressDebounceSeconds = Mathf.Clamp(pressDebounceSeconds, 0f, 0.25f);
+        releaseDebounceSeconds = Mathf.Clamp(releaseDebounceSeconds, 0f, 0.25f);
+        calibrationRestPercentile = Mathf.Clamp(calibrationRestPercentile, 0.5f, 0.95f);
+        minimumCalibrationSamplesPerLane = Mathf.Clamp(minimumCalibrationSamplesPerLane, 1, 200);
 
         if (!Application.isPlaying)
         {

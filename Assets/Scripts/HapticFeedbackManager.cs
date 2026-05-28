@@ -69,7 +69,7 @@ public class HapticFeedbackManager : MonoBehaviour
     public int tuneLane = 1;
     [Range(0f, 1f)]
     public float tuneSolenoidDuty = 1.00f;
-    public int tuneSolenoidDurationMs = 220;
+    public int tuneSolenoidDurationMs = 350;
     [Tooltip("Standalone tester TEST rampTimeMs equivalent, sent as SOLRAMP.")]
     public int tuneSolenoidRampMs = 800;
     [Tooltip("Standalone tester func equivalent: Linear = 0, Quadratic = 1, Exponential = 2.")]
@@ -392,7 +392,7 @@ public class HapticFeedbackManager : MonoBehaviour
         maxErmRampMs = 1200;
 
         tuneSolenoidDuty = 1.00f;
-        tuneSolenoidDurationMs = 220;
+        tuneSolenoidDurationMs = 350;
         tuneSolenoidRampMs = 800;
         tuneSolenoidRampCurve = SolenoidRampCurve.Quadratic;
         tuneSolenoidRampHoldMs = 350;

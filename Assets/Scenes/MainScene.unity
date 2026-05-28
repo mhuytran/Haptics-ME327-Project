@@ -2726,8 +2726,8 @@ MonoBehaviour:
   autoCalibrateOnStart: 1
   pauseGameDuringCalibration: 1
   startupCalibrationPauseSeconds: 1.5
-  pressEnterDeltaMM: 1.5
-  releaseDeltaMM: 0.5
+  pressEnterDeltaMM: 4
+  releaseDeltaMM: 2
   useDiscreteToFStates: 1
   useTeensyDebugPressBits: 0
   acceptTeensyPressBitsAsFallback: 0
@@ -2735,7 +2735,12 @@ MonoBehaviour:
   isCalibrating: 0
   calibrationWaitForDataSeconds: 4
   closeSensorPressDeltaFraction: 0.25
-  minimumPressEnterDeltaMM: 1.5
+  minimumPressEnterDeltaMM: 4
+  postCalibrationReleaseGuardSeconds: 0.75
+  pressDebounceSeconds: 0.08
+  releaseDebounceSeconds: 0.04
+  calibrationRestPercentile: 0.75
+  minimumCalibrationSamplesPerLane: 5
   derivePressedStateFromDistance: 0
   pressAmountThreshold: 0.65
   printIncomingLines: 0
@@ -2744,9 +2749,9 @@ MonoBehaviour:
   liveValve1DistanceMM: 255
   liveValve2DistanceMM: 255
   liveValve3DistanceMM: 255
-  liveValve1Pressed: 1
-  liveValve2Pressed: 1
-  liveValve3Pressed: 1
+  liveValve1Pressed: 0
+  liveValve2Pressed: 0
+  liveValve3Pressed: 0
   liveValve1Amount: 0
   liveValve2Amount: 0
   liveValve3Amount: 0
@@ -2804,7 +2809,7 @@ MonoBehaviour:
   maxErmRampMs: 1200
   tuneLane: 1
   tuneSolenoidDuty: 1
-  tuneSolenoidDurationMs: 220
+  tuneSolenoidDurationMs: 350
   tuneSolenoidRampMs: 800
   tuneSolenoidRampCurve: 1
   tuneSolenoidRampHoldMs: 350
@@ -3573,7 +3578,7 @@ MonoBehaviour:
   maxErmRampMs: 1200
   tuneLane: 1
   tuneSolenoidDuty: 1
-  tuneSolenoidDurationMs: 220
+  tuneSolenoidDurationMs: 350
   tuneSolenoidRampMs: 800
   tuneSolenoidRampCurve: 1
   tuneSolenoidRampHoldMs: 350
