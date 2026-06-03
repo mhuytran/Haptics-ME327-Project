@@ -31,12 +31,14 @@ public class SilverTextShine : MonoBehaviour
 
     void Awake()
     {
+        // Clone the TMP material so this text can animate glow independently.
         text = GetComponent<TMP_Text>();
         SetupRuntimeMaterial();
     }
 
     void Update()
     {
+        // Animate both per-character color and material glow.
         AnimateTextShine();
         AnimateGlow();
     }
@@ -96,6 +98,7 @@ public class SilverTextShine : MonoBehaviour
 
     void AnimateTextShine()
     {
+        // Modify TMP vertex colors to create a moving silver/white shine sweep.
         if (text == null)
         {
             return;

@@ -12,6 +12,7 @@ public class PowerMarginLayout : MonoBehaviour
 
     void Start()
     {
+        // Position the four border images once and make sure they never block clicks.
         ApplyLayout();
         DisableRaycasts();
     }
@@ -19,6 +20,7 @@ public class PowerMarginLayout : MonoBehaviour
     [ContextMenu("Apply Layout")]
     public void ApplyLayout()
     {
+        // Anchor each image to one screen edge to form a power-mode border.
         SetupTop(powerTop);
         SetupBottom(powerBottom);
         SetupLeft(powerLeft);

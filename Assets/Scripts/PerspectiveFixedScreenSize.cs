@@ -29,6 +29,7 @@ public class PerspectiveFixedScreenSize : MonoBehaviour
 
     void LateUpdate()
     {
+        // Estimate world size from camera projection, then refine by measuring screen pixels.
         if (mainCamera == null)
         {
             mainCamera = Camera.main;
@@ -73,6 +74,7 @@ public class PerspectiveFixedScreenSize : MonoBehaviour
 
     float EstimateWorldDiameter()
     {
+        // First-pass conversion from desired pixels to world units at the object's depth.
         Vector3 cameraSpacePosition = mainCamera.transform.InverseTransformPoint(transform.position);
         float depth = Mathf.Abs(cameraSpacePosition.z);
 
@@ -90,6 +92,7 @@ public class PerspectiveFixedScreenSize : MonoBehaviour
 
     float MeasureProjectedDiameterPixels()
     {
+        // Measure projected X/Z diameters to correct for perspective and object rotation.
         Vector3 centerScreen = mainCamera.WorldToScreenPoint(transform.position);
 
         if (centerScreen.z <= 0f)

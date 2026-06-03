@@ -6,6 +6,18 @@ public class FlyingNote : MonoBehaviour
     public float targetHitTime;
     public bool resolved = false;
 
+    [Header("fingering group")]
+    public int fingeringGroupId = -1;
+    public int requiredValveMask = 0;
+    public string fingeringName = "";
+    public Color noteColor = Color.white;
+
+    [Header("pre-cue")]
+    public bool useDistanceBasedPreCue = false;
+    public float preCueDistanceFromTarget = 1.0f;
+    public float preCueLeadTime = 0.60f;
+    private bool preCueSent = false;
+
     [Header("hold note")]
     public bool isHoldNote = false;
     public float holdDuration = 0f;
@@ -36,6 +48,7 @@ public class FlyingNote : MonoBehaviour
         float duration
     )
     {
+        // Convenience overload for notes whose hit effect happens at the valve target.
         Initialize(
             lane,
             spawn,
@@ -61,7 +74,12 @@ public class FlyingNote : MonoBehaviour
         float duration
     )
     {
+        // Store the timing and path data used by Update to animate the note toward the valve.
         laneIndex = lane;
+        fingeringGroupId = -1;
+        requiredValveMask = 1 << lane;
+        fingeringName = "Valve " + (lane + 1);
+
         spawnPosition = spawn;
         targetPosition = target;
         hitEffectPosition = hitPosition;
@@ -89,6 +107,9 @@ public class FlyingNote : MonoBehaviour
             return;
         }
 
+        TrySendPreCue();
+
+        // Time-based interpolation keeps visual movement synced to the note's hit time.
         float travelFraction = Mathf.InverseLerp(spawnTime, targetHitTime, Time.time);
         travelFraction = Mathf.Clamp01(travelFraction);
 
@@ -98,6 +119,7 @@ public class FlyingNote : MonoBehaviour
         {
             UpdateHoldTail();
 
+            // Hold notes must be started inside the hit window and then held until their end time.
             if (!holdStarted && Time.time > targetHitTime + gameManager.missWindow)
             {
                 Miss();
@@ -107,6 +129,12 @@ public class FlyingNote : MonoBehaviour
             if (holdStarted)
             {
                 bool stillHolding = ValveInputState.GetValve(laneIndex);
+
+                if (gameManager != null)
+                {
+                    stillHolding = gameManager.IsFingeringHeld(this);
+                }
+
                 float holdEndTime = targetHitTime + holdDuration;
 
                 if (!stillHolding && Time.time < holdEndTime)
@@ -132,8 +160,75 @@ public class FlyingNote : MonoBehaviour
         }
     }
 
+    void TrySendPreCue()
+    {
+        // A pre-cue can be triggered either by lead time or by distance from the target.
+        if (preCueSent)
+        {
+            return;
+        }
+
+        bool shouldSendPreCue = false;
+
+        if (useDistanceBasedPreCue)
+        {
+            float distanceToTarget = Vector3.Distance(transform.position, targetPosition);
+            shouldSendPreCue = distanceToTarget <= preCueDistanceFromTarget;
+        }
+        else
+        {
+            float timeUntilHit = targetHitTime - Time.time;
+            shouldSendPreCue = timeUntilHit <= preCueLeadTime && timeUntilHit > 0f;
+        }
+
+        if (shouldSendPreCue)
+        {
+            preCueSent = true;
+
+            if (gameManager != null)
+            {
+                gameManager.OnNotePreCue(this);
+            }
+        }
+    }
+
+    public float GetDistanceToTarget()
+    {
+        return Vector3.Distance(transform.position, targetPosition);
+    }
+
+    public float GetTimeUntilHit()
+    {
+        float timeUntilHit = targetHitTime - Time.time;
+        return Mathf.Max(0f, timeUntilHit);
+    }
+
+    public void SetFingeringGroup(int groupId, int valveMask, string name)
+    {
+        // A group lets multiple lane visuals represent one trumpet fingering.
+        fingeringGroupId = groupId;
+        requiredValveMask = valveMask == 0 ? 1 << laneIndex : valveMask;
+        fingeringName = string.IsNullOrEmpty(name) ? "Valve " + (laneIndex + 1) : name;
+    }
+
+    public void SetNoteColor(Color color)
+    {
+        noteColor = color;
+    }
+
+    public int GetRequiredValveMask()
+    {
+        if (requiredValveMask != 0)
+        {
+            return requiredValveMask;
+        }
+
+        return 1 << laneIndex;
+    }
+
     public void ResolveTapHit(string rating)
     {
+        // Tap notes disappear immediately after their hit effect is triggered.
         if (resolved)
         {
             return;
@@ -147,8 +242,40 @@ public class FlyingNote : MonoBehaviour
         Destroy(gameObject);
     }
 
+    public void ResolveHoldCompleteFromGroup()
+    {
+        if (resolved)
+        {
+            return;
+        }
+
+        StopHoldSmash();
+        TriggerHoldEndSmash();
+
+        resolved = true;
+        gameManager.UnregisterNote(this);
+
+        Destroy(gameObject);
+    }
+
+    public void ResolveMissFromGroup()
+    {
+        if (resolved)
+        {
+            return;
+        }
+
+        StopHoldSmash();
+
+        resolved = true;
+        gameManager.UnregisterNote(this);
+
+        Destroy(gameObject);
+    }
+
     public void StartHold(string rating)
     {
+        // Hold visuals stay alive while the valve remains pressed.
         if (resolved || holdStarted)
         {
             return;
@@ -161,6 +288,7 @@ public class FlyingNote : MonoBehaviour
 
     void CompleteHold()
     {
+        // Completion is reported to the manager so scoring and haptics stay centralized.
         if (resolved)
         {
             return;
@@ -177,6 +305,7 @@ public class FlyingNote : MonoBehaviour
 
     void Miss()
     {
+        // Misses are also reported centrally so health, combo, and hardware feedback match.
         if (resolved)
         {
             return;
@@ -251,6 +380,7 @@ public class FlyingNote : MonoBehaviour
 
     void CreateHoldTail()
     {
+        // The hold tail is a line from the moving note back to the delayed trail position.
         holdTail = gameObject.AddComponent<LineRenderer>();
         holdTail.useWorldSpace = true;
         holdTail.positionCount = 2;
@@ -283,6 +413,7 @@ public class FlyingNote : MonoBehaviour
 
     void UpdateHoldTail()
     {
+        // Tail length follows the same travel curve as the note, offset by the hold duration.
         if (holdTail == null)
         {
             return;

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 public class RhythmGameManager : MonoBehaviour
 {
@@ -19,6 +21,11 @@ public class RhythmGameManager : MonoBehaviour
     public float baseComboHeal = 2f;
     public float comboHealScale = 0.25f;
 
+    [Header("health debug")]
+    public bool enableInfiniteHealthShortcut = true;
+    public Key infiniteHealthShortcutKey = Key.F8;
+    public bool infiniteHealth = false;
+
     [Header("combo multiplier")]
     public int combo = 0;
     public int baseMultiplierComboThreshold = 10;
@@ -28,7 +35,27 @@ public class RhythmGameManager : MonoBehaviour
     [Header("ui")]
     public GameplayUIFeedback uiFeedback;
 
+    [Header("haptics")]
+    public HapticFeedbackManager hapticFeedbackManager;
+
+    [Header("solenoid push-off tuning")]
+    [Tooltip("Leave off with the final firmware because TAPCOMPLETE/HOLDCOMPLETE already trigger the mapped solenoid pins on the Teensy.")]
+    public bool sendSolenoidPushOnHit = false;
+    public bool pushOnAnyValvePressForTuning = false;
+    public SolenoidPulseSettings[] solenoidPushSettings = new SolenoidPulseSettings[]
+    {
+        new SolenoidPulseSettings(),
+        new SolenoidPulseSettings(),
+        new SolenoidPulseSettings()
+    };
+
+    [Header("MVP fingering judgment")]
+    public bool requireExactFingering = true;
+    [Tooltip("Leave off for MVP hardware so a stuck/held ToF state cannot keep auto-hitting future notes. Notes are judged on a new press edge.")]
+    public bool judgeFingeringContinuously = false;
+
     private List<FlyingNote> activeNotes = new List<FlyingNote>();
+    private HashSet<int> preCuedFingeringGroups = new HashSet<int>();
     private bool[] previousValveStates = new bool[3];
 
     private int previousPointMultiplier = 1;
@@ -36,7 +63,18 @@ public class RhythmGameManager : MonoBehaviour
 
     void Start()
     {
-        Time.timeScale = 1f;
+        // Startup calibration can pause the game; otherwise make sure gameplay runs normally.
+        if (TeensySerialInput.Instance == null || !TeensySerialInput.Instance.isCalibrating)
+        {
+            Time.timeScale = 1f;
+        }
+
+        EnsureSolenoidSettings();
+
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
 
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
         UpdateMultiplier();
@@ -45,10 +83,17 @@ public class RhythmGameManager : MonoBehaviour
 
     void Update()
     {
+        HandleDebugShortcuts();
+
         if (gameOver)
         {
             return;
         }
+
+        // Build a 3-bit mask from the current valve state and judge only on a new press
+        // unless continuous judging is explicitly enabled for debugging.
+        int currentValveMask = ValveInputState.GetValveMask();
+        bool anyNewPress = false;
 
         for (int lane = 0; lane < 3; lane++)
         {
@@ -56,15 +101,29 @@ public class RhythmGameManager : MonoBehaviour
 
             if (pressed && !previousValveStates[lane])
             {
-                TryHit(lane);
+                anyNewPress = true;
             }
 
             previousValveStates[lane] = pressed;
+        }
+
+        if (currentValveMask == 0)
+        {
+            return;
+        }
+
+        bool shouldJudge = anyNewPress || judgeFingeringContinuously;
+        bool successfulHit = shouldJudge && TryHitCurrentFingering(currentValveMask);
+
+        if (pushOnAnyValvePressForTuning && anyNewPress && !successfulHit)
+        {
+            SendSolenoidPushForMask(currentValveMask);
         }
     }
 
     public void RegisterNote(FlyingNote note)
     {
+        // Keep track of unresolved notes so input can be matched against them.
         if (gameOver)
         {
             if (note != null)
@@ -84,13 +143,95 @@ public class RhythmGameManager : MonoBehaviour
     public void UnregisterNote(FlyingNote note)
     {
         activeNotes.Remove(note);
+        ClearPreCueGroupIfInactive(note);
     }
 
-    public void TryHit(int lane)
+    public bool HasActiveNotes()
     {
-        if (gameOver)
+        for (int i = activeNotes.Count - 1; i >= 0; i--)
+        {
+            if (activeNotes[i] == null)
+            {
+                activeNotes.RemoveAt(i);
+                continue;
+            }
+
+            if (!activeNotes[i].resolved)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void OnNotePreCue(FlyingNote note)
+    {
+        // Send one pre-cue per fingering group, even if the visual note uses multiple lanes.
+        if (note == null || gameOver)
         {
             return;
+        }
+
+        int groupId = note.fingeringGroupId;
+
+        if (groupId >= 0)
+        {
+            if (preCuedFingeringGroups.Contains(groupId))
+            {
+                return;
+            }
+
+            preCuedFingeringGroups.Add(groupId);
+        }
+
+        SendPreCueForMask(note.GetRequiredValveMask());
+    }
+
+    void SendPreCueForMask(int valveMask)
+    {
+        if (valveMask == 0)
+        {
+            return;
+        }
+
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager == null)
+        {
+            return;
+        }
+
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) != 0)
+            {
+                hapticFeedbackManager.SendPreCue(lane);
+            }
+        }
+    }
+
+    public bool TryHit(int lane)
+    {
+        int currentValveMask = ValveInputState.GetValveMask();
+
+        if (currentValveMask == 0)
+        {
+            currentValveMask = 1 << lane;
+        }
+
+        return TryHitCurrentFingering(currentValveMask);
+    }
+
+    bool TryHitCurrentFingering(int currentValveMask)
+    {
+        // Pick the closest active note that accepts the current fingering.
+        if (gameOver)
+        {
+            return false;
         }
 
         FlyingNote bestNote = null;
@@ -103,7 +244,9 @@ public class RhythmGameManager : MonoBehaviour
                 continue;
             }
 
-            if (note.laneIndex != lane)
+            int requiredValveMask = note.GetRequiredValveMask();
+
+            if (!IsValveMaskAccepted(requiredValveMask, currentValveMask))
             {
                 continue;
             }
@@ -119,32 +262,208 @@ public class RhythmGameManager : MonoBehaviour
 
         if (bestNote == null)
         {
-            return;
+            return false;
         }
 
         if (bestTimingError <= goodWindow)
         {
+            // Resolve tap and hold notes differently because holds must remain pressed.
             bool perfect = bestTimingError <= perfectWindow;
             string rating = perfect ? "PERFECT!" : "GOOD!";
+            Color feedbackColor = GetFingeringFeedbackColor(bestNote, perfect);
 
             if (bestNote.isHoldNote)
             {
-                bestNote.StartHold(rating);
-                ShowFeedback(rating, perfect ? Color.green : Color.yellow);
+                SendHoldStartForMask(bestNote.GetRequiredValveMask());
+                StartHoldGroup(bestNote, rating);
+                ShowFeedback(rating, feedbackColor);
             }
             else
             {
-                bestNote.ResolveTapHit(rating);
-                RegisterSuccessfulNote(rating, perfect, true);
+                if (sendSolenoidPushOnHit)
+                {
+                    SendSolenoidPushForMask(bestNote.GetRequiredValveMask());
+                }
+
+                SendTapCompleteForMask(bestNote.GetRequiredValveMask(), perfect);
+                ResolveTapGroup(bestNote, rating);
+                RegisterSuccessfulNote(rating, perfect, false);
+                ShowFeedback(rating, feedbackColor);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool IsFingeringHeld(FlyingNote note)
+    {
+        if (note == null)
+        {
+            return false;
+        }
+
+        return IsValveMaskAccepted(note.GetRequiredValveMask(), ValveInputState.GetValveMask());
+    }
+
+    bool IsValveMaskAccepted(int requiredValveMask, int currentValveMask)
+    {
+        // Exact mode rejects extra valves; relaxed mode accepts supersets of the required fingering.
+        if (requiredValveMask == 0 || currentValveMask == 0)
+        {
+            return false;
+        }
+
+        if (requireExactFingering)
+        {
+            return currentValveMask == requiredValveMask;
+        }
+
+        return (currentValveMask & requiredValveMask) == requiredValveMask;
+    }
+
+    void StartHoldGroup(FlyingNote sourceNote, string rating)
+    {
+        List<FlyingNote> groupNotes = GetFingeringGroup(sourceNote);
+
+        foreach (FlyingNote note in groupNotes)
+        {
+            if (note != null)
+            {
+                note.StartHold(rating);
             }
         }
     }
 
+    void ResolveTapGroup(FlyingNote sourceNote, string rating)
+    {
+        List<FlyingNote> groupNotes = GetFingeringGroup(sourceNote);
+
+        foreach (FlyingNote note in groupNotes)
+        {
+            if (note != null)
+            {
+                note.ResolveTapHit(rating);
+            }
+        }
+    }
+
+    void ResolveCompletedHoldGroup(FlyingNote sourceNote)
+    {
+        List<FlyingNote> groupNotes = GetFingeringGroup(sourceNote);
+
+        foreach (FlyingNote note in groupNotes)
+        {
+            if (note == null || note == sourceNote)
+            {
+                continue;
+            }
+
+            note.ResolveHoldCompleteFromGroup();
+        }
+    }
+
+    void ResolveMissedGroup(FlyingNote sourceNote)
+    {
+        List<FlyingNote> groupNotes = GetFingeringGroup(sourceNote);
+
+        foreach (FlyingNote note in groupNotes)
+        {
+            if (note == null || note == sourceNote)
+            {
+                continue;
+            }
+
+            note.ResolveMissFromGroup();
+        }
+    }
+
+    List<FlyingNote> GetFingeringGroup(FlyingNote sourceNote)
+    {
+        // Multi-valve fingerings spawn several lane notes, but they resolve as one note group.
+        List<FlyingNote> groupNotes = new List<FlyingNote>();
+
+        if (sourceNote == null)
+        {
+            return groupNotes;
+        }
+
+        int groupId = sourceNote.fingeringGroupId;
+
+        if (groupId < 0)
+        {
+            groupNotes.Add(sourceNote);
+            return groupNotes;
+        }
+
+        foreach (FlyingNote note in activeNotes)
+        {
+            if (note != null && note.fingeringGroupId == groupId)
+            {
+                groupNotes.Add(note);
+            }
+        }
+
+        if (groupNotes.Count == 0)
+        {
+            groupNotes.Add(sourceNote);
+        }
+
+        return groupNotes;
+    }
+
+    Color GetFingeringFeedbackColor(FlyingNote sourceNote, bool perfect)
+    {
+        List<FlyingNote> groupNotes = GetFingeringGroup(sourceNote);
+
+        if (groupNotes.Count == 0)
+        {
+            return perfect ? Color.green : Color.yellow;
+        }
+
+        Color mixedColor = Color.black;
+        int colorCount = 0;
+
+        foreach (FlyingNote note in groupNotes)
+        {
+            if (note == null)
+            {
+                continue;
+            }
+
+            mixedColor += note.noteColor;
+            colorCount++;
+        }
+
+        if (colorCount <= 0)
+        {
+            return perfect ? Color.green : Color.yellow;
+        }
+
+        mixedColor /= colorCount;
+        mixedColor.a = 1f;
+
+        if (perfect)
+        {
+            return Color.Lerp(mixedColor, Color.white, 0.25f);
+        }
+
+        return mixedColor;
+    }
+
     public void OnHoldCompleted(FlyingNote note)
     {
+        // A completed hold counts as a successful note and sends the release haptic.
         if (gameOver)
         {
             return;
+        }
+
+        if (note != null)
+        {
+            SendHoldCompleteForMask(note.GetRequiredValveMask());
+            ResolveCompletedHoldGroup(note);
         }
 
         UnregisterNote(note);
@@ -153,15 +472,29 @@ public class RhythmGameManager : MonoBehaviour
 
     public void OnNoteMissed(FlyingNote note)
     {
+        // Misses clear the fingering group, damage health, reset combo, and notify hardware.
         if (gameOver)
         {
             return;
         }
 
+        if (note != null)
+        {
+            SendMissForMask(note.GetRequiredValveMask());
+            ResolveMissedGroup(note);
+        }
+
         UnregisterNote(note);
 
-        currentHealth -= missDamage;
-        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+        if (infiniteHealth)
+        {
+            currentHealth = maxHealth;
+        }
+        else
+        {
+            currentHealth -= missDamage;
+            currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+        }
 
         combo = 0;
         previousPointMultiplier = pointMultiplier;
@@ -177,7 +510,7 @@ public class RhythmGameManager : MonoBehaviour
 
         UpdateUI();
 
-        if (currentHealth <= 0f)
+        if (!infiniteHealth && currentHealth <= 0f)
         {
             TriggerGameOver();
         }
@@ -185,6 +518,7 @@ public class RhythmGameManager : MonoBehaviour
 
     void RegisterSuccessfulNote(string feedbackMessage, bool strongHit, bool showFeedbackText)
     {
+        // Score increases by the active multiplier, and long combos can heal low health.
         if (gameOver)
         {
             return;
@@ -222,6 +556,12 @@ public class RhythmGameManager : MonoBehaviour
 
     void TryRecoverHealthFromCombo()
     {
+        if (infiniteHealth)
+        {
+            currentHealth = maxHealth;
+            return;
+        }
+
         bool healthIsLow = currentHealth < lowHealthThreshold;
         bool inComboMode = pointMultiplier > 1;
 
@@ -238,13 +578,44 @@ public class RhythmGameManager : MonoBehaviour
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
     }
 
+    void HandleDebugShortcuts()
+    {
+        if (!enableInfiniteHealthShortcut || Keyboard.current == null)
+        {
+            return;
+        }
+
+        KeyControl shortcutKey = Keyboard.current[infiniteHealthShortcutKey];
+
+        if (shortcutKey == null || !shortcutKey.wasPressedThisFrame)
+        {
+            return;
+        }
+
+        infiniteHealth = !infiniteHealth;
+
+        if (infiniteHealth)
+        {
+            currentHealth = maxHealth;
+        }
+
+        UpdateUI();
+        Debug.Log("Infinite health " + (infiniteHealth ? "enabled" : "disabled"));
+    }
+
     void TriggerGameOver()
     {
+        // Freeze gameplay, clear notes, shut off haptics, and show the final score UI.
         gameOver = true;
         currentHealth = 0f;
         UpdateUI();
 
         ClearActiveNotes();
+
+        if (hapticFeedbackManager != null)
+        {
+            hapticFeedbackManager.AllOff();
+        }
 
         if (uiFeedback != null)
         {
@@ -254,7 +625,7 @@ public class RhythmGameManager : MonoBehaviour
         Time.timeScale = 0f;
     }
 
-    void ClearActiveNotes()
+    public void ClearActiveNotes()
     {
         for (int i = activeNotes.Count - 1; i >= 0; i--)
         {
@@ -265,6 +636,187 @@ public class RhythmGameManager : MonoBehaviour
         }
 
         activeNotes.Clear();
+        preCuedFingeringGroups.Clear();
+    }
+
+    void ClearPreCueGroupIfInactive(FlyingNote note)
+    {
+        if (note == null || note.fingeringGroupId < 0)
+        {
+            return;
+        }
+
+        int groupId = note.fingeringGroupId;
+
+        foreach (FlyingNote activeNote in activeNotes)
+        {
+            if (activeNote != null && activeNote.fingeringGroupId == groupId && !activeNote.resolved)
+            {
+                return;
+            }
+        }
+
+        preCuedFingeringGroups.Remove(groupId);
+    }
+
+    void SendTapCompleteForMask(int valveMask, bool perfect)
+    {
+        // Fan out a fingering mask into per-lane hardware commands.
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) != 0)
+            {
+                SendTapComplete(lane, perfect);
+            }
+        }
+    }
+
+    void SendHoldStartForMask(int valveMask)
+    {
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) != 0)
+            {
+                SendHoldStart(lane);
+            }
+        }
+    }
+
+    void SendHoldCompleteForMask(int valveMask)
+    {
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) != 0)
+            {
+                SendHoldComplete(lane);
+            }
+        }
+    }
+
+    void SendMissForMask(int valveMask)
+    {
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) != 0)
+            {
+                SendMiss(lane);
+            }
+        }
+    }
+
+    void SendSolenoidPushForMask(int valveMask)
+    {
+        for (int lane = 0; lane < 3; lane++)
+        {
+            if ((valveMask & (1 << lane)) != 0)
+            {
+                SendSolenoidPush(lane);
+            }
+        }
+    }
+
+    void SendTapComplete(int lane, bool perfect)
+    {
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager != null)
+        {
+            hapticFeedbackManager.SendTapComplete(lane, perfect);
+        }
+    }
+
+    void SendHoldStart(int lane)
+    {
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager != null)
+        {
+            hapticFeedbackManager.SendHoldStart(lane);
+        }
+    }
+
+    void SendHoldComplete(int lane)
+    {
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager != null)
+        {
+            hapticFeedbackManager.SendHoldComplete(lane);
+        }
+    }
+
+    void SendMiss(int lane)
+    {
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager != null)
+        {
+            hapticFeedbackManager.SendMiss(lane);
+        }
+    }
+
+    void SendSolenoidPush(int lane)
+    {
+        if (hapticFeedbackManager == null)
+        {
+            hapticFeedbackManager = HapticFeedbackManager.Instance;
+        }
+
+        if (hapticFeedbackManager != null)
+        {
+            EnsureSolenoidSettings();
+            hapticFeedbackManager.SendSolenoidPush(lane, solenoidPushSettings[lane]);
+        }
+    }
+
+    void EnsureSolenoidSettings()
+    {
+        if (solenoidPushSettings == null || solenoidPushSettings.Length != 3)
+        {
+            SolenoidPulseSettings[] resizedSettings = new SolenoidPulseSettings[3];
+
+            for (int i = 0; i < resizedSettings.Length; i++)
+            {
+                if (solenoidPushSettings != null && i < solenoidPushSettings.Length)
+                {
+                    resizedSettings[i] = solenoidPushSettings[i];
+                }
+
+                if (resizedSettings[i] == null)
+                {
+                    resizedSettings[i] = new SolenoidPulseSettings();
+                }
+            }
+
+            solenoidPushSettings = resizedSettings;
+        }
+
+        for (int i = 0; i < solenoidPushSettings.Length; i++)
+        {
+            if (solenoidPushSettings[i] == null)
+            {
+                solenoidPushSettings[i] = new SolenoidPulseSettings();
+            }
+
+            solenoidPushSettings[i].Clamp();
+        }
+    }
+
+    void OnValidate()
+    {
+        EnsureSolenoidSettings();
     }
 
     void UpdateMultiplier()
@@ -274,6 +826,7 @@ public class RhythmGameManager : MonoBehaviour
 
     int CalculateMultiplier(int currentCombo)
     {
+        // Multiplier doubles as combo thresholds double, capped by maxPointMultiplier.
         if (currentCombo < baseMultiplierComboThreshold)
         {
             return 1;

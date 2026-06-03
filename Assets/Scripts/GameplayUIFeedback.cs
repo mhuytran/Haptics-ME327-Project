@@ -69,6 +69,7 @@ public class GameplayUIFeedback : MonoBehaviour
 
     void Start()
     {
+        // Cache base scales and clear transient UI elements at scene start.
         if (feedbackText != null)
         {
             feedbackRect = feedbackText.GetComponent<RectTransform>();
@@ -107,6 +108,7 @@ public class GameplayUIFeedback : MonoBehaviour
 
     void Update()
     {
+        // Clear timed feedback text and animate health/power visuals every frame.
         if (feedbackText != null && Time.time >= feedbackClearTime)
         {
             feedbackText.text = "";
@@ -151,6 +153,7 @@ public class GameplayUIFeedback : MonoBehaviour
 
     public void SetHealth(float normalizedHealth)
     {
+        // Health is stored normalized so the slider/text can share one value.
         currentNormalizedHealth = Mathf.Clamp01(normalizedHealth);
 
         if (healthBar != null)
@@ -168,6 +171,7 @@ public class GameplayUIFeedback : MonoBehaviour
 
     void UpdateHealthVisual()
     {
+        // Critical health flashes red; otherwise the bar stays in the healthy color.
         if (healthFill == null)
         {
             return;
@@ -186,6 +190,7 @@ public class GameplayUIFeedback : MonoBehaviour
 
     public void ShowFeedback(string message, Color color)
     {
+        // Main hit/miss message with a short scale punch.
         if (feedbackText == null)
         {
             return;
@@ -203,6 +208,7 @@ public class GameplayUIFeedback : MonoBehaviour
 
     public void ShowCombo(int combo, int multiplier)
     {
+        // Show streak text only after the player has built a meaningful combo.
         if (comboText == null)
         {
             return;
@@ -277,6 +283,7 @@ public class GameplayUIFeedback : MonoBehaviour
 
     public void ShowGameOver(int finalScore)
     {
+        // Hide transient gameplay effects and reveal the score submission flow.
         SetPowerMode(1);
         SetMarginOverlayAlpha(0f);
 
@@ -332,6 +339,7 @@ public class GameplayUIFeedback : MonoBehaviour
 
     void UpdatePowerOverlay()
     {
+        // Power mode draws a pulsing colored border while a multiplier is active.
         if (Time.time >= overlayEndTime || activeMultiplier <= 1)
         {
             SetMarginOverlayAlpha(0f);

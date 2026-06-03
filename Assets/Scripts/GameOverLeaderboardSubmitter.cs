@@ -36,6 +36,7 @@ public class GameOverLeaderboardSubmitter : MonoBehaviour
 
     public void ResetGameOverFlow()
     {
+        // Require the player to save a valid non-aborted run before navigating away.
         scoreSaved = false;
         transitionStarted = false;
 
@@ -67,6 +68,7 @@ public class GameOverLeaderboardSubmitter : MonoBehaviour
 
     void UpdateSaveButtonState()
     {
+        // Emergency-aborted runs cannot be submitted.
         bool canSave =
             HasValidName() &&
             !scoreSaved &&
@@ -88,6 +90,7 @@ public class GameOverLeaderboardSubmitter : MonoBehaviour
 
     public void SubmitScore()
     {
+        // Save the final score once, then unlock Play Again/Home navigation.
         if (scoreSaved || transitionStarted || !HasValidName())
         {
             return;
@@ -162,6 +165,7 @@ public class GameOverLeaderboardSubmitter : MonoBehaviour
 
     void LockAllControls()
     {
+        // Prevent double-click scene transitions or duplicate submissions.
         SetButtonInteractable(saveScoreButton, false);
         SetButtonInteractable(playAgainButton, false);
         SetButtonInteractable(homeButton, false);
@@ -174,6 +178,7 @@ public class GameOverLeaderboardSubmitter : MonoBehaviour
 
     void SetButtonInteractable(Button button, bool interactable)
     {
+        // Refresh hover visuals because disabled buttons use custom styling.
         if (button == null)
         {
             return;

@@ -1,0 +1,2808 @@
+{
+  "songTitle": "From-The-Start",
+  "audioFile": "",
+  "bpm": 155.0,
+  "timeSignature": "4/4",
+  "leadInSeconds": 3.0,
+  "conversionMode": "omr_generated_trumpet_audio",
+  "notes": [
+    {
+      "time": 0.0,
+      "duration": 0.3871,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 59,
+      "pitchName": "B3",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 0.3871,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 0.7742,
+      "duration": 0.7742,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 1.5484,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 1.7419,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 2.129,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 2.3226,
+      "duration": 1.1613,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 3.4839,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 3.6774,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 3.871,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 4.2581,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 4.6452,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 5.0323,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 5.2258,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 5.4194,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 5.8065,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 6.1935,
+      "duration": 0.5806,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0001_t0.00_From-The-Start_frame_0000_t0.00.mxl"
+    },
+    {
+      "time": 6.7742,
+      "duration": 0.7742,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 7.5484,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 7.7419,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 8.129,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 8.3226,
+      "duration": 1.1613,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 9.4839,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 9.6774,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 9.871,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 10.2581,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 10.6452,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 11.0323,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 11.2258,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 11.4194,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 11.8065,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 12.1935,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 12.7742,
+      "duration": 0.5806,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 13.3548,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 72,
+      "pitchName": "C5",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 13.5484,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 72,
+      "pitchName": "C5",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 13.9355,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 14.3226,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 15.0968,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 15.4839,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 68,
+      "pitchName": "A-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0002_t17.50_From-The-Start_frame_0026_t17.50.mxl"
+    },
+    {
+      "time": 15.871,
+      "duration": 0.5806,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 16.4516,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 16.6452,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 17.0323,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 64,
+      "pitchName": "E4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 17.4194,
+      "duration": 1.1613,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 64,
+      "pitchName": "E4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 18.7742,
+      "duration": 0.2,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 18.9677,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 19.1613,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 19.5484,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 19.9355,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 20.3226,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 20.5161,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 20.7097,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 21.0968,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 21.4839,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 21.871,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 22.0645,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 22.2581,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 22.6452,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 23.0323,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 23.4194,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 23.6129,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 24.3871,
+      "duration": 0.3871,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 59,
+      "pitchName": "B3",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 24.7742,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0003_t27.50_From-The-Start_frame_0035_t27.50.mxl"
+    },
+    {
+      "time": 25.1613,
+      "duration": 0.2,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 25.3548,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 25.7419,
+      "duration": 0.2,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 25.9355,
+      "duration": 0.2,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 26.129,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 26.5161,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 26.7097,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 26.9032,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 27.2903,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 27.4839,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 27.6774,
+      "duration": 0.3871,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 28.2581,
+      "duration": 0.5806,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 28.8387,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 72,
+      "pitchName": "C5",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 29.0323,
+      "duration": 0.3871,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 72,
+      "pitchName": "C5",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 29.4194,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 29.8065,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 30.5806,
+      "duration": 0.3871,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 30.9677,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 68,
+      "pitchName": "A-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 31.3548,
+      "duration": 0.5806,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 31.9355,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 32.129,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 32.5161,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 64,
+      "pitchName": "E4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 32.9032,
+      "duration": 1.1613,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 64,
+      "pitchName": "E4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 34.2581,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0004_t49.00_From-The-Start_frame_0053_t49.00.mxl"
+    },
+    {
+      "time": 34.4581,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 34.6516,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 35.0387,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 35.4258,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 35.8129,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 36.0065,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 36.2,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 36.5871,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 36.9742,
+      "duration": 0.3871,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 37.3613,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 37.5548,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 37.7484,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 38.1355,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 38.5226,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 38.9097,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 39.1032,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 39.8774,
+      "duration": 0.7742,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 40.6516,
+      "duration": 0.5806,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 41.2323,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 41.4258,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 41.8129,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 42.2,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 42.3935,
+      "duration": 0.5806,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 42.9742,
+      "duration": 0.3871,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 43.3613,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0005_t53.00_From-The-Start_frame_0057_t53.00.mxl"
+    },
+    {
+      "time": 43.7484,
+      "duration": 0.5806,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 44.329,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 44.5226,
+      "duration": 0.3871,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 44.9097,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 45.2968,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 45.4903,
+      "duration": 0.5806,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 46.071,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 46.4581,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 46.8452,
+      "duration": 0.5806,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 47.4258,
+      "duration": 0.2,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 47.6194,
+      "duration": 0.3871,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 48.0065,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 48.3935,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 48.5871,
+      "duration": 0.5806,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 49.1677,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 49.5548,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 49.9419,
+      "duration": 1.25,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 52.6516,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0006_t67.00_From-The-Start_frame_0064_t67.00.mxl"
+    },
+    {
+      "time": 53.0387,
+      "duration": 0.5806,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 53.6194,
+      "duration": 0.2,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 53.8129,
+      "duration": 0.3871,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 54.2,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 54.5871,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 54.7806,
+      "duration": 0.5806,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 55.3613,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 55.7484,
+      "duration": 0.3871,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 56.1355,
+      "duration": 0.5806,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 56.7161,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 56.9097,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 57.2968,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 57.6839,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 57.8774,
+      "duration": 0.5806,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 68,
+      "pitchName": "A-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 58.4581,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 58.8452,
+      "duration": 0.3871,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 59.2323,
+      "duration": 0.5806,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 59.8129,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 60.0065,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 60.3935,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 60.7806,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 60.9742,
+      "duration": 0.5806,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 61.5548,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 58,
+      "pitchName": "B-3",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 61.9419,
+      "duration": 0.3871,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0007_t68.50_From-The-Start_frame_0066_t68.50.mxl"
+    },
+    {
+      "time": 62.329,
+      "duration": 1.25,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 66.2,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 66.3935,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 66.5871,
+      "duration": 0.2,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 66.7806,
+      "duration": 1.25,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 68.7161,
+      "duration": 0.2,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 59,
+      "pitchName": "B3",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 68.9097,
+      "duration": 0.2,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 59,
+      "pitchName": "B3",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 69.1032,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 69.2968,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 69.4903,
+      "duration": 0.2,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 69.6839,
+      "duration": 0.7742,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 70.4581,
+      "duration": 0.3871,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 70.8452,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 71.0387,
+      "duration": 0.7742,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 71.8129,
+      "duration": 0.2,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 68,
+      "pitchName": "A-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 72.0065,
+      "duration": 0.5806,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 72.5871,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0008_t87.00_From-The-Start_frame_0081_t87.00.mxl"
+    },
+    {
+      "time": 72.7871,
+      "duration": 1.25,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 75.1097,
+      "duration": 0.3871,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 68,
+      "pitchName": "A-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 75.4968,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 75.8839,
+      "duration": 0.7742,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 72,
+      "pitchName": "C5",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 76.6581,
+      "duration": 0.2,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 68,
+      "pitchName": "A-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 76.8516,
+      "duration": 0.3871,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 77.2387,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 77.4323,
+      "duration": 0.7742,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 78.5935,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 78.9806,
+      "duration": 0.5806,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 74,
+      "pitchName": "D5",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 79.5613,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 72,
+      "pitchName": "C5",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 79.7548,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 79.9484,
+      "duration": 0.2,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 68,
+      "pitchName": "A-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 80.1419,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 80.3355,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 80.529,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 64,
+      "pitchName": "E4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 80.7226,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 80.9161,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 81.1097,
+      "duration": 0.2,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 72,
+      "pitchName": "C5",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 81.3032,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        2,
+        3
+      ],
+      "pitchMidi": 73,
+      "pitchName": "D-5",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 81.4323,
+      "duration": 0.2,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 75,
+      "pitchName": "E-5",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 81.5613,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        2,
+        3
+      ],
+      "pitchMidi": 73,
+      "pitchName": "D-5",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 81.6903,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 72,
+      "pitchName": "C5",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 81.8839,
+      "duration": 0.2,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 70,
+      "pitchName": "B-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0009_t95.50_From-The-Start_frame_0085_t95.50.mxl"
+    },
+    {
+      "time": 82.0839,
+      "duration": 0.7742,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 68,
+      "pitchName": "A-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 82.8581,
+      "duration": 0.3871,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 83.2452,
+      "duration": 0.2,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 83.4387,
+      "duration": 0.7742,
+      "laneMask": [
+        1,
+        3
+      ],
+      "pitchMidi": 62,
+      "pitchName": "D4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 84.2129,
+      "duration": 0.7742,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 84.9871,
+      "duration": 1.25,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 65,
+      "pitchName": "F4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 87.3097,
+      "duration": 0.3871,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 59,
+      "pitchName": "B3",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 87.6968,
+      "duration": 0.3871,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 88.0839,
+      "duration": 0.7742,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 88.8581,
+      "duration": 0.2,
+      "laneMask": [
+        3
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 89.0516,
+      "duration": 0.5806,
+      "laneMask": [
+        1,
+        2
+      ],
+      "pitchMidi": 60,
+      "pitchName": "C4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 89.6323,
+      "duration": 1.1613,
+      "laneMask": [
+        1
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 90.7935,
+      "duration": 0.3871,
+      "laneMask": [
+        2
+      ],
+      "pitchMidi": 67,
+      "pitchName": "G4",
+      "type": "hold",
+      "generatedOpenFill": true,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    },
+    {
+      "time": 91.1806,
+      "duration": 1.25,
+      "laneMask": [
+        2,
+        3
+      ],
+      "pitchMidi": 63,
+      "pitchName": "E-4",
+      "type": "hold",
+      "generatedOpenFill": false,
+      "generatedGapFill": false,
+      "sourceFile": "0010_t110.00_From-The-Start_frame_0095_t110.00.mxl"
+    }
+  ]
+}

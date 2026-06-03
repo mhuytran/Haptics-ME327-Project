@@ -10,6 +10,7 @@ public class TMPInputPlaceholderOnFocus : MonoBehaviour
 
     void Awake()
     {
+        // Wire TMP input events so the placeholder hides while the field is focused or filled.
         if (inputField == null)
         {
             inputField = GetComponent<TMP_InputField>();
@@ -72,6 +73,7 @@ public class TMPInputPlaceholderOnFocus : MonoBehaviour
 
     void ShowPlaceholderIfEmpty()
     {
+        // Restore the prompt only when no user text is present.
         if (placeholderTMP == null || inputField == null)
         {
             return;

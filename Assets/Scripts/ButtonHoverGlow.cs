@@ -30,6 +30,7 @@ public class ButtonHoverGlow : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     void Awake()
     {
+        // Cache UI references and disable Unity's built-in tint so custom colors stay consistent.
         baseScale = transform.localScale;
 
         if (button == null)
@@ -64,6 +65,7 @@ public class ButtonHoverGlow : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     void Update()
     {
+        // Lerp color and scale toward the current normal/hover/disabled target.
         bool interactable = button == null || button.interactable;
 
         // if interactable changed, immediately refresh instead of slowly lerping from gray
@@ -139,6 +141,7 @@ public class ButtonHoverGlow : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     public void ForceVisualRefresh()
     {
+        // Immediately restore the visual state after buttons are enabled/disabled externally.
         bool interactable = button == null || button.interactable;
 
         if (buttonImage != null)

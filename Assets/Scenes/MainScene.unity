@@ -2637,6 +2637,266 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1311786264}
   m_CullTransparentMesh: 1
+--- !u!1 &1414622043
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1414622044}
+  - component: {fileID: 1414622045}
+  - component: {fileID: 1414622046}
+  - component: {fileID: 1414622047}
+  m_Layer: 0
+  m_Name: TeensyManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1414622044
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1414622043}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.99668, y: 1.21228, z: -4.83961}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2025762557}
+  - {fileID: 1646046085}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1414622045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1414622043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23ddd76d8ac0dc74593704a46c84b764, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TeensySerialInput
+  portName: COM4
+  baudRate: 115200
+  connectOnStart: 1
+  autoDetectPort: 1
+  reconnectWhenDisconnected: 1
+  reconnectIntervalSeconds: 2
+  hardwarePinout:
+  - valveName: Valve 1
+    unityChannelNumber: 1
+    tofMuxChannel: 0
+    solenoidPwmPin: 2
+    solenoidPhasePin: 5
+    ermIn1Pin: 12
+    ermIn2Pin: 13
+  - valveName: Valve 2
+    unityChannelNumber: 2
+    tofMuxChannel: 6
+    solenoidPwmPin: 3
+    solenoidPhasePin: 6
+    ermIn1Pin: 14
+    ermIn2Pin: 15
+  - valveName: Valve 3
+    unityChannelNumber: 3
+    tofMuxChannel: 7
+    solenoidPwmPin: 4
+    solenoidPhasePin: 7
+    ermIn1Pin: 22
+    ermIn2Pin: 23
+  tofCalibrationGuide: Plug in with all valves released. Auto calibration samples
+    the live ToF rest distance, usually near 80 mm. Pressed threshold = rest - Press
+    Enter Delta, so 80 and 15 gives a 65 mm press threshold. If presses do not register,
+    lower Press Enter Delta. If idle valves falsely press, raise it.
+  valve1RestDistanceMM: 35.5
+  valve1PressedDistanceMM: 34
+  valve2RestDistanceMM: 80
+  valve2PressedDistanceMM: 78.5
+  valve3RestDistanceMM: 38.8
+  valve3PressedDistanceMM: 37.3
+  autoCalibrateOnStart: 1
+  pauseGameDuringCalibration: 1
+  startupCalibrationPauseSeconds: 1.5
+  pressEnterDeltaMM: 1.5
+  releaseDeltaMM: 0.75
+  useDiscreteToFStates: 1
+  useTeensyDebugPressBits: 0
+  acceptTeensyPressBitsAsFallback: 0
+  isCalibrated: 0
+  isCalibrating: 0
+  calibrationWaitForDataSeconds: 4
+  closeSensorPressDeltaFraction: 0.25
+  minimumPressEnterDeltaMM: 1.5
+  postCalibrationReleaseGuardSeconds: 0.75
+  pressDebounceSeconds: 0.08
+  releaseDebounceSeconds: 0.04
+  calibrationRestPercentile: 0.75
+  minimumCalibrationSamplesPerLane: 5
+  maxReasonableRestDistanceMM: 90
+  rejectOutOfRangeCalibration: 1
+  allowLiveRestRebaseline: 1
+  restRebaselineDeltaMM: 8
+  restRebaselineStableSeconds: 0.2
+  activeValve1TofMuxChannel: 0
+  activeValve2TofMuxChannel: 6
+  activeValve3TofMuxChannel: 7
+  tofHealthReadout: ToF channels not checked yet.
+  useAnalogAmountsWhileDiscrete: 0
+  analogAmountDeadZone: 0.08
+  requireConfirmedTravelForAnimation: 1
+  animationConfirmExtraDeltaMM: 1
+  derivePressedStateFromDistance: 0
+  pressAmountThreshold: 0.65
+  printIncomingLines: 0
+  printOutgoingCommands: 1
+  liveToFReadout: Waiting for Teensy data.
+  liveValve1DistanceMM: 255
+  liveValve2DistanceMM: 255
+  liveValve3DistanceMM: 255
+  liveValve1Pressed: 0
+  liveValve2Pressed: 0
+  liveValve3Pressed: 0
+  liveValve1Amount: 0
+  liveValve2Amount: 0
+  liveValve3Amount: 0
+--- !u!114 &1414622046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1414622043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5fc851b971930743a24543af1a5f6f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HapticFeedbackManager
+  teensySerialInput: {fileID: 1414622045}
+  hardwarePinout:
+  - valveName: Valve 1
+    unityChannelNumber: 1
+    tofMuxChannel: 0
+    solenoidPwmPin: 2
+    solenoidPhasePin: 5
+    ermIn1Pin: 12
+    ermIn2Pin: 13
+  - valveName: Valve 2
+    unityChannelNumber: 2
+    tofMuxChannel: 6
+    solenoidPwmPin: 3
+    solenoidPhasePin: 6
+    ermIn1Pin: 14
+    ermIn2Pin: 15
+  - valveName: Valve 3
+    unityChannelNumber: 3
+    tofMuxChannel: 7
+    solenoidPwmPin: 4
+    solenoidPhasePin: 7
+    ermIn1Pin: 22
+    ermIn2Pin: 23
+  commandGuide: 'Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE,
+    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, THRESH.
+    Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.'
+  commandProfile: 1
+  filterOutgoingCommands: 1
+  enableHaptics: 1
+  printCommands: 1
+  maxSolenoidDuty: 1
+  maxSolenoidDurationMs: 800
+  completionPushDelayMs: 0
+  useRampedPreCue: 1
+  preCueErmDuty: 1
+  preCueErmRampMs: 500
+  preCueErmHoldMs: 80
+  preCueErmRampCurve: 0
+  preCueRetriggerGuardMs: 120
+  maxErmDuty: 1
+  maxErmRampMs: 1200
+  tuneLane: 1
+  tuneSolenoidDuty: 1
+  tuneSolenoidDurationMs: 800
+  tuneSolenoidRampMs: 800
+  tuneSolenoidRampCurve: 1
+  tuneSolenoidRampHoldMs: 800
+  tuneErmDuty: 1
+  tuneErmDurationMs: 150
+  tuneErmRampMs: 1000
+  tuneErmRampCurve: 1
+  tuneErmHoldMs: 100
+  tuneTeamSequenceDelayMs: 1000
+  tuneRawTofThresholdMM: 65
+  lastCommandStatus: No haptic command sent yet.
+--- !u!114 &1414622047
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1414622043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 481c0f76a0b9c9646b1596d684e5533d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitySolenoidTester
+  hapticFeedbackManager: {fileID: 1414622046}
+  rhythmGameManager: {fileID: 0}
+  noteSpawner: {fileID: 0}
+  hardwarePinout:
+  - valveName: Valve 1
+    unityChannelNumber: 1
+    tofMuxChannel: 0
+    solenoidPwmPin: 2
+    solenoidPhasePin: 5
+    ermIn1Pin: 12
+    ermIn2Pin: 13
+  - valveName: Valve 2
+    unityChannelNumber: 2
+    tofMuxChannel: 6
+    solenoidPwmPin: 3
+    solenoidPhasePin: 6
+    ermIn1Pin: 14
+    ermIn2Pin: 15
+  - valveName: Valve 3
+    unityChannelNumber: 3
+    tofMuxChannel: 7
+    solenoidPwmPin: 4
+    solenoidPhasePin: 7
+    ermIn1Pin: 22
+    ermIn2Pin: 23
+  testDuty: 1
+  testDurationMs: 800
+  normalPhase: 1
+  shiftedPhase: 0
+  usePerLanePulseSettings: 1
+  applyPulseSettingsToGameplay: 1
+  solenoidPulseSettings:
+  - duty: 1
+    phase: 1
+    durationMs: 800
+  - duty: 1
+    phase: 1
+    durationMs: 800
+  - duty: 1
+    phase: 1
+    durationMs: 800
+  applyPreCueTuningToSpawner: 1
+  useDistanceBasedPreCue: 0
+  preCueDistanceFromTarget: 1
+  fallbackPreCueLeadTime: 0.6
+  animateValveOnTest: 0
+  testAnimationPressSeconds: 0.12
+  testAnimationReleaseSeconds: 0.45
+  enableKeyboardTesting: 1
+  useTeamSequenceForKeyboardTesting: 1
 --- !u!1 &1476594531
 GameObject:
   m_ObjectHideFlags: 0
@@ -2783,6 +3043,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1502017323}
+  - component: {fileID: 1502017324}
   m_Layer: 0
   m_Name: InputManager
   m_TagString: Untagged
@@ -2805,6 +3066,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1502017324
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1502017322}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fa52cbd37b5fcb47a29e802be8fbc82, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeyboardValveInput
 --- !u!1 &1566750325
 GameObject:
   m_ObjectHideFlags: 0
@@ -3233,6 +3506,105 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 12.658, y: -12.819, z: -43.888}
+--- !u!1 &1646046084
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1646046085}
+  - component: {fileID: 1646046086}
+  m_Layer: 0
+  m_Name: HapticFeedbackManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1646046085
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1646046084}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1414622044}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1646046086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1646046084}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5fc851b971930743a24543af1a5f6f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HapticFeedbackManager
+  teensySerialInput: {fileID: 1414622045}
+  hardwarePinout:
+  - valveName: Valve 1
+    unityChannelNumber: 1
+    tofMuxChannel: 0
+    solenoidPwmPin: 2
+    solenoidPhasePin: 5
+    ermIn1Pin: 12
+    ermIn2Pin: 13
+  - valveName: Valve 2
+    unityChannelNumber: 2
+    tofMuxChannel: 6
+    solenoidPwmPin: 3
+    solenoidPhasePin: 6
+    ermIn1Pin: 14
+    ermIn2Pin: 15
+  - valveName: Valve 3
+    unityChannelNumber: 3
+    tofMuxChannel: 7
+    solenoidPwmPin: 4
+    solenoidPhasePin: 7
+    ermIn1Pin: 22
+    ermIn2Pin: 23
+  commandGuide: 'Needed for gameplay: X, PRECUE, TAPCOMPLETE, HOLDSTART, HOLDCOMPLETE,
+    MISS. Needed for bench tuning: SOL, SOLRAMP, ERM, ERMRAMP, TEST, TESTCH, THRESH.
+    Not used by Unity MVP: READ, STREAM, RATE, A/B/C quick keys, blocking scale loops.'
+  commandProfile: 1
+  filterOutgoingCommands: 1
+  enableHaptics: 1
+  printCommands: 1
+  maxSolenoidDuty: 1
+  maxSolenoidDurationMs: 800
+  completionPushDelayMs: 0
+  useRampedPreCue: 1
+  preCueErmDuty: 1
+  preCueErmRampMs: 500
+  preCueErmHoldMs: 80
+  preCueErmRampCurve: 0
+  preCueRetriggerGuardMs: 120
+  maxErmDuty: 1
+  maxErmRampMs: 1200
+  tuneLane: 1
+  tuneSolenoidDuty: 1
+  tuneSolenoidDurationMs: 800
+  tuneSolenoidRampMs: 800
+  tuneSolenoidRampCurve: 1
+  tuneSolenoidRampHoldMs: 800
+  tuneErmDuty: 1
+  tuneErmDurationMs: 150
+  tuneErmRampMs: 1000
+  tuneErmRampCurve: 1
+  tuneErmHoldMs: 100
+  tuneTeamSequenceDelayMs: 1000
+  tuneRawTofThresholdMM: 65
+  lastCommandStatus: No haptic command sent yet.
 --- !u!1 &1646561942
 GameObject:
   m_ObjectHideFlags: 0
@@ -3616,11 +3988,29 @@ MonoBehaviour:
   lowHealthThreshold: 70
   baseComboHeal: 2
   comboHealScale: 0.25
+  enableInfiniteHealthShortcut: 1
+  infiniteHealthShortcutKey: 101
+  infiniteHealth: 0
   combo: 0
   baseMultiplierComboThreshold: 3
   pointMultiplier: 1
   maxPointMultiplier: 20
   uiFeedback: {fileID: 1740641790}
+  hapticFeedbackManager: {fileID: 1414622046}
+  sendSolenoidPushOnHit: 0
+  pushOnAnyValvePressForTuning: 0
+  solenoidPushSettings:
+  - duty: 1
+    phase: 1
+    durationMs: 800
+  - duty: 1
+    phase: 1
+    durationMs: 800
+  - duty: 1
+    phase: 1
+    durationMs: 800
+  requireExactFingering: 1
+  judgeFingeringContinuously: 0
 --- !u!114 &1740641789
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3644,12 +4034,103 @@ MonoBehaviour:
   hitPlane1: {fileID: 1084728750}
   hitPlane2: {fileID: 576142329}
   hitPlane3: {fileID: 235335200}
-  spawnInterval: 0.8
-  noteTravelTime: 1.5
+  spawnMode: 0
+  spawnInterval: 2
+  noteTravelTime: 2.2
+  minimumNoteHoldDuration: 0.5
+  waitForPreviousFingeringToResolve: 1
+  allowModeSwitchShortcuts: 1
+  toggleSpawnModeKey: 102
+  randomDebugModeKey: 103
+  songChartModeKey: 104
+  clearNotesWhenSwitchingModes: 1
+  startSongWhenSwitchingToSongMode: 1
+  songModeGuide: RandomDebug keeps spawning generated fingerings. SongChart loads
+    From-The-Start from Resources/TrumpetCharts, plays the audio, and spawns the
+    PDF/OMR note chart in sync. Keyboard testing still uses A/S/D for valves 1/2/3.
+  songChartJson: {fileID: 0}
+  songChartResourcePath: TrumpetCharts/From-The-Start-90bpm
+  songAudioSource: {fileID: 0}
+  songAudioClip: {fileID: 0}
+  songAudioResourcePath: TrumpetCharts/From-The-Start-90bpm
+  autoStartSong: 1
+  allowSongKeyboardControls: 1
+  startPauseSongKey: 1
+  restartSongKey: 32
+  useChartLeadInSeconds: 1
+  manualLeadInSeconds: 2
+  additionalChartOffsetSeconds: 2.6
+  useDspClockForSongSync: 1
+  useSampleAccurateSongTime: 1
+  scheduledAudioStartDelaySeconds: 0.1
+  allowTimingOffsetShortcuts: 1
+  nudgeChartEarlierKey: 11
+  nudgeChartLaterKey: 12
+  resetChartOffsetKey: 10
+  timingOffsetNudgeSeconds: 0.025
+  currentAudioClockTime: 0
+  useSongDurationsAsHolds: 1
+  minimumSongHoldDuration: 0.5
+  skipVeryLateSongNotes: 1
+  lateSongNoteSkipSeconds: 0.4
+  loopSongChart: 0
+  loadedSongTitle: 
+  loadedSongNoteCount: 0
+  nextSongNoteIndex: 0
+  currentSongTime: 0
+  currentSongStatus: Song chart not loaded.
+  deriveSongFingeringsFromPitch: 1
+  skipOpenSongNotes: 1
+  skippedOpenSongNoteCount: 0
+  useDistanceBasedPreCue: 0
+  preCueDistanceFromTarget: 1
+  fallbackPreCueLeadTime: 0.6
   lane1Color: {r: 0, g: 1, b: 0, a: 1}
-  lane2Color: {r: 0, g: 1, b: 1, a: 1}
+  lane2Color: {r: 0.1882353, g: 0.627451, b: 1, a: 1}
   lane3Color: {r: 1, g: 0, b: 0, a: 1}
+  lane1LineMaterial: {fileID: 2100000, guid: 3d823791324dfd4458707c2738803e9b, type: 2}
+  lane2LineMaterial: {fileID: 2100000, guid: 7ea3a1c06d908fc449eeb9bce0f55798, type: 2}
+  lane3LineMaterial: {fileID: 2100000, guid: 51e98de0529e1e54f97bcee1bbe4a730, type: 2}
   holdSafetyBuffer: 0.2
+  useTrumpetFingerings: 1
+  randomizeFingerings: 1
+  lastSpawnedFingering: 
+  validFingerings:
+  - noteName: F / Bb - 1
+    valve1: 1
+    valve2: 0
+    valve3: 0
+    holdDuration: 0
+  - noteName: F# / B - 2
+    valve1: 0
+    valve2: 1
+    valve3: 0
+    holdDuration: 0
+  - noteName: E / A - 1+2
+    valve1: 1
+    valve2: 1
+    valve3: 0
+    holdDuration: 0.8
+  - noteName: D / G - 1+3
+    valve1: 1
+    valve2: 0
+    valve3: 1
+    holdDuration: 0
+  - noteName: Eb / Ab - 2+3
+    valve1: 0
+    valve2: 1
+    valve3: 1
+    holdDuration: 1
+  - noteName: C# / F# - 1+2+3
+    valve1: 1
+    valve2: 1
+    valve3: 1
+    holdDuration: 0
+  - noteName: C / G - open
+    valve1: 0
+    valve2: 0
+    valve3: 0
+    holdDuration: 0
 --- !u!114 &1740641790
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4491,6 +4972,37 @@ MonoBehaviour:
   animationSpeed: 10
   normalScale: 1
   hoverScale: 1.08
+--- !u!1 &2025762556
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2025762557}
+  m_Layer: 0
+  m_Name: TeensySerialInput
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2025762557
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2025762556}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1414622044}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2028586845
 GameObject:
   m_ObjectHideFlags: 0
@@ -4704,6 +5216,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EmergencyAbortController
   homeSceneName: HomeScene
+  serialShutdownDelaySeconds: 0.15
   logAbort: 1
 --- !u!1001 &810020403682491978
 PrefabInstance:
@@ -4793,10 +5306,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c208dc6e13feb84ea68887c0f204f76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrumpetValveAnimator
+  hardwarePinout:
+  - valveName: Valve 1
+    unityChannelNumber: 1
+    tofMuxChannel: 0
+    solenoidPwmPin: 2
+    solenoidPhasePin: 5
+    ermIn1Pin: 12
+    ermIn2Pin: 13
+  - valveName: Valve 2
+    unityChannelNumber: 2
+    tofMuxChannel: 6
+    solenoidPwmPin: 3
+    solenoidPhasePin: 6
+    ermIn1Pin: 14
+    ermIn2Pin: 15
+  - valveName: Valve 3
+    unityChannelNumber: 3
+    tofMuxChannel: 7
+    solenoidPwmPin: 4
+    solenoidPhasePin: 7
+    ermIn1Pin: 22
+    ermIn2Pin: 23
   laneIndex: 1
-  maxPressedLocalOffset: {x: 0, y: -0.25, z: 0}
-  pressSpeed: 2
-  releaseSpeed: 1.5
+  pressedLocalOffset: {x: 0, y: -0.18, z: 0}
+  motionSpeed: 18
+  releaseMotionSpeed: 28
+  useAnalogValveAmount: 0
+  allowDebugValveAnimation: 0
+  requireConfirmedInputForAnimation: 1
+  requireConfirmedTeensyTravel: 1
+  repairValveRendererOnStart: 1
+  visualPressDebounceSeconds: 0.04
+  visualReleaseDebounceSeconds: 0.03
+  visualAmountDeadZone: 0.05
+  visualTargetSnapEpsilon: 0.025
+  followSolenoidRelease: 0
+  solenoidDutyForFullRelease: 0.35
+  solenoidDutyDeadZone: 0.02
+  pinoutReadout: Valve 2 / Unity channel 2 / ToF mux SC6 / solenoid PWM 3 phase 6
+    / ERM 14,15
+  latestDistanceMM: 255
+  latestPressAmount: 0
+  targetPressAmount: 0
+  latestSolenoidDuty: 0
 --- !u!114 &810020403682491982
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4809,10 +5362,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c208dc6e13feb84ea68887c0f204f76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrumpetValveAnimator
+  hardwarePinout:
+  - valveName: Valve 1
+    unityChannelNumber: 1
+    tofMuxChannel: 0
+    solenoidPwmPin: 2
+    solenoidPhasePin: 5
+    ermIn1Pin: 12
+    ermIn2Pin: 13
+  - valveName: Valve 2
+    unityChannelNumber: 2
+    tofMuxChannel: 6
+    solenoidPwmPin: 3
+    solenoidPhasePin: 6
+    ermIn1Pin: 14
+    ermIn2Pin: 15
+  - valveName: Valve 3
+    unityChannelNumber: 3
+    tofMuxChannel: 7
+    solenoidPwmPin: 4
+    solenoidPhasePin: 7
+    ermIn1Pin: 22
+    ermIn2Pin: 23
   laneIndex: 0
-  maxPressedLocalOffset: {x: 0, y: -0.25, z: 0}
-  pressSpeed: 2
-  releaseSpeed: 1.5
+  pressedLocalOffset: {x: 0, y: -0.18, z: 0}
+  motionSpeed: 18
+  releaseMotionSpeed: 28
+  useAnalogValveAmount: 0
+  allowDebugValveAnimation: 0
+  requireConfirmedInputForAnimation: 1
+  requireConfirmedTeensyTravel: 1
+  repairValveRendererOnStart: 1
+  visualPressDebounceSeconds: 0.04
+  visualReleaseDebounceSeconds: 0.03
+  visualAmountDeadZone: 0.05
+  visualTargetSnapEpsilon: 0.025
+  followSolenoidRelease: 0
+  solenoidDutyForFullRelease: 0.35
+  solenoidDutyDeadZone: 0.02
+  pinoutReadout: Valve 1 / Unity channel 1 / ToF mux SC0 / solenoid PWM 2 phase 5
+    / ERM 12,13
+  latestDistanceMM: 255
+  latestPressAmount: 0
+  targetPressAmount: 0
+  latestSolenoidDuty: 0
 --- !u!1 &810020403682491983 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6400996076825264593, guid: 2f438cd8023804842ae3f779e31d5fdb, type: 3}
@@ -4830,10 +5423,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c208dc6e13feb84ea68887c0f204f76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrumpetValveAnimator
+  hardwarePinout:
+  - valveName: Valve 1
+    unityChannelNumber: 1
+    tofMuxChannel: 0
+    solenoidPwmPin: 2
+    solenoidPhasePin: 5
+    ermIn1Pin: 12
+    ermIn2Pin: 13
+  - valveName: Valve 2
+    unityChannelNumber: 2
+    tofMuxChannel: 6
+    solenoidPwmPin: 3
+    solenoidPhasePin: 6
+    ermIn1Pin: 14
+    ermIn2Pin: 15
+  - valveName: Valve 3
+    unityChannelNumber: 3
+    tofMuxChannel: 7
+    solenoidPwmPin: 4
+    solenoidPhasePin: 7
+    ermIn1Pin: 22
+    ermIn2Pin: 23
   laneIndex: 2
-  maxPressedLocalOffset: {x: 0, y: -0.25, z: 0}
-  pressSpeed: 2
-  releaseSpeed: 1.5
+  pressedLocalOffset: {x: 0, y: -0.18, z: 0}
+  motionSpeed: 18
+  releaseMotionSpeed: 28
+  useAnalogValveAmount: 0
+  allowDebugValveAnimation: 0
+  requireConfirmedInputForAnimation: 1
+  requireConfirmedTeensyTravel: 1
+  repairValveRendererOnStart: 1
+  visualPressDebounceSeconds: 0.04
+  visualReleaseDebounceSeconds: 0.03
+  visualAmountDeadZone: 0.05
+  visualTargetSnapEpsilon: 0.025
+  followSolenoidRelease: 0
+  solenoidDutyForFullRelease: 0.35
+  solenoidDutyDeadZone: 0.02
+  pinoutReadout: Valve 3 / Unity channel 3 / ToF mux SC7 / solenoid PWM 4 phase 7
+    / ERM 22,23
+  latestDistanceMM: 255
+  latestPressAmount: 0
+  targetPressAmount: 0
+  latestSolenoidDuty: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -4850,6 +5483,7 @@ SceneRoots:
   - {fileID: 747055673}
   - {fileID: 669030553}
   - {fileID: 1740641787}
+  - {fileID: 1414622044}
   - {fileID: 1502017323}
   - {fileID: 1576133625}
   - {fileID: 1877037018}

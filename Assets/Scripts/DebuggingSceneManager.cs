@@ -23,6 +23,7 @@ public class DebuggingSceneManager : MonoBehaviour
 
     void Start()
     {
+        // Debug actions stay locked until the configured team password is entered.
         LockDebugControls();
 
         if (statusText != null)
@@ -39,6 +40,7 @@ public class DebuggingSceneManager : MonoBehaviour
 
     public void TryUnlock()
     {
+        // Compare trimmed input to the inspector password and reveal reset controls on success.
         if (actionInProgress)
         {
             return;
@@ -80,6 +82,7 @@ public class DebuggingSceneManager : MonoBehaviour
 
     public void ResetLeaderboardAndStartNewCsv()
     {
+        // Archive the current attempt CSV and clear the visible leaderboard.
         if (!authenticated || actionInProgress)
         {
             return;
@@ -110,6 +113,7 @@ public class DebuggingSceneManager : MonoBehaviour
 
     public void ReturnHome()
     {
+        // Lock controls during scene transition to avoid duplicate loads.
         if (actionInProgress)
         {
             return;

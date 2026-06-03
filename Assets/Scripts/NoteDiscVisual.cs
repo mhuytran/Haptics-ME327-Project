@@ -14,12 +14,14 @@ public class NoteDiscVisual : MonoBehaviour
 
     void Start()
     {
+        // Cache authored scale so the disc can grow/shrink relative to its starting size.
         mainCamera = Camera.main;
         originalLocalScale = transform.localScale;
     }
 
     void Update()
     {
+        // Keep disc size readable in perspective and optionally face it toward the camera.
         if (mainCamera == null)
         {
             return;

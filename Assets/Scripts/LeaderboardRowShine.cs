@@ -29,6 +29,7 @@ public class LeaderboardRowShine : MonoBehaviour
 
     void Awake()
     {
+        // Give each row its own TMP material so glow changes do not affect other text.
         text = GetComponent<TMP_Text>();
         SetupRuntimeMaterial();
     }
@@ -46,6 +47,7 @@ public class LeaderboardRowShine : MonoBehaviour
 
     public void SetMedalStyle(Color newBaseColor, Color newShineColor, Color newGlowColor)
     {
+        // Enable animated shine/glow for top-ranked leaderboard rows.
         baseColor = newBaseColor;
         shineColor = newShineColor;
         glowColor = newGlowColor;
@@ -58,6 +60,7 @@ public class LeaderboardRowShine : MonoBehaviour
 
     public void SetNormalStyle(Color normalColor)
     {
+        // Disable medal animation for lower rows and restore a plain color.
         shineActive = false;
 
         if (text == null)
@@ -167,6 +170,7 @@ public class LeaderboardRowShine : MonoBehaviour
 
     void AnimateTextShine()
     {
+        // Sweep a bright band across visible TMP characters by editing vertex colors.
         text.ForceMeshUpdate();
 
         TMP_TextInfo textInfo = text.textInfo;
