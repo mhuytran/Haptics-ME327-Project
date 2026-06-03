@@ -2,6 +2,8 @@ using UnityEngine;
 
 public static class ValveInputState
 {
+    // Shared, thread-safe input cache. Gameplay reads this instead of talking
+    // directly to keyboard/debug/Teensy sources.
     private static readonly object stateLock = new object();
 
     private static bool[] keyboardValves = new bool[3];
@@ -27,6 +29,7 @@ public static class ValveInputState
 
     public static bool GetValve(int laneIndex, bool includeDebugValves)
     {
+        // A valve is pressed if any enabled source says it is pressed.
         if (!IsValidLane(laneIndex))
         {
             return false;
@@ -47,6 +50,7 @@ public static class ValveInputState
 
     public static float GetValveAmount(int laneIndex, bool includeDebugValves)
     {
+        // Keyboard and debug presses are full-depth; Teensy can report analog depth.
         if (!IsValidLane(laneIndex))
         {
             return 0f;
@@ -73,6 +77,71 @@ public static class ValveInputState
             }
 
             return amount;
+        }
+    }
+
+    public static bool GetKeyboardValveOnly(int laneIndex)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return false;
+        }
+
+        lock (stateLock)
+        {
+            return keyboardValves[laneIndex];
+        }
+    }
+
+    public static bool GetTeensyValveOnly(int laneIndex)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return false;
+        }
+
+        lock (stateLock)
+        {
+            return teensyValves[laneIndex];
+        }
+    }
+
+    public static float GetTeensyValveAmountOnly(int laneIndex)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return 0f;
+        }
+
+        lock (stateLock)
+        {
+            return Mathf.Clamp01(teensyValveAmounts[laneIndex]);
+        }
+    }
+
+    public static bool GetDebugValveOnly(int laneIndex)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return false;
+        }
+
+        lock (stateLock)
+        {
+            return debugValves[laneIndex];
+        }
+    }
+
+    public static float GetDebugValveAmountOnly(int laneIndex)
+    {
+        if (!IsValidLane(laneIndex))
+        {
+            return 0f;
+        }
+
+        lock (stateLock)
+        {
+            return Mathf.Clamp01(debugValveAmounts[laneIndex]);
         }
     }
 
@@ -123,6 +192,7 @@ public static class ValveInputState
 
     public static int GetValveMask()
     {
+        // Convert the three current valves into the bitmask used for fingering judgment.
         int mask = 0;
 
         lock (stateLock)
@@ -167,6 +237,7 @@ public static class ValveInputState
 
     public static void SetTeensyValveAmount(int laneIndex, float amount)
     {
+        // Store normalized ToF travel for valve visuals.
         if (!IsValidLane(laneIndex))
         {
             return;
@@ -219,6 +290,7 @@ public static class ValveInputState
 
     public static void SetDebugValve(int laneIndex, bool pressed, float amount)
     {
+        // Debug state lets test tools animate valves without pretending it came from hardware.
         if (!IsValidLane(laneIndex))
         {
             return;
@@ -275,6 +347,7 @@ public static class ValveInputState
 
     public static void ClearAll()
     {
+        // Reset every input and actuator telemetry channel to a released/off state.
         lock (stateLock)
         {
             for (int i = 0; i < 3; i++)

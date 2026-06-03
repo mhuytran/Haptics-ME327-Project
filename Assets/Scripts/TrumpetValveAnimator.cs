@@ -21,6 +21,12 @@ public class TrumpetValveAnimator : MonoBehaviour
     [Tooltip("Off for hardware runs so haptic test routines cannot make valves appear pressed on their own.")]
     public bool allowDebugValveAnimation = false;
 
+    [Header("input gate")]
+    [Tooltip("Keeps valve visuals at rest unless keyboard/debug input is explicit or Teensy travel is confirmed beyond the idle noise band.")]
+    public bool requireConfirmedInputForAnimation = true;
+    [Tooltip("When on, Teensy-driven valve motion must pass the stricter visual confirmation gate in TeensySerialInput.")]
+    public bool requireConfirmedTeensyTravel = true;
+
     [Header("render safety")]
     [Tooltip("Repairs hidden or missing valve renderers at startup. Useful when prefab overrides drop a valve mesh.")]
     public bool repairValveRendererOnStart = true;
@@ -65,6 +71,7 @@ public class TrumpetValveAnimator : MonoBehaviour
 
     void Start()
     {
+        // Cache the valve's rest pose and repair hidden/missing renderers before animation starts.
         RefreshPinoutReadout();
 
         if (repairValveRendererOnStart)
@@ -82,20 +89,8 @@ public class TrumpetValveAnimator : MonoBehaviour
 
     void LateUpdate()
     {
-        float sensedPressAmount;
-
-        if (useAnalogValveAmount)
-        {
-            // Uses continuous ToF distance from Teensy.
-            // 0 = valve up, 1 = valve fully pressed.
-            sensedPressAmount = ValveInputState.GetValveAmount(laneIndex, allowDebugValveAnimation);
-        }
-        else
-        {
-            // Uses binary keyboard/Teensy press state.
-            sensedPressAmount = ValveInputState.GetValve(laneIndex, allowDebugValveAnimation) ? 1f : 0f;
-        }
-
+        // Read the current source-aware press amount and smooth the valve toward that target.
+        float sensedPressAmount = GetSourceAwareVisualPressAmount();
         sensedPressAmount = GetVisualDebouncedPressAmount(sensedPressAmount);
 
         latestDistanceMM = ValveInputState.GetValveDistanceMM(laneIndex);
@@ -126,8 +121,56 @@ public class TrumpetValveAnimator : MonoBehaviour
         transform.localPosition = targetPosition;
     }
 
+    float GetSourceAwareVisualPressAmount()
+    {
+        // Keyboard/debug input can override; Teensy input must pass the visual confirmation gate.
+        if (ValveInputState.GetKeyboardValveOnly(laneIndex))
+        {
+            return 1f;
+        }
+
+        if (allowDebugValveAnimation)
+        {
+            float debugAmount = ValveInputState.GetDebugValveAmountOnly(laneIndex);
+
+            if (ValveInputState.GetDebugValveOnly(laneIndex))
+            {
+                return debugAmount > 0f ? debugAmount : 1f;
+            }
+
+            if (debugAmount > visualAmountDeadZone)
+            {
+                return debugAmount;
+            }
+        }
+
+        bool teensyPressed = ValveInputState.GetTeensyValveOnly(laneIndex);
+        float teensyAmount = ValveInputState.GetTeensyValveAmountOnly(laneIndex);
+
+        if (!teensyPressed && (!useAnalogValveAmount || teensyAmount <= visualAmountDeadZone))
+        {
+            return 0f;
+        }
+
+        if (requireConfirmedInputForAnimation && requireConfirmedTeensyTravel)
+        {
+            TeensySerialInput input = TeensySerialInput.Instance;
+            int distanceMM = ValveInputState.GetValveDistanceMM(laneIndex);
+
+            if (input == null || !input.IsAnimationPressConfirmed(laneIndex, teensyAmount, distanceMM))
+            {
+                return 0f;
+            }
+        }
+
+        return useAnalogValveAmount
+            ? teensyAmount
+            : (teensyPressed ? 1f : 0f);
+    }
+
     float GetVisualDebouncedPressAmount(float sensedPressAmount)
     {
+        // Require stable visual state changes so ToF noise does not twitch the model.
         float normalizedAmount = NormalizeVisualPressAmount(sensedPressAmount);
         float now = Time.unscaledTime;
 
@@ -160,6 +203,7 @@ public class TrumpetValveAnimator : MonoBehaviour
 
     float NormalizeVisualPressAmount(float sensedPressAmount)
     {
+        // Binary mode snaps to 0/1; analog mode remaps after a dead zone.
         sensedPressAmount = Mathf.Clamp01(sensedPressAmount);
 
         if (!useAnalogValveAmount)
@@ -179,6 +223,7 @@ public class TrumpetValveAnimator : MonoBehaviour
 
     float GetStableTargetPressAmount(float sensedPressAmount, float solenoidDuty)
     {
+        // Optional solenoid telemetry can visually pull the valve toward release.
         sensedPressAmount = Mathf.Clamp01(sensedPressAmount);
 
         if (!followSolenoidRelease)
@@ -197,6 +242,7 @@ public class TrumpetValveAnimator : MonoBehaviour
 
     float GetJitterHeldTargetPressAmount(float nextTargetPressAmount)
     {
+        // Ignore tiny target changes so the rendered valve does not wobble.
         nextTargetPressAmount = Mathf.Clamp01(nextTargetPressAmount);
 
         if (Mathf.Abs(nextTargetPressAmount - stableTargetPressAmount) <= visualTargetSnapEpsilon)

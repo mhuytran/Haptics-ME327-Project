@@ -69,12 +69,14 @@ public class NoteGlowPulse : MonoBehaviour
 
     void Awake()
     {
+        // Use a runtime material so each note can glow independently.
         noteRenderer = GetComponent<Renderer>();
         CreateRuntimeMaterial();
     }
 
     void Update()
     {
+        // Idle notes gently pulse while they travel toward the valve target.
         float pulse = 1.0f + Mathf.Sin(Time.time * pulseSpeed) * pulseAmount;
         ApplyColor(pulse);
     }
@@ -87,6 +89,7 @@ public class NoteGlowPulse : MonoBehaviour
 
     public void PlayTapSmash(Vector3 position, Quaternion rotation, bool perfectHit)
     {
+        // Spawn a short-lived flat ring/streak burst on the hit plane.
         if (!enableSmashBurst)
         {
             return;
@@ -121,6 +124,7 @@ public class NoteGlowPulse : MonoBehaviour
 
     public FlatNoteSmashEffect StartHoldSmash(Vector3 position, Quaternion rotation, bool perfectHit)
     {
+        // Hold notes keep a pulsing effect alive until the hold ends or misses.
         Color smashColor = perfectHit
             ? Color.Lerp(baseColor, Color.white, 0.25f)
             : baseColor;
@@ -197,6 +201,7 @@ public class NoteGlowPulse : MonoBehaviour
 
     void ApplyColor(float pulse)
     {
+        // Write color to whichever shader property the active pipeline exposes.
         if (runtimeMaterial == null)
         {
             return;
@@ -269,6 +274,7 @@ public class FlatNoteSmashEffect : MonoBehaviour
         bool isPerfectHit
     )
     {
+        // Tap effects expand and fade over a fixed duration.
         mode = EffectMode.Tap;
 
         baseColor = color;
@@ -302,6 +308,7 @@ public class FlatNoteSmashEffect : MonoBehaviour
         float radialStreakWidth
     )
     {
+        // Hold effects pulse continuously until StopEffect destroys the object.
         mode = EffectMode.Hold;
 
         baseColor = color;
@@ -374,6 +381,7 @@ public class FlatNoteSmashEffect : MonoBehaviour
 
     void UpdateTapVisual(float t)
     {
+        // Cubic ease-out makes the ring expand quickly and then fade smoothly.
         float eased = 1.0f - Mathf.Pow(1.0f - t, 3.0f);
         float alpha = Mathf.Lerp(perfectHit ? 1.0f : 0.80f, 0f, t);
 
@@ -465,6 +473,7 @@ public class FlatNoteSmashEffect : MonoBehaviour
 
     void BuildRingMesh(Mesh mesh, float radius, float width, int segmentCount, Color color)
     {
+        // Build a flat annulus mesh in local XY space.
         if (mesh == null)
         {
             return;
@@ -545,6 +554,7 @@ public class FlatNoteSmashEffect : MonoBehaviour
         float angleOffset
     )
     {
+        // Build radial rectangles that read as impact streaks around the note.
         if (mesh == null)
         {
             return;

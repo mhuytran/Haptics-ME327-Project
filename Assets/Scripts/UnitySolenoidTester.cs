@@ -50,6 +50,7 @@ public class UnitySolenoidTester : MonoBehaviour
 
     void Start()
     {
+        // Find scene systems, share the configured pinout, then push tuning values into gameplay.
         if (hapticFeedbackManager == null)
         {
             hapticFeedbackManager = HapticFeedbackManager.Instance;
@@ -73,6 +74,7 @@ public class UnitySolenoidTester : MonoBehaviour
 
     void Update()
     {
+        // Number keys trigger per-lane haptic tests; X sends all-off.
         if (!enableKeyboardTesting)
         {
             return;
@@ -149,6 +151,7 @@ public class UnitySolenoidTester : MonoBehaviour
 
     public void AllOff()
     {
+        // Clear any debug valve animation before shutting down hardware output.
         ClearDebugAnimation();
 
         if (hapticFeedbackManager == null)
@@ -190,6 +193,7 @@ public class UnitySolenoidTester : MonoBehaviour
 
     void TestSolenoid(int channelIndex, int phase)
     {
+        // Send a clamped direct solenoid pulse for one valve channel.
         if (hapticFeedbackManager == null)
         {
             hapticFeedbackManager = HapticFeedbackManager.Instance;
@@ -247,6 +251,7 @@ public class UnitySolenoidTester : MonoBehaviour
 
     void TestTeamSequence(int channelIndex)
     {
+        // Run the full ERM-delay-solenoid sequence used for bench feel testing.
         if (hapticFeedbackManager == null)
         {
             hapticFeedbackManager = HapticFeedbackManager.Instance;
@@ -312,6 +317,7 @@ public class UnitySolenoidTester : MonoBehaviour
         int solenoidHoldMs
     )
     {
+        // Optional visual-only animation mirrors the haptic test without needing hardware motion.
         if (channelIndex < 0 || channelIndex >= debugAnimationRoutines.Length)
         {
             return;
@@ -412,6 +418,7 @@ public class UnitySolenoidTester : MonoBehaviour
 
     public void ApplyTuningToGameplay()
     {
+        // Share tester settings with the manager/spawner so inspector tuning affects the game.
         EnsureSolenoidSettings();
         ApplyPinoutToReferences();
 
@@ -447,6 +454,7 @@ public class UnitySolenoidTester : MonoBehaviour
 
     void EnsureSolenoidSettings()
     {
+        // Maintain exactly three valid pulse-setting objects for the three valves.
         if (solenoidPulseSettings == null || solenoidPulseSettings.Length != 3)
         {
             SolenoidPulseSettings[] resizedSettings = new SolenoidPulseSettings[3];

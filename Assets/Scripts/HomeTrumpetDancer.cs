@@ -77,6 +77,7 @@ public class HomeTrumpetDancer : MonoBehaviour
 
     void Start()
     {
+        // This decorative driver only runs on the home scene and only when explicitly enabled.
         if (SceneManager.GetActiveScene().name != allowedSceneName)
         {
             restoreRestPositionsOnDisable = false;
@@ -98,6 +99,11 @@ public class HomeTrumpetDancer : MonoBehaviour
             RepairValveRenderers();
         }
 
+        if (disableGameplayValveAnimators)
+        {
+            DisableConflictingValveScripts();
+        }
+
         if (!autoAnimateValves)
         {
             enabled = false;
@@ -111,11 +117,6 @@ public class HomeTrumpetDancer : MonoBehaviour
             return;
         }
 
-        if (disableGameplayValveAnimators)
-        {
-            DisableConflictingValveScripts();
-        }
-
         localPressDirection = localPressDirection.normalized;
 
         BeginMoveToPattern();
@@ -123,6 +124,7 @@ public class HomeTrumpetDancer : MonoBehaviour
 
     bool TryClaimValveDriver()
     {
+        // Prevent multiple home-screen animators from fighting over the same valve transforms.
         for (int i = activeDrivers.Count - 1; i >= 0; i--)
         {
             HomeTrumpetDancer driver = activeDrivers[i];
@@ -173,6 +175,7 @@ public class HomeTrumpetDancer : MonoBehaviour
 
     void Update()
     {
+        // Step through a small valve fingering pattern using unscaled time for menu animation.
         if (valve1 == null || valve2 == null || valve3 == null)
         {
             return;
@@ -233,6 +236,7 @@ public class HomeTrumpetDancer : MonoBehaviour
 
     void BeginMoveToPattern()
     {
+        // Cache current positions so transitions start smoothly from wherever the valves are.
         state = State.MovingToPattern;
         stateTimer = 0f;
 
@@ -276,6 +280,7 @@ public class HomeTrumpetDancer : MonoBehaviour
 
     void AnimateTowardTargets()
     {
+        // Ease from cached start positions to the current target positions.
         float t = transitionTime <= 0f ? 1f : Mathf.Clamp01(stateTimer / transitionTime);
         float eased = motionCurve.Evaluate(t);
 
@@ -293,6 +298,7 @@ public class HomeTrumpetDancer : MonoBehaviour
 
     void DisableConflictingValveScripts()
     {
+        // Gameplay valve animators are disabled so the home dancer has sole transform control.
         DisableTrumpetValveAnimator(valve1);
         DisableTrumpetValveAnimator(valve2);
         DisableTrumpetValveAnimator(valve3);

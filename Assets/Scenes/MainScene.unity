@@ -2752,6 +2752,8 @@ MonoBehaviour:
   tofHealthReadout: ToF channels not checked yet.
   useAnalogAmountsWhileDiscrete: 0
   analogAmountDeadZone: 0.08
+  requireConfirmedTravelForAnimation: 1
+  animationConfirmExtraDeltaMM: 1
   derivePressedStateFromDistance: 0
   pressAmountThreshold: 0.65
   printIncomingLines: 0
@@ -5332,6 +5334,9 @@ MonoBehaviour:
   releaseMotionSpeed: 28
   useAnalogValveAmount: 0
   allowDebugValveAnimation: 0
+  requireConfirmedInputForAnimation: 1
+  requireConfirmedTeensyTravel: 1
+  repairValveRendererOnStart: 1
   visualPressDebounceSeconds: 0.04
   visualReleaseDebounceSeconds: 0.03
   visualAmountDeadZone: 0.05
@@ -5385,6 +5390,9 @@ MonoBehaviour:
   releaseMotionSpeed: 28
   useAnalogValveAmount: 0
   allowDebugValveAnimation: 0
+  requireConfirmedInputForAnimation: 1
+  requireConfirmedTeensyTravel: 1
+  repairValveRendererOnStart: 1
   visualPressDebounceSeconds: 0.04
   visualReleaseDebounceSeconds: 0.03
   visualAmountDeadZone: 0.05
@@ -5443,6 +5451,9 @@ MonoBehaviour:
   releaseMotionSpeed: 28
   useAnalogValveAmount: 0
   allowDebugValveAnimation: 0
+  requireConfirmedInputForAnimation: 1
+  requireConfirmedTeensyTravel: 1
+  repairValveRendererOnStart: 1
   visualPressDebounceSeconds: 0.04
   visualReleaseDebounceSeconds: 0.03
   visualAmountDeadZone: 0.05

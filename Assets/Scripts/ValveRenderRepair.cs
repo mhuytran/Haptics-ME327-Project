@@ -6,6 +6,7 @@ public static class ValveRenderRepair
 
     public static bool EnsureVisible(Transform valveRoot, string label, out string status)
     {
+        // Make existing valve renderers visible, or copy a sibling mesh as a runtime repair.
         status = "No valve root.";
 
         if (valveRoot == null)
@@ -104,6 +105,7 @@ public static class ValveRenderRepair
 
     private static Renderer FindSiblingRenderer(Transform valveRoot)
     {
+        // Look for another valve mesh that can be reused when this valve lacks one.
         if (valveRoot == null || valveRoot.parent == null)
         {
             return null;
@@ -153,6 +155,7 @@ public static class ValveRenderRepair
 
     private static GameObject GetOrCreateRepairObject(Transform valveRoot)
     {
+        // Reuse a previous repair object so repeated calls do not create duplicate meshes.
         Transform existing = valveRoot.Find(RepairObjectName);
 
         if (existing != null)
@@ -168,6 +171,7 @@ public static class ValveRenderRepair
 
     private static void CopyRendererSettings(Renderer source, MeshRenderer target)
     {
+        // Preserve materials and lighting/sorting settings from the source valve renderer.
         target.sharedMaterials = source.sharedMaterials;
         target.shadowCastingMode = source.shadowCastingMode;
         target.receiveShadows = source.receiveShadows;

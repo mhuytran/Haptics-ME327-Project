@@ -48,6 +48,7 @@ public class FlyingNote : MonoBehaviour
         float duration
     )
     {
+        // Convenience overload for notes whose hit effect happens at the valve target.
         Initialize(
             lane,
             spawn,
@@ -73,6 +74,7 @@ public class FlyingNote : MonoBehaviour
         float duration
     )
     {
+        // Store the timing and path data used by Update to animate the note toward the valve.
         laneIndex = lane;
         fingeringGroupId = -1;
         requiredValveMask = 1 << lane;
@@ -107,6 +109,7 @@ public class FlyingNote : MonoBehaviour
 
         TrySendPreCue();
 
+        // Time-based interpolation keeps visual movement synced to the note's hit time.
         float travelFraction = Mathf.InverseLerp(spawnTime, targetHitTime, Time.time);
         travelFraction = Mathf.Clamp01(travelFraction);
 
@@ -116,6 +119,7 @@ public class FlyingNote : MonoBehaviour
         {
             UpdateHoldTail();
 
+            // Hold notes must be started inside the hit window and then held until their end time.
             if (!holdStarted && Time.time > targetHitTime + gameManager.missWindow)
             {
                 Miss();
@@ -158,6 +162,7 @@ public class FlyingNote : MonoBehaviour
 
     void TrySendPreCue()
     {
+        // A pre-cue can be triggered either by lead time or by distance from the target.
         if (preCueSent)
         {
             return;
@@ -200,6 +205,7 @@ public class FlyingNote : MonoBehaviour
 
     public void SetFingeringGroup(int groupId, int valveMask, string name)
     {
+        // A group lets multiple lane visuals represent one trumpet fingering.
         fingeringGroupId = groupId;
         requiredValveMask = valveMask == 0 ? 1 << laneIndex : valveMask;
         fingeringName = string.IsNullOrEmpty(name) ? "Valve " + (laneIndex + 1) : name;
@@ -222,6 +228,7 @@ public class FlyingNote : MonoBehaviour
 
     public void ResolveTapHit(string rating)
     {
+        // Tap notes disappear immediately after their hit effect is triggered.
         if (resolved)
         {
             return;
@@ -268,6 +275,7 @@ public class FlyingNote : MonoBehaviour
 
     public void StartHold(string rating)
     {
+        // Hold visuals stay alive while the valve remains pressed.
         if (resolved || holdStarted)
         {
             return;
@@ -280,6 +288,7 @@ public class FlyingNote : MonoBehaviour
 
     void CompleteHold()
     {
+        // Completion is reported to the manager so scoring and haptics stay centralized.
         if (resolved)
         {
             return;
@@ -296,6 +305,7 @@ public class FlyingNote : MonoBehaviour
 
     void Miss()
     {
+        // Misses are also reported centrally so health, combo, and hardware feedback match.
         if (resolved)
         {
             return;
@@ -370,6 +380,7 @@ public class FlyingNote : MonoBehaviour
 
     void CreateHoldTail()
     {
+        // The hold tail is a line from the moving note back to the delayed trail position.
         holdTail = gameObject.AddComponent<LineRenderer>();
         holdTail.useWorldSpace = true;
         holdTail.positionCount = 2;
@@ -402,6 +413,7 @@ public class FlyingNote : MonoBehaviour
 
     void UpdateHoldTail()
     {
+        // Tail length follows the same travel curve as the note, offset by the hold duration.
         if (holdTail == null)
         {
             return;

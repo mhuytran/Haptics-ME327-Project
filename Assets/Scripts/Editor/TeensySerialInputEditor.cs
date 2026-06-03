@@ -6,6 +6,7 @@ public class TeensySerialInputEditor : Editor
 {
     public override void OnInspectorGUI()
     {
+        // Add calibration presets and live serial/ToF controls for hardware setup.
         DrawDefaultInspector();
 
         TeensySerialInput input = (TeensySerialInput)target;

@@ -46,6 +46,7 @@ public static class TeensyHardwarePinout
 
     public static TeensyHardwareChannel[] CreateDefaultChannels()
     {
+        // Default mapping mirrors the final Teensy firmware pin assignments.
         return new TeensyHardwareChannel[]
         {
             new TeensyHardwareChannel("Valve 1", 1, 0, 2, 5, 12, 13),
@@ -56,6 +57,7 @@ public static class TeensyHardwarePinout
 
     public static void EnsureDefaultPinout(ref TeensyHardwareChannel[] channels)
     {
+        // Repair null/short arrays so inspector data can be safely shared across components.
         if (channels == null || channels.Length != ChannelCount)
         {
             TeensyHardwareChannel[] defaults = CreateDefaultChannels();
@@ -89,6 +91,7 @@ public static class TeensyHardwarePinout
 
     public static int LaneToUnityChannelNumber(int laneIndex, TeensyHardwareChannel[] channels)
     {
+        // Convert Unity's zero-based lane index into the one-based firmware command channel.
         EnsureDefaultPinout(ref channels);
 
         if (!IsValidLane(laneIndex))
@@ -104,6 +107,7 @@ public static class TeensyHardwarePinout
         TeensyHardwareChannel[] channels
     )
     {
+        // Convert telemetry channel numbers back into Unity's lane indexes.
         EnsureDefaultPinout(ref channels);
 
         for (int i = 0; i < channels.Length; i++)
@@ -119,6 +123,7 @@ public static class TeensyHardwarePinout
 
     public static string GetDebugLabel(int laneIndex, TeensyHardwareChannel[] channels)
     {
+        // Human-readable pinout label used by inspector/debug readouts.
         EnsureDefaultPinout(ref channels);
 
         if (!IsValidLane(laneIndex))

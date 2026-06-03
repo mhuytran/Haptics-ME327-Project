@@ -33,12 +33,14 @@ public class HomeScreenManager : MonoBehaviour
 
     void Start()
     {
+        // Returning home should always restore normal time and fresh leaderboard visuals.
         Time.timeScale = 1f;
         RefreshLeaderboard();
     }
 
     public void StartGame()
     {
+        // Clear any previous abort flag before starting a new gameplay run.
         GameAbortState.ResetForNewRun();
         SceneManager.LoadScene(gameSceneName);
     }
@@ -50,6 +52,7 @@ public class HomeScreenManager : MonoBehaviour
 
     public void RefreshLeaderboard()
     {
+        // Load saved scores and choose row-based or legacy text rendering.
         LeaderboardData data = LeaderboardStore.Load();
 
         if (data.entries == null)
@@ -71,6 +74,7 @@ public class HomeScreenManager : MonoBehaviour
 
     void RenderRowBasedLeaderboard(LeaderboardData data)
     {
+        // Fill visible rows with top scores and apply medal styling to the top three.
         int maxRows = Mathf.Min(leaderboardRows.Length, 10);
 
         for (int i = 0; i < maxRows; i++)

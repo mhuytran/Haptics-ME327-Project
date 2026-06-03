@@ -112,6 +112,10 @@ public class TeensySerialInput : MonoBehaviour
     [Range(0f, 0.5f)]
     [Tooltip("Small analog amount ignored for animation so idle ToF noise does not wiggle valves.")]
     public float analogAmountDeadZone = 0.08f;
+    [Tooltip("Valve visuals must travel beyond the normal press threshold before animation is allowed. This filters idle ToF noise without changing gameplay input.")]
+    public bool requireConfirmedTravelForAnimation = true;
+    [Tooltip("Extra millimeters past the press threshold required before a Teensy press may move the rendered valve.")]
+    public float animationConfirmExtraDeltaMM = 1f;
 
     [Header("legacy press threshold")]
     public bool derivePressedStateFromDistance = false;
@@ -178,6 +182,7 @@ public class TeensySerialInput : MonoBehaviour
 
     void Awake()
     {
+        // Keep one serial bridge alive per scene so all haptic systems share the same port.
         if (Instance != null && Instance != this)
         {
             enabled = false;
@@ -189,6 +194,7 @@ public class TeensySerialInput : MonoBehaviour
 
     void Start()
     {
+        // Connect immediately in hardware mode, then optionally pause for ToF calibration.
         if (connectOnStart)
         {
             Connect();
@@ -202,6 +208,7 @@ public class TeensySerialInput : MonoBehaviour
 
     void Update()
     {
+        // Copy the thread-updated serial state once, then process it on the Unity main thread.
         TryReconnectIfNeeded();
 
         bool v1;
@@ -249,6 +256,7 @@ public class TeensySerialInput : MonoBehaviour
 
         if (isCalibrated)
         {
+            // Calibration can finish with fallback values; these helpers recover from that during play.
             TryLazyCalibrateLane(0, d1);
             TryLazyCalibrateLane(1, d2);
             TryLazyCalibrateLane(2, d3);
@@ -263,6 +271,7 @@ public class TeensySerialInput : MonoBehaviour
 
         if (isCalibrating || IsPostCalibrationReleaseGuardActive())
         {
+            // Prevent startup sensor settling from creating fake presses or valve animation.
             v1 = false;
             v2 = false;
             v3 = false;
@@ -273,6 +282,7 @@ public class TeensySerialInput : MonoBehaviour
         }
         else if (useDiscreteToFStates && isCalibrated)
         {
+            // Gameplay uses debounced discrete states, while animation can still receive an amount.
             v1 = GetDiscretePressedState(0, d1);
             v2 = GetDiscretePressedState(1, d2);
             v3 = GetDiscretePressedState(2, d3);
@@ -310,6 +320,7 @@ public class TeensySerialInput : MonoBehaviour
 
     IEnumerator AutoCalibrateStartup()
     {
+        // Sample released-valve ToF distances, derive thresholds, then resume gameplay.
         isCalibrating = true;
         isCalibrated = false;
         ValveInputState.ClearAll();
@@ -407,6 +418,7 @@ public class TeensySerialInput : MonoBehaviour
         List<int>[] calibrationSamples
     )
     {
+        // Ignore missing/saturated VL6180X readings during calibration.
         if (!IsValidDistance(distanceMM))
         {
             return;
@@ -508,6 +520,7 @@ public class TeensySerialInput : MonoBehaviour
 
     float GetCalibrationPercentile(List<int> samples)
     {
+        // Percentile rest distance rejects low noisy dips better than a simple average.
         samples.Sort();
 
         if (samples.Count <= 0)
@@ -523,6 +536,7 @@ public class TeensySerialInput : MonoBehaviour
 
     bool GetDiscretePressedState(int laneIndex, int distanceMM)
     {
+        // Hysteresis uses a lower enter threshold and a higher release threshold.
         if (!IsValidDistance(distanceMM))
         {
             return calibratedPressedStates[laneIndex];
@@ -540,6 +554,7 @@ public class TeensySerialInput : MonoBehaviour
 
     float GetDiscreteModeValveAmount(int laneIndex, int distanceMM, bool pressed, float rawAmount)
     {
+        // Keep gameplay binary, but optionally expose analog depth for valve visuals.
         if (pressed)
         {
             return 1f;
@@ -558,6 +573,43 @@ public class TeensySerialInput : MonoBehaviour
         }
 
         return Mathf.InverseLerp(deadZone, 1f, Mathf.Clamp01(rawAmount));
+    }
+
+    public bool IsAnimationPressConfirmed(int laneIndex, float amount, int distanceMM)
+    {
+        // Visual valve motion requires travel beyond the noise band when configured.
+        if (laneIndex < 0 || laneIndex >= laneHasLiveCalibration.Length)
+        {
+            return false;
+        }
+
+        if (!requireConfirmedTravelForAnimation)
+        {
+            return true;
+        }
+
+        if (!isCalibrated || isCalibrating || IsPostCalibrationReleaseGuardActive())
+        {
+            return false;
+        }
+
+        if (!laneHasLiveCalibration[laneIndex] || !IsValidDistance(distanceMM))
+        {
+            return false;
+        }
+
+        float confirmedPressDistanceMM = Mathf.Max(
+            1f,
+            GetPressEnterDistance(laneIndex) - Mathf.Max(0f, animationConfirmExtraDeltaMM)
+        );
+
+        if (Mathf.Clamp01(amount) <= Mathf.Clamp01(analogAmountDeadZone) &&
+            distanceMM > confirmedPressDistanceMM)
+        {
+            return false;
+        }
+
+        return distanceMM <= confirmedPressDistanceMM;
     }
 
     bool ApplyDiscreteStateDebounce(int laneIndex, bool rawPressed)
@@ -612,6 +664,7 @@ public class TeensySerialInput : MonoBehaviour
 
     void TryLazyCalibrateLane(int laneIndex, int distanceMM)
     {
+        // If startup missed a lane, accept the first reasonable live released distance later.
         if (laneIndex < 0 || laneIndex >= laneHasLiveCalibration.Length)
         {
             return;
@@ -639,6 +692,7 @@ public class TeensySerialInput : MonoBehaviour
 
     void TryLiveRestRebaseline(int laneIndex, int distanceMM)
     {
+        // Recover if a stale rest baseline makes released valves look permanently pressed.
         if (!allowLiveRestRebaseline ||
             laneIndex < 0 ||
             laneIndex >= restRebaselineCandidateDistance.Length)
@@ -752,6 +806,7 @@ public class TeensySerialInput : MonoBehaviour
 
     void ApplyPressedThresholdsFromCalibratedRest()
     {
+        // Press distance is derived per lane so close-mounted sensors still get a usable threshold.
         valve1PressedDistanceMM = Mathf.Max(1f, valve1RestDistanceMM - GetEffectivePressEnterDelta(0));
         valve2PressedDistanceMM = Mathf.Max(1f, valve2RestDistanceMM - GetEffectivePressEnterDelta(1));
         valve3PressedDistanceMM = Mathf.Max(1f, valve3RestDistanceMM - GetEffectivePressEnterDelta(2));
@@ -810,6 +865,7 @@ public class TeensySerialInput : MonoBehaviour
         float a3
     )
     {
+        // Mirror live hardware state into inspector fields for quick setup/debugging.
         liveValve1DistanceMM = d1;
         liveValve2DistanceMM = d2;
         liveValve3DistanceMM = d3;
@@ -872,6 +928,7 @@ public class TeensySerialInput : MonoBehaviour
 
     void TryReconnectIfNeeded()
     {
+        // Keep retrying so the game can recover if the Teensy is plugged in late or reconnects.
         if (!connectOnStart || !reconnectWhenDisconnected || IsConnected())
         {
             return;
@@ -895,6 +952,7 @@ public class TeensySerialInput : MonoBehaviour
         float ermDuty
     )
     {
+        // Convert firmware channel numbers into Unity lane indexes before updating shared state.
         TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
 
         int laneIndex = TeensyHardwarePinout.UnityChannelNumberToLaneIndex(
@@ -911,6 +969,7 @@ public class TeensySerialInput : MonoBehaviour
 
     float DistanceToPressAmount(int distanceMM, float restDistanceMM, float pressedDistanceMM)
     {
+        // Convert raw distance into normalized travel: 0 released, 1 pressed.
         if (distanceMM < 0 || distanceMM >= 255)
         {
             return 0f;
@@ -935,6 +994,7 @@ public class TeensySerialInput : MonoBehaviour
 
     public void Connect()
     {
+        // Try the configured port first, then scan detected COM ports for plug-and-play setup.
         if (IsConnected())
         {
             return;
@@ -999,6 +1059,7 @@ public class TeensySerialInput : MonoBehaviour
 
     bool TryConnectPort(string candidatePort)
     {
+        // Opening the port starts a background reader so Unity's main thread stays responsive.
         try
         {
             serialPort = new SerialPort(candidatePort, baudRate);
@@ -1057,6 +1118,7 @@ public class TeensySerialInput : MonoBehaviour
 
     public void ShutdownHardwareOutputs()
     {
+        // Clear Unity's cached state and send the firmware's all-off command once.
         ClearCachedInputAndActuatorState();
 
         if (hardwareShutdownSent || !IsConnected())
@@ -1089,6 +1151,7 @@ public class TeensySerialInput : MonoBehaviour
 
     void ReadSerialLoop()
     {
+        // Background thread: read complete newline-delimited telemetry lines from Teensy.
         while (keepReading)
         {
             try
@@ -1116,6 +1179,7 @@ public class TeensySerialInput : MonoBehaviour
 
     void ParseIncomingLine(string line)
     {
+        // Expected telemetry is comma-separated key:value pairs such as D1:80,V1:0,S1:0.00.
         if (string.IsNullOrWhiteSpace(line))
         {
             return;
@@ -1248,6 +1312,7 @@ public class TeensySerialInput : MonoBehaviour
 
     public bool SendLine(string command)
     {
+        // All writes are serialized so haptic commands cannot interleave on the port.
         if (string.IsNullOrWhiteSpace(command))
         {
             return false;
@@ -1340,6 +1405,7 @@ public class TeensySerialInput : MonoBehaviour
         restRebaselineDeltaMM = Mathf.Clamp(restRebaselineDeltaMM, 1f, 100f);
         restRebaselineStableSeconds = Mathf.Clamp(restRebaselineStableSeconds, 0f, 2f);
         analogAmountDeadZone = Mathf.Clamp01(analogAmountDeadZone);
+        animationConfirmExtraDeltaMM = Mathf.Clamp(animationConfirmExtraDeltaMM, 0f, 10f);
 
         if (!Application.isPlaying)
         {

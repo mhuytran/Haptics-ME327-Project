@@ -15,6 +15,7 @@ public class SolenoidPulseSettings
 
     public void Clamp()
     {
+        // Keep inspector-entered values inside the firmware's recommended operating range.
         duty = Mathf.Clamp(duty, 0f, MaxRecommendedDuty);
         phase = phase == 0 ? 0 : 1;
         durationMs = Mathf.Clamp(durationMs, 1, MaxRecommendedDurationMs);

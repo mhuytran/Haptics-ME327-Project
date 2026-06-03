@@ -10,12 +10,14 @@ public class ConstantScreenSize : MonoBehaviour
 
     void Start()
     {
+        // Cache the initial scale so distance compensation preserves the authored size.
         mainCamera = Camera.main;
         originalLocalScale = transform.localScale;
     }
 
     void Update()
     {
+        // Scale with camera distance so the object appears roughly constant on screen.
         if (mainCamera == null)
         {
             return;

@@ -6,6 +6,7 @@ public class HapticFeedbackManagerEditor : Editor
 {
     public override void OnInspectorGUI()
     {
+        // Add one-click haptic tuning/testing controls below the default inspector.
         DrawDefaultInspector();
 
         HapticFeedbackManager manager = (HapticFeedbackManager)target;

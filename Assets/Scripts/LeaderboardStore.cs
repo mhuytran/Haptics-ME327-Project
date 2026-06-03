@@ -35,6 +35,7 @@ public static class LeaderboardStore
 
     public static LeaderboardData Load()
     {
+        // PlayerPrefs stores the visible top-score table as JSON.
         string json = PlayerPrefs.GetString(LeaderboardKey, "");
 
         if (string.IsNullOrEmpty(json))
@@ -54,6 +55,7 @@ public static class LeaderboardStore
 
     public static bool AddScore(string playerName, int score)
     {
+        // Every attempt goes to CSV, while the visible leaderboard keeps each player's best score.
         string cleanName = SanitizeName(playerName);
 
         // every game attempt is always written to csv
@@ -127,6 +129,7 @@ public static class LeaderboardStore
 
     public static string ResetLeaderboardAndStartNewCsv()
     {
+        // Debug reset archives the current CSV before creating a fresh attempt log.
         ClearLeaderboard();
         string archivedPath = ArchiveCurrentAttemptLog();
         CreateFreshAttemptLogFile();
@@ -188,6 +191,7 @@ public static class LeaderboardStore
 
     static void AppendAttemptToCsv(string playerName, int score)
     {
+        // Append timestamps plus score so raw attempts are preserved beyond the top 10 list.
         EnsureLogFolderExists();
 
         string path = GetAttemptLogPath();
@@ -237,6 +241,7 @@ public static class LeaderboardStore
 
     static string SanitizeName(string playerName)
     {
+        // Keep names short and non-empty for the home-screen leaderboard rows.
         if (string.IsNullOrWhiteSpace(playerName))
         {
             return "Player";
@@ -254,6 +259,7 @@ public static class LeaderboardStore
 
     static string EscapeCsv(string value)
     {
+        // Quote fields only when CSV syntax requires it.
         if (value == null)
         {
             return "";

@@ -35,6 +35,7 @@ public class TitleGoldGlowWave : MonoBehaviour
 
     void Awake()
     {
+        // Cache scale and clone the TMP material for title-only glow animation.
         titleText = GetComponent<TMP_Text>();
         baseScale = transform.localScale;
 
@@ -43,6 +44,7 @@ public class TitleGoldGlowWave : MonoBehaviour
 
     void Update()
     {
+        // Combine scale pulse, per-character color, and material glow for the title.
         AnimateScalePulse();
         AnimateTextMesh();
         AnimateGlowMaterial();
@@ -116,6 +118,7 @@ public class TitleGoldGlowWave : MonoBehaviour
 
     void AnimateTextMesh()
     {
+        // Alternate silver/gold per character and sweep a bright highlight across the title.
         if (titleText == null)
         {
             return;

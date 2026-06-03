@@ -34,6 +34,7 @@ public class TrumpetLaneFourDividers : MonoBehaviour
 
     void Start()
     {
+        // Create runtime line renderers for the four lane boundaries and optional center guides.
         leftOuter = CreateLine("left outer divider", dividerColor, dividerWidth);
         between12 = CreateLine("divider between lane 1 and 2", dividerColor, dividerWidth);
         between23 = CreateLine("divider between lane 2 and 3", dividerColor, dividerWidth);
@@ -46,6 +47,7 @@ public class TrumpetLaneFourDividers : MonoBehaviour
 
     void Update()
     {
+        // Recompute divider endpoints from the current spawn/target transforms each frame.
         if (MissingReferences())
         {
             return;
@@ -95,6 +97,7 @@ public class TrumpetLaneFourDividers : MonoBehaviour
 
     LineRenderer CreateLine(string lineName, Color color, float width)
     {
+        // Build a simple unlit line renderer with rounded caps.
         GameObject lineObject = new GameObject(lineName);
         lineObject.transform.parent = transform;
 
@@ -129,6 +132,7 @@ public class TrumpetLaneFourDividers : MonoBehaviour
 
     void UpdateTrimmedLine(LineRenderer line, Vector3 start, Vector3 end)
     {
+        // Trim the divider so it does not visually collide with the valve targets.
         Vector3 trimmedStart = Vector3.Lerp(start, end, startTrimFraction);
         Vector3 trimmedEnd = Vector3.Lerp(start, end, 1.0f - endTrimFraction);
 

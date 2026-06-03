@@ -63,6 +63,7 @@ public class RhythmGameManager : MonoBehaviour
 
     void Start()
     {
+        // Startup calibration can pause the game; otherwise make sure gameplay runs normally.
         if (TeensySerialInput.Instance == null || !TeensySerialInput.Instance.isCalibrating)
         {
             Time.timeScale = 1f;
@@ -89,6 +90,8 @@ public class RhythmGameManager : MonoBehaviour
             return;
         }
 
+        // Build a 3-bit mask from the current valve state and judge only on a new press
+        // unless continuous judging is explicitly enabled for debugging.
         int currentValveMask = ValveInputState.GetValveMask();
         bool anyNewPress = false;
 
@@ -120,6 +123,7 @@ public class RhythmGameManager : MonoBehaviour
 
     public void RegisterNote(FlyingNote note)
     {
+        // Keep track of unresolved notes so input can be matched against them.
         if (gameOver)
         {
             if (note != null)
@@ -163,6 +167,7 @@ public class RhythmGameManager : MonoBehaviour
 
     public void OnNotePreCue(FlyingNote note)
     {
+        // Send one pre-cue per fingering group, even if the visual note uses multiple lanes.
         if (note == null || gameOver)
         {
             return;
@@ -223,6 +228,7 @@ public class RhythmGameManager : MonoBehaviour
 
     bool TryHitCurrentFingering(int currentValveMask)
     {
+        // Pick the closest active note that accepts the current fingering.
         if (gameOver)
         {
             return false;
@@ -261,6 +267,7 @@ public class RhythmGameManager : MonoBehaviour
 
         if (bestTimingError <= goodWindow)
         {
+            // Resolve tap and hold notes differently because holds must remain pressed.
             bool perfect = bestTimingError <= perfectWindow;
             string rating = perfect ? "PERFECT!" : "GOOD!";
             Color feedbackColor = GetFingeringFeedbackColor(bestNote, perfect);
@@ -302,6 +309,7 @@ public class RhythmGameManager : MonoBehaviour
 
     bool IsValveMaskAccepted(int requiredValveMask, int currentValveMask)
     {
+        // Exact mode rejects extra valves; relaxed mode accepts supersets of the required fingering.
         if (requiredValveMask == 0 || currentValveMask == 0)
         {
             return false;
@@ -373,6 +381,7 @@ public class RhythmGameManager : MonoBehaviour
 
     List<FlyingNote> GetFingeringGroup(FlyingNote sourceNote)
     {
+        // Multi-valve fingerings spawn several lane notes, but they resolve as one note group.
         List<FlyingNote> groupNotes = new List<FlyingNote>();
 
         if (sourceNote == null)
@@ -445,6 +454,7 @@ public class RhythmGameManager : MonoBehaviour
 
     public void OnHoldCompleted(FlyingNote note)
     {
+        // A completed hold counts as a successful note and sends the release haptic.
         if (gameOver)
         {
             return;
@@ -462,6 +472,7 @@ public class RhythmGameManager : MonoBehaviour
 
     public void OnNoteMissed(FlyingNote note)
     {
+        // Misses clear the fingering group, damage health, reset combo, and notify hardware.
         if (gameOver)
         {
             return;
@@ -507,6 +518,7 @@ public class RhythmGameManager : MonoBehaviour
 
     void RegisterSuccessfulNote(string feedbackMessage, bool strongHit, bool showFeedbackText)
     {
+        // Score increases by the active multiplier, and long combos can heal low health.
         if (gameOver)
         {
             return;
@@ -593,6 +605,7 @@ public class RhythmGameManager : MonoBehaviour
 
     void TriggerGameOver()
     {
+        // Freeze gameplay, clear notes, shut off haptics, and show the final score UI.
         gameOver = true;
         currentHealth = 0f;
         UpdateUI();
@@ -648,6 +661,7 @@ public class RhythmGameManager : MonoBehaviour
 
     void SendTapCompleteForMask(int valveMask, bool perfect)
     {
+        // Fan out a fingering mask into per-lane hardware commands.
         for (int lane = 0; lane < 3; lane++)
         {
             if ((valveMask & (1 << lane)) != 0)
@@ -812,6 +826,7 @@ public class RhythmGameManager : MonoBehaviour
 
     int CalculateMultiplier(int currentCombo)
     {
+        // Multiplier doubles as combo thresholds double, capped by maxPointMultiplier.
         if (currentCombo < baseMultiplierComboThreshold)
         {
             return 1;

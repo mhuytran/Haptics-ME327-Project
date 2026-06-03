@@ -5,6 +5,7 @@ public class KeyboardValveInput : MonoBehaviour
 {
     void Update()
     {
+        // Keyboard fallback for testing: A/S/D map to valves 1/2/3.
         if (Keyboard.current == null)
         {
             return;

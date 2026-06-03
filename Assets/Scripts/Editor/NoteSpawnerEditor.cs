@@ -6,6 +6,7 @@ public class NoteSpawnerEditor : Editor
 {
     public override void OnInspectorGUI()
     {
+        // Add play-mode chart controls and quick spawn-mode switches.
         DrawDefaultInspector();
 
         NoteSpawner spawner = (NoteSpawner)target;
@@ -79,6 +80,7 @@ public class NoteSpawnerEditor : Editor
 
     void SetSpawnerMode(NoteSpawner spawner, NoteSpawner.NoteSpawnMode mode)
     {
+        // Use the runtime API in Play mode so mode-change cleanup still runs.
         Undo.RecordObject(spawner, "Set Note Spawn Mode");
 
         if (Application.isPlaying)

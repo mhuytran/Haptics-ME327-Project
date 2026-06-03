@@ -229,6 +229,7 @@ public class NoteSpawner : MonoBehaviour
 
     void Start()
     {
+        // Find optional scene references, then prepare song data and lane colors.
         if (gameManager == null)
         {
             gameManager = UnityEngine.Object.FindAnyObjectByType<RhythmGameManager>();
@@ -241,6 +242,7 @@ public class NoteSpawner : MonoBehaviour
 
     void Update()
     {
+        // Song mode is driven by the audio clock; random mode is driven by a spawn interval.
         HandleModeSwitchShortcuts();
 
         if (spawnMode != activeSpawnMode)
@@ -345,6 +347,7 @@ public class NoteSpawner : MonoBehaviour
         bool startSongIfPossible
     )
     {
+        // Mode switches reset active notes and song state so old timing data cannot leak forward.
         if (clearNotesWhenSwitchingModes && gameManager != null)
         {
             gameManager.ClearActiveNotes();
@@ -393,6 +396,7 @@ public class NoteSpawner : MonoBehaviour
 
     void FinishSongPlayback()
     {
+        // End-of-song cleanup stops haptics and removes any notes that were still active.
         currentSongStatus = "Song finished.";
         songStarted = false;
         songPaused = false;
@@ -419,6 +423,7 @@ public class NoteSpawner : MonoBehaviour
 
     void SpawnNextNote()
     {
+        // Random debug mode can spawn either real trumpet fingerings or legacy single-lane notes.
         if (useTrumpetFingerings)
         {
             SpawnNextTrumpetFingering();
@@ -466,6 +471,7 @@ public class NoteSpawner : MonoBehaviour
 
     void SpawnNextTrumpetFingering()
     {
+        // Spawn one visual note per pressed valve, sharing one fingering group id.
         EnsureValidFingerings();
 
         TrumpetFingering fingering = GetNextFingering();
@@ -530,6 +536,7 @@ public class NoteSpawner : MonoBehaviour
         string fingeringName
     )
     {
+        // Create the note visual, color it by lane, initialize its timing, and register it.
         Transform spawnPoint = GetSpawnPoint(lane);
         Transform valveTarget = GetValveTarget(lane);
         Transform hitPlane = GetHitPlane(lane);
@@ -586,6 +593,7 @@ public class NoteSpawner : MonoBehaviour
 
     int FingeringToMask(TrumpetFingering fingering)
     {
+        // Convert valve booleans into the same 3-bit mask used by RhythmGameManager.
         int mask = 0;
 
         for (int lane = 0; lane < 3; lane++)
@@ -601,6 +609,7 @@ public class NoteSpawner : MonoBehaviour
 
     TrumpetFingering GetNextFingering()
     {
+        // Avoid immediately repeating the same random fingering when possible.
         int fingeringCount = validFingerings.Length;
         int maxAttempts = Mathf.Max(1, fingeringCount * 2);
 
@@ -651,6 +660,7 @@ public class NoteSpawner : MonoBehaviour
 
     void UpdateSongChartMode()
     {
+        // Spawn chart notes when they are noteTravelTime seconds away from their hit time.
         LoadSongChartIfNeeded();
         HandleSongKeyboardControls();
 
@@ -781,6 +791,7 @@ public class NoteSpawner : MonoBehaviour
     [ContextMenu("Song/Start Song Chart")]
     public void StartSong()
     {
+        // Reset the chart cursor, clear active notes, and start audio from the beginning.
         LoadSongChartIfNeeded();
 
         if (loadedSongChart == null)
@@ -899,6 +910,7 @@ public class NoteSpawner : MonoBehaviour
 
     void LoadSongChartIfNeeded()
     {
+        // Load the JSON chart once and sort notes by their computed hit time.
         if (loadedSongChart != null)
         {
             return;
@@ -967,6 +979,7 @@ public class NoteSpawner : MonoBehaviour
 
     void PlaySongAudioFrom(float songTime, bool allowScheduledStart)
     {
+        // DSP scheduling reduces start jitter between the audio clip and spawned notes.
         scheduledSongDspStartTime = -1.0;
         fallbackSongStartTime = Time.time - songTime;
 
@@ -1015,6 +1028,7 @@ public class NoteSpawner : MonoBehaviour
 
     float GetSongTime()
     {
+        // Prefer sample-accurate time so visual note timing follows the audio closely.
         if (songPaused)
         {
             return pausedSongTime;
@@ -1059,6 +1073,7 @@ public class NoteSpawner : MonoBehaviour
 
     void SpawnSongChartNote(SongChartNote chartNote, float hitSongTime, float timeUntilHit)
     {
+        // Chart notes become one grouped fingering made from pitch-derived or stored lane data.
         int requiredValveMask = GetSongNoteValveMask(chartNote);
 
         if (requiredValveMask == 0)
@@ -1120,6 +1135,7 @@ public class NoteSpawner : MonoBehaviour
 
     bool TryGetTrumpetValveMask(string pitchName, out int valveMask)
     {
+        // Map pitch class to common trumpet valve combinations.
         valveMask = 0;
 
         if (string.IsNullOrWhiteSpace(pitchName))
@@ -1194,6 +1210,7 @@ public class NoteSpawner : MonoBehaviour
 
     int LaneArrayToValveMask(int[] laneMask)
     {
+        // Chart lane masks are one-based; the game mask is zero-based.
         int mask = 0;
 
         if (laneMask == null)

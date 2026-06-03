@@ -18,6 +18,7 @@ public class EmergencyAbortController : MonoBehaviour
 
     void Update()
     {
+        // Ctrl+Shift+X is reserved for an immediate safe exit from a hardware run.
         if (abortTriggered)
         {
             return;
@@ -46,6 +47,7 @@ public class EmergencyAbortController : MonoBehaviour
 
     IEnumerator EmergencyAbortRoutine()
     {
+        // Mark the run unsaveable, clear local state, shut off hardware, then return home.
         abortTriggered = true;
 
         // Prevent this run from being saved to leaderboard or CSV.

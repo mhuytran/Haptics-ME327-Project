@@ -97,6 +97,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     void Awake()
     {
+        // Prefer the manager attached to the serial object so commands share the active connection.
         if (Instance != null && Instance != this)
         {
             bool thisLivesWithSerialInput = GetComponent<TeensySerialInput>() != null;
@@ -126,6 +127,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void SendPreCue(int laneIndex)
     {
+        // Pre-cues are guarded per lane so dense notes do not retrigger the ERM too rapidly.
         if (!TeensyHardwarePinout.IsValidLane(laneIndex) || IsPreCueGuardActive(laneIndex))
         {
             return;
@@ -158,12 +160,14 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void SendTapComplete(int laneIndex, bool perfect)
     {
+        // Tap completion tells firmware whether to use the GOOD or PERFECT haptic profile.
         string rating = perfect ? "PERFECT" : "GOOD";
         SendCompletionAfterPlayableDwell("TAPCOMPLETE," + GetTeensyChannelNumber(laneIndex) + "," + rating);
     }
 
     public void SendHoldStart(int laneIndex)
     {
+        // Hold start keeps the ERM active until completion or miss.
         Send("HOLDSTART," + GetTeensyChannelNumber(laneIndex));
     }
 
@@ -179,6 +183,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void SendSolenoidPush(int laneIndex, SolenoidPulseSettings settings)
     {
+        // Manual/gameplay tuning path for direct solenoid push-off pulses.
         if (settings == null)
         {
             Debug.LogWarning("No solenoid pulse settings found for " + GetPinoutLabel(laneIndex));
@@ -191,6 +196,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void TestSolenoid(int channelIndex, float duty, int phase, int durationMs)
     {
+        // Clamp Unity-side values before firmware applies its own safety caps.
         int channelNumber = GetTeensyChannelNumber(channelIndex);
         float safeMaxDuty = Mathf.Clamp(
             maxSolenoidDuty,
@@ -295,6 +301,7 @@ public class HapticFeedbackManager : MonoBehaviour
         float solenoidPeakDuty
     )
     {
+        // Sends the team's ERM-delay-solenoid test sequence in the firmware command format.
         int channelNumber = GetTeensyChannelNumber(channelIndex);
         float safeMaxSolenoidDuty = Mathf.Clamp(
             maxSolenoidDuty,
@@ -390,6 +397,7 @@ public class HapticFeedbackManager : MonoBehaviour
     [ContextMenu("Tune/Apply Game-Ready Haptic Defaults")]
     public void ApplyTeam12VFeelDefaults()
     {
+        // Inspector helper that restores known-good haptic tuning values for the demo rig.
         maxSolenoidDuty = 1.00f;
         maxSolenoidDurationMs = 800;
         completionPushDelayMs = 0;
@@ -421,6 +429,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void AllOff()
     {
+        // Stop scheduled commands and ask firmware to turn every actuator off.
         CancelPendingCompletionCommands();
         ResetPreCueGuards();
         Send("X");
@@ -428,6 +437,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     public void EmergencyAllOff()
     {
+        // Emergency shutdown bypasses normal command filtering and latches the manager stopped.
         CancelPendingCompletionCommands();
         ResetPreCueGuards();
         emergencyStopped = true;
@@ -460,6 +470,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     void SendCompletionAfterPlayableDwell(string command)
     {
+        // Optional delay gives the player time to feel a press before push-off feedback.
         int safeDelayMs = Mathf.Clamp(completionPushDelayMs, 0, 1000);
 
         if (safeDelayMs <= 0 || !isActiveAndEnabled)
@@ -527,6 +538,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     private void Send(string command)
     {
+        // Central command gate: emergency state, enable flag, allow-list, and serial send.
         if (emergencyStopped)
         {
             return;
@@ -579,6 +591,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     bool IsCommandAllowed(string command)
     {
+        // Gameplay commands are always allowed; tuning commands depend on the profile.
         string commandName = GetCommandName(command);
 
         if (commandName == "X" ||
@@ -620,6 +633,7 @@ public class HapticFeedbackManager : MonoBehaviour
 
     int GetTeensyChannelNumber(int laneIndex)
     {
+        // Scene lanes can be remapped to firmware channels through the shared pinout table.
         TeensyHardwarePinout.EnsureDefaultPinout(ref hardwarePinout);
         return TeensyHardwarePinout.LaneToUnityChannelNumber(laneIndex, hardwarePinout);
     }
