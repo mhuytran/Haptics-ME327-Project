@@ -3,6 +3,8 @@
 For our ME327 project, our Unity rhythm game titled "Trum-pal Triumph" was developed. This repository consists of the Unity code and the Arduino code that is flashed onto the Teensy 
 microcontroller that enables it to communicate with the Unity code. The key functions of the rhythm game include trumpet valve timing, visual note motion, and Teensy-driven haptic hardware. 
 
+CAD files used to fabricate the Trum-pal can be found in the TrumPal CAD Files folder.
+
 The core flow of scripts used in the Unity game is as follows:
 
 1. `NoteSpawner` creates notes from either random trumpet fingerings or a JSON song chart.
